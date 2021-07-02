@@ -6,21 +6,22 @@ Hooked input request can be checked against:
 
 * LOA (Level Of Assurance) defines the level of trust you have in a given external authentication source. There is no standard to define LOA. Nevertheless most people loosely map it on NIST definition:
 
-    * loa=0 public access
-    * loa=1 basic authentication (just better than nothing)
-    * loa=2 typical authentication (usually provided some trusted attributes as roles or groups.
-    * loa=3 more trusted authentication (two factors ?)
-    * loa=6 live critical authentication.
+  * loa=0 public access
+  * loa=1 basic authentication (just better than nothing)
+  * loa=2 typical authentication (usually provided some trusted attributes as roles or groups.
+  * loa=3 more trusted authentication (two factors ?)
+  * loa=6 live critical authentication.
 
 * Security attributes: allows fine grain access controls to be added. They define a set of labels that should be provided by your IDP.
 
-    * Enterprise IDPs typically provide either groups or roles.
-    * github' provides organizations, repositories, ...
-    * onelogin map groups on local roles or ldap/AD member of request
+  * Enterprise IDPs typically provide either groups or roles.
+  * github provides organizations, repositories, ...
+  * onelogin map groups on local roles or ldap/AD member of request
 
     Each IDP has its own way to provide attributes. Idp security labels map to Cynagora's permissions through an independent json configuration file, where security administrator may define a per IDP label/privilege mapping.
 
 Typical access control:
+
 ``` json
  {"uid": "geoloc","uri":"unix:@gps-api", "loa":1, "require":["geoloc-role"]},
 ```
@@ -58,6 +59,7 @@ Detail on OpenId-Connect specifications can be found [here](https://openid.net/d
 * [Configuration](./3-configuration.html)
 * [Secure Gate SVC API](./4-sgate-svc-api.html)
 * [Running and Testing](./5-running-and-testing.html)
+* [pcsc library](../libs/pcscd-client/README.html)
 
 ## Support/sources
 

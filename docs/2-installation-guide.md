@@ -33,12 +33,14 @@ Note:
 # Quick test
 
 ## start sec-gate-oidc samples
+
 Use one of the default config templates to write your own one and start the binder with your own oidc-config.json
 
-```
+```bash
  # check with PAM login as fake IDP
  afb-binder --config=/my_config/oidc-local.json
 ```
+
 **Note:** *any test with an external authority requires a minimum level of remote configuration. Check specific IDPs requirement before trying oidc-oauth2.json samples.*
 
 ## Connect to HTML5 test page
@@ -46,11 +48,8 @@ Use one of the default config templates to write your own one and start the bind
 Connect your browser to your sec-gate-oidc service with ```https://target:port``` to display corresponding HTML5 test page. When testing on your local machine redirect uri should look like https://localhost:1234 when running sgate on a target, then your should use https://target-ip-addr
 
 * Note:
-
-    * HTTPS requires SSL certificates. Check $PROJECT/conf.d/project/ssl/gen-cert.sh to generated self signed SSL certificates. For development you may also choose to remove SSL. To remove SSL simply set 'HTTPS':false within your oidc-config.json
-
-    * Warning: most IDPs impose HTTPS connection when using anything different from localhost as redirect login URL.
-
+  * HTTPS requires SSL certificates. Check $PROJECT/conf.d/project/ssl/gen-cert.sh to generated self signed SSL certificates. For development you may also choose to remove SSL. To remove SSL simply set 'HTTPS':false within your oidc-config.json
+  * Warning: most IDPs impose HTTPS connection when using anything different from localhost as redirect login URL.
 
 ## Rebuild 'sec-gate-oidc' from sources
 
@@ -78,22 +77,22 @@ You should recompile `sec-gate-oidc` when:
 #### Install sec-gate-oidc specific dependencies
 
 * standard linux dependencies
-    * libpam-devel
-    * libcurl-devel
-    * uthash
-    * pcsc-lite pcsc-lite-libs
+  * libpam-devel
+  * libcurl-devel
+  * uthash
+  * pcsc-lite pcsc-lite-libs
 
 * Redpesk AFB application framework dependencies
-    * afb-cmake-modules
-    * afb-libafb-devel
+  * afb-cmake-modules
+  * afb-libafb-devel
 
 >Note: all previous dependencies should be available out-of-the-box for major Linux distributions (Fedora, OpenSuse, Ubuntu). Note that Debian/Ubuntu use '.dev' in place of '.devel'.
 
 ### Download source from git
 
 ```bash
-    git clone https://github.com/redpesk-common/sgate-fedid-binding.git
-    git clone https://github.com/redpesk-common/sec-gate-oidc-afbext.git
+    git clone https://github.com/redpesk-common/sec-gate-fedid-binding.git
+    git clone https://github.com/redpesk-common/sec-gate-oidc.git
 ```
 
 ### Build your fedid binding and sgate binder extension
