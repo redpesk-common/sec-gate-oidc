@@ -7,7 +7,7 @@ CONFNAME="oidc"
 # default spawn-binding installation
 if test -z "$AFB_SPAWN_INSTALL"
 then
-    AFB_SPAWN_INSTALL="/var/local/lib/afm/applications/spawn-binding"
+    AFB_SPAWN_INSTALL="/usr/redpesk/spawn-binding"
 fi    
 
 if test -z "$AFB_SPAWN_PORT"
@@ -16,7 +16,7 @@ then
 fi
 
 # make sure we have spawn binding avaliable
-if ! test -f $AFB_SPAWN_INSTALL/lib/afb-spawn.so
+if ! test -f $AFB_SPAWN_INSTALL/lib/spawn-binding.so
 then
     echo spawn-binding not install into $AFB_SPAWN_INSTALL
 fi
@@ -30,4 +30,4 @@ done
 export AFB_SPAWN_CONFIG=$CONFDIR
 echo "Check APIs with http://localhost:$AFB_SPAWN_PORT/devtools/index.html"
 set -x
-afb-binder --name=afb-spawn --name=afb-$CONFNAME-test --roothttp=$CONFDIR --binding=$AFB_SPAWN_INSTALL/lib/afb-spawn.so --ws-server=tcp:localhost:1235/test3 --port=$AFB_SPAWN_PORT $APIS_SVC
+afb-binder --name=spawn-binding --name=afb-$CONFNAME-test --roothttp=$CONFDIR --binding=$AFB_SPAWN_INSTALL/lib/spawn-binding.so --ws-server=tcp:localhost:1235/test3 --port=$AFB_SPAWN_PORT $APIS_SVC
