@@ -33,9 +33,9 @@ static void glueOnSocketCB (struct ev_fd *efd, int sock, uint32_t revents, void 
     int action;
 
     // translate libafb event into curl event
-    if (FLAGS_SET(revents, EPOLLIN | EPOLLOUT)) action= CURL_POLL_INOUT;
-    else if (revents & EPOLLIN)  action= CURL_POLL_IN;
-    else if (revents & EPOLLOUT) action= CURL_POLL_OUT;
+    if (FLAGS_SET(revents, EV_FD_IN | EV_FD_OUT)) action= CURL_POLL_INOUT;
+    else if (revents & EV_FD_IN)  action= CURL_POLL_IN;
+    else if (revents & EV_FD_OUT) action= CURL_POLL_OUT;
     else action= 0;
 
     int err= httpOnSocketCB(httpPool, sock, action);
@@ -55,13 +55,13 @@ static int glueSetSocketCB (httpPoolT *httpPool, CURL *easy, int sock, int actio
       case CURL_POLL_REMOVE:
         goto OnErrorExit;
       case CURL_POLL_IN:
-        events= EPOLLIN;
+        events= EV_FD_IN;
         break;
       case CURL_POLL_OUT:
-        events= EPOLLOUT;
+        events= EV_FD_OUT;
         break;
       case CURL_POLL_INOUT:
-        events= EPOLLIN|EPOLLOUT;
+        events= EV_FD_IN|EV_FD_OUT;
         break;
       default:
         goto OnErrorExit;

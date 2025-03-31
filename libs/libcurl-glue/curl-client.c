@@ -70,7 +70,7 @@ int wrap_base64_decode(
 
 	/* terminate */
     result[out]='\0'; // added fulup
-	*decoded = realloc(result, out);
+	*decoded = realloc(result, out + 1);
 	if (out && *decoded == NULL) {
 		free(result);
 		return -1;
@@ -261,7 +261,7 @@ static void multiCheckInfoCB(httpPoolT *httpPool)
                 httpRqt->body= message;
                 httpRqt->length=len;
             } else {
-                curl_easy_getinfo(easy, CURLINFO_SIZE_DOWNLOAD, &httpRqt->length);
+                curl_easy_getinfo(easy, CURLINFO_SIZE_DOWNLOAD_T, &httpRqt->length);
                 curl_easy_getinfo(easy, CURLINFO_RESPONSE_CODE, &httpRqt->status);
                 curl_easy_getinfo(easy, CURLINFO_CONTENT_TYPE, &httpRqt->ctype);
             }
@@ -414,7 +414,7 @@ static int httpSendQuery(httpPoolT *httpPool, const char *url, const httpOptsT *
             goto OnErrorExit;
         }
 
-        curl_easy_getinfo(httpRqt->easy, CURLINFO_SIZE_DOWNLOAD, &httpRqt->length);
+        curl_easy_getinfo(httpRqt->easy, CURLINFO_SIZE_DOWNLOAD_T, &httpRqt->length);
         curl_easy_getinfo(httpRqt->easy, CURLINFO_RESPONSE_CODE, &httpRqt->status);
         curl_easy_getinfo(httpRqt->easy, CURLINFO_CONTENT_TYPE, &httpRqt->ctype);
 

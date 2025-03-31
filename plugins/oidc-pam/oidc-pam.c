@@ -135,7 +135,7 @@ static int pamAccessToken (oidcIdpT * idp, const oidcProfileT * profile, const c
             goto OnErrorExit;
         }
         // map pam group name as security labels attributes
-        fedSocial->attrs = calloc (sizeof (char *), ngroups + 1);
+        fedSocial->attrs = calloc (ngroups + 1, sizeof (char *));
         for (int idx = 0; idx < ngroups; idx++) {
             struct group *gr;
             gr = getgrgid (groups[idx]);
