@@ -253,7 +253,8 @@ static int oidcUserGetByToken (idpRqtCtxT * rqtCtx)
 
     // asynchronous wreq to IDP user profile https://docs.oidc.com/en/rest/reference/orgs#list-organizations-for-the-authenticated-user
     EXT_DEBUG ("[oidc-profile-get] curl -H 'Authorization: %s' %s\n", rqtCtx->token, idp->wellknown->userinfo);
-    int err = httpSendGet (idp->oidc->httpPool, idp->wellknown->userinfo, &dfltOpts, authToken, oidcUserGetByTokenCB, rqtCtx);
+    //int err = httpSendGet (idp->oidc->httpPool, idp->wellknown->userinfo, &dfltOpts, authToken, oidcUserGetByTokenCB, rqtCtx);
+    int err = httpSendGet (NULL, idp->wellknown->userinfo, &dfltOpts, authToken, oidcUserGetByTokenCB, rqtCtx);
     if (err) goto OnErrorExit;
     return 0;
 
@@ -395,7 +396,8 @@ static int oidcAccessToken (afb_hreq * hreq, oidcIdpT * idp, const char *redirec
             };
 
             EXT_DEBUG ("[oidc-access-token] curl -H 'Authorization: %s' -X post -d '%s' %s\n", schema->auth64, (char*)rqtCtx->userData, idp->wellknown->tokenid);
-            err = httpSendPost (oidc->httpPool, idp->wellknown->tokenid, &dfltOpts, headers, rqtCtx->userData, dataLen , oidcAccessTokenCB, rqtCtx);
+            //err = httpSendPost (oidc->httpPool, idp->wellknown->tokenid, &dfltOpts, headers, rqtCtx->userData, dataLen , oidcAccessTokenCB, rqtCtx);
+            err = httpSendPost (NULL, idp->wellknown->tokenid, &dfltOpts, headers, rqtCtx->userData, dataLen , oidcAccessTokenCB, rqtCtx);
             break;
         }
 
@@ -417,7 +419,8 @@ static int oidcAccessToken (afb_hreq * hreq, oidcIdpT * idp, const char *redirec
             };
 
             EXT_DEBUG ("[oidc-access-token] curl -X post -d '%s' %s\n", (char*)rqtCtx->userData, idp->wellknown->tokenid);
-            err = httpSendPost (oidc->httpPool, idp->wellknown->tokenid, &dfltOpts, headers, rqtCtx->userData, dataLen , oidcAccessTokenCB, rqtCtx);
+            //err = httpSendPost (oidc->httpPool, idp->wellknown->tokenid, &dfltOpts, headers, rqtCtx->userData, dataLen , oidcAccessTokenCB, rqtCtx);
+            err = httpSendPost (NULL, idp->wellknown->tokenid, &dfltOpts, headers, rqtCtx->userData, dataLen , oidcAccessTokenCB, rqtCtx);
             break;
 
         default:
@@ -669,7 +672,8 @@ static httpRqtActionT oidcDiscoveryCB (httpRqtT * httpRqt)
 
     // if jwks is define request URI to get jwt keys
     if (idp->wellknown->jwks && schema->jwksJ && json_object_get_boolean(schema->jwksJ)) {
-        int err = httpSendGet (idp->oidc->httpPool, idp->wellknown->jwks, NULL, NULL, oidcDiscoJwksCB, schema);
+        //int err = httpSendGet (idp->oidc->httpPool, idp->wellknown->jwks, NULL, NULL, oidcDiscoJwksCB, schema);
+        int err = httpSendGet (NULL, idp->wellknown->jwks, NULL, NULL, oidcDiscoJwksCB, schema);
         if (err) goto OnErrorExit;
     }
 
