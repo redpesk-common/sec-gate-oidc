@@ -524,8 +524,8 @@ OnErrorExit:
     return NULL;
 }
 
-// build request with query
-int httpBuildQuery(const char *uid, char *response, size_t maxlen, const char *prefix, const char *url, httpKeyValT *query)
+// build request with params
+int httpBuildQuery(const char *uid, char *query, size_t maxlen, const char *prefix, const char *url, httpKeyValT *params)
 {
     size_t index = 0;
     maxlen = maxlen - 1; // space for '\0'
@@ -539,11 +539,11 @@ int httpBuildQuery(const char *uid, char *response, size_t maxlen, const char *p
     {
         for (int idx = 0; prefix[idx]; idx++)
         {
-            response[index++] = prefix[idx];
+            query[index++] = prefix[idx];
             if (index == maxlen)
                 goto OnErrorExit;
         }
-        response[index++] = '/';
+        query[index++] = '/';
     }
 
     // place url
@@ -551,38 +551,42 @@ int httpBuildQuery(const char *uid, char *response, size_t maxlen, const char *p
     {
         for (int idx = 0; url[idx]; idx++)
         {
-            response[index++] = url[idx];
+            query[index++] = url[idx];
             if (index == maxlen)
                 goto OnErrorExit;
         }
     }
 
-    // loop on query arguments
-    if (query) {
-        // if no static query params initialize params list
-        if (response[index-1] != '&') response[index++] = '?';
+    // loop on parameters
+    if (params && params->tag) {
+        // if no static params initialize params list
+        char sep;
+        query[index] = '\0';
+        sep = strchr(query, '?') ? '&' : '?';
+        if (index && query[index - 1] != sep)
+            query[index++] = sep;
 
-        for (int idx = 0; query[idx].tag; idx++)
+        for (int idx = 0; params[idx].tag; idx++)
         {
-            for (int jdx = 0; query[idx].tag[jdx]; jdx++)
+            for (int jdx = 0; params[idx].tag[jdx]; jdx++)
             {
-                response[index++] = query[idx].tag[jdx];
+                query[index++] = params[idx].tag[jdx];
                 if (index == maxlen)
                     goto OnErrorExit;
             }
-            if (query[idx].value) {
-                response[index++] = '=';
-                for (int jdx = 0; query[idx].value[jdx]; jdx++)
+            if (params[idx].value) {
+                query[index++] = '=';
+                for (int jdx = 0; params[idx].value[jdx]; jdx++)
                 {
-                    response[index++] = query[idx].value[jdx];
+                    query[index++] = params[idx].value[jdx];
                     if (index == maxlen)
                         goto OnErrorExit;
                 }
             }
-            response[index++] = '&';
+            query[index++] = '&';
         }
     }
-    response[index] = '\0'; // remove last '&'
+    query[index] = '\0'; // remove last '&'
     return 0;
 
 OnErrorExit:

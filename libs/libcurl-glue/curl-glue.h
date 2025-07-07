@@ -118,7 +118,7 @@ typedef struct httpPoolS
 const httpCallbacksT *glueGetCbs(void);
 
 // API to build and lauch request (if httpPoolT==NULL then run synchronously)
-int httpBuildQuery(const char *uid, char *response, size_t maxlen, const char *prefix, const char *url, httpKeyValT *query);
+int httpBuildQuery(const char *uid, char *query, size_t maxlen, const char *prefix, const char *url, httpKeyValT *params);
 int httpSendPost(httpPoolT *pool, const char *url, const httpOptsT *opts, httpKeyValT *tokens, void *databuf, long datalen, httpRqtCbT callback, void *ctx);
 int httpSendGet(httpPoolT *pool, const char *url, const httpOptsT *opts, httpKeyValT *tokens, httpRqtCbT callback, void *ctx);
 
