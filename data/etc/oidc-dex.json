@@ -1,0 +1,76 @@
+{
+  "name": "afb-oidc",
+  "tracereq": "none",
+  "verbose": 2,
+  "port": 3000,
+  "https": false,
+  "https-cert": "../data/ssl/devel-cert.pem",
+  "https-key": "../data/ssl/devel-key.pem",
+  "extension": "./package/lib/libafb-sec-gate-oidc-ext.so",
+  "roothttp": ".",
+  "rootdir":  "../data/htdocs",
+  "binding" : [{
+    "uid": "fedid-api",
+    "path": "/usr/local/sec-gate-fedid-binding/lib/libfedid-types.so",
+    "config": {"dbpath":"/var/tmp/fedid-oauth2.sqlite"}
+}],
+"@extconfig": {
+    "sec-gate-oidc": {
+      "api": "sgate",
+      "info": "oidc secure gate demo config",
+      "globals": {
+          "info" : "Relative location to HTML pages",
+          "register": "/sgate/common/register.html",
+          "fedlink": "/sgate/common/fedlink.html",
+          "error": "/sgate/common/error.html",
+          "timeout": 600
+      },
+      "idps": [
+        {
+            "uid": "dex",
+            "type": "oidc",
+            "info": "IOT.bzh DEX",
+            "credentials": {
+                "clientid": "domotic",
+                "secret": "tJdJPR83DaVquTF3gBBJ9x8SJzn"
+            },
+            "wellknown": {
+                "discovery": "http://imternal.lorient.iot:5556/dex/.well-known/openid-configuration"
+            },
+            "schema": {
+                "fedid"  : "sub",
+                "avatar" : "picture",
+                "pseudo" : "name", 
+                "name"   : "fullname",
+                "company": "company",
+                "email"  : "email",
+                "attrs"  : "groups"
+            },
+            "statics": {
+                "login": "/api/yaroslavtest",
+                "logo": "/sgate/dex/logo-64px.png"
+            },
+            "profiles": [
+                {"uid":"basic", "loa":2, "scope":"openid+profile+email"}
+            ]
+        }
+      ],
+      "apis": [
+        {"uid": "fedid","info":"embedded social federated user identity svc","loa":0,"uri":"@fedid"},
+        {"uid": "test1","lazy":1},
+        {"uid": "test2","uri":"unix:@test2", "loa":1, "require": ["user"], "lazy":1},
+        {"uid": "test3","uri":"tcp:localhost:1235/test3", "loa":2, "require": ["user","admin"], "lazy":1},
+        {"uid": "simple","uri":"unix:/tmp/spawn-binding/simple", "loa":1, "require": ["user"], "lazy":1}
+        ],
+      "alias": [
+        {"uid": "idp-common", "url":"/sgate/common", "path":"idps/common" },
+        {"uid": "idp-dex" , "url":"/sgate/dex"   ,"loa":0, "path":"idps/onelogin" },
+        {"uid": "public" , "info": "Anonymous access allowed", "url":"/public", "path":"public" },
+        {"uid": "private", "info": "Required basic authentication", "url":"/private",  "loa":1, "path":"private" },
+        {"uid": "confidential", "info": "Required teams authentication", "url":"/confidential", "loa":2, "path":"confidential" },
+        {"uid": "admin", "info": "Required admin security attribute", "url":"/admin", "loa":1, "path":"admin", "require": ["wheel","iotbzh","sudo"]}
+      ]
+    }
+  }
+}
+

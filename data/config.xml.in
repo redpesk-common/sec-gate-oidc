@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <widget xmlns="http://www.w3.org/ns/widgets" id="@PROJECT_NAME@" version="@PROJECT_VERSION@">
   <name>@PROJECT_NAME@</name>
-  <icon src="@PROJECT_ICON@"/>
-  <content src="@WIDGET_ENTRY_POINT@" type="@WIDGET_TYPE@"/>
+  <icon src="icon.jpg"/>
+  <content src="lib/libafb-sec-gate-oidc-ext.so" type="application/vnd.agl.service"/>
   <description>@PROJECT_DESCRIPTION@</description>
-  <author>@PROJECT_AUTHOR@ &lt;@PROJECT_AUTHOR_MAIL@&gt;</author>
-  <license>@PROJECT_LICENSE@</license>
+  <author>IoT.bzh</author>
+  <license>APL2.0</license>
 
   <feature name="urn:AGL:widget:provided-api">
-    <param name="@API_NAME@" value="ws" />
+    <param name="sec-gate-oidc" value="ws" />
   </feature>
 
   <feature name="urn:AGL:widget:required-permission">
@@ -16,6 +16,6 @@
   </feature>
 
   <feature name="urn:AGL:widget:required-binding">
-     <param name="@WIDGET_ENTRY_POINT@" value="local" />
+     <param name="lib/libafb-sec-gate-oidc-ext.so" value="local" />
   </feature>
 </widget>

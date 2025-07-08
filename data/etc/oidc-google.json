@@ -1,0 +1,74 @@
+{
+  "name": "sec-gate-oidc",
+  "tracereq": "none",
+  "verbose": 255,
+  "port": 1234,
+  "https": true,
+  "https-cert": "../data/ssl/devel-cert.pem",
+  "https-key": "../data/ssl/devel-key.pem",
+  "extension": "./package/lib/libafb-sec-gate-oidc-ext.so",
+  "roothttp": "../data/htdocs",
+  "rootdir":  "../data/htdocs",
+  "binding" : [{
+    "uid": "fedid-api",
+    "path": "/home/hugo/src/sec-gate-fedid-binding/build/src/sec-gate-fedid-binding.so",
+    "config": {"dbpath":"/var/tmp/fedid-oauth2.sqlite"}
+}],
+"@extconfig": {
+    "sec-gate-oidc": {
+      "api": "sgate",
+      "info": "oidc secure gate demo config",
+      "globals": {
+          "info" : "Relative location to HTML pages",
+          "login": "/sgate/common/login.html",
+          "register": "/sgate/common/register.html",
+          "fedlink": "/sgate/common/fedlink.html",
+          "error": "/sgate/common/error.html",
+          "timeout": 600
+      },
+        "idps": [
+{
+    "uid": "google",
+    "type": "oidc",
+            "info": "Google",
+            "credentials": {
+                "clientid": "123338344433-hdb4m27cmiqateha9qd70ua8n145c1rg.apps.googleusercontent.com",
+                "secret": "************R9mol0q6ZjvbAU43rtZ"
+            },
+            "wellknown": {
+                "lazy": true,
+                "discovery": "https://accounts.google.com/.well-known/openid-configuration",
+                "authent": "client_secret_basic"
+            },
+            "statics": {
+                "login": "/sgate/google/login",
+                "logo": "/sgate/linkedin/linkedin_logo.png",
+                "timeout": 600
+            },
+            "profiles": [
+                {"uid":"basic", "loa":1, "scope":"email"}
+            ]
+        }
+      ],
+      "apis": [
+        {"uid": "fedid","info":"embedded social federated user identity svc","loa":0,"uri":"@fedid"},
+        {"uid": "helloworld","uri":"tcp:localhost:1235/helloworld", "loa":1, "require": ["email"], "lazy":0}
+        ],
+      "alias": [
+        {"uid": "idp-common", "url":"/sgate/common", "path":"idps/common" },
+        {"uid": "idp-google"  , "url":"/sgate/google","loa":0, "path":"idps/google" },
+        {"uid": "idp-github"  , "url":"/sgate/github","loa":0, "path":"idps/github" },
+        {"uid": "idp-linkedin"  , "url":"/sgate/linkedin","loa":0, "path":"idps/linkedin" },
+        {"uid": "idp-pam"     , "url":"/sgate/pam"   ,"loa":0, "path":"idps/pam" },
+        {"uid": "idp-ldap"    , "url":"/sgate/ldap"   ,"loa":0, "path":"idps/ldap" },
+        {"uid": "idp-phantauth" , "url":"/sgate/phantauth"   ,"loa":0, "path":"idps/phantauth" },
+        {"uid": "idp-onelogin" , "url":"/sgate/onelogin"   ,"loa":0, "path":"idps/onelogin" },
+        {"uid": "public" , "info": "Anonymous access allowed", "url":"/public", "path":"public" },
+        {"uid": "private", "info": "Required basic authentication", "url":"/private",  "loa":1, "path":"private" },
+        {"uid": "confidential", "info": "Required teams authentication", "url":"/confidential", "loa":2, "path":"confidential" },
+        {"uid": "admin", "info": "Required admin security attribute", "url":"/admin", "loa":1, "path":"admin", "require": ["wheel","iotbzh","sudo"]}
+      ]
+    }
+  }
+}
+

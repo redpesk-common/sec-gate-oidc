@@ -14,38 +14,40 @@
 # limitations under the License.
 ###########################################################################
 
-# Add target to project dependency list
-PROJECT_TARGET_ADD(sec-gate-oidc)
 
-	# compile any C file starting with a lower case
-	file(GLOB CSOURCES [a-z]*.c)
-	file(GLOB CHEADERS [a-z]*.h)
+# Define project Targets
+add_library(sec-gate-oidc SHARED
+	oidc-alias.c
+	oidc-apis.c
+	oidc-core.c
+	oidc-fedid.c
+	oidc-idp.c
+	oidc-idsvc.c
+	oidc-utils.c
+)
 
-	# Define project Targets
-	add_library(${TARGET_NAME} SHARED ${CSOURCES})
+add_dependencies(sec-gate-oidc curl-glue-afb idps-builtin)
+target_link_libraries(sec-gate-oidc curl-glue-afb idps-builtin)
 
-    add_dependencies(${TARGET_NAME} curl-glue-afb idps-builtin)
-    target_link_libraries(${TARGET_NAME} curl-glue-afb idps-builtin)
+target_include_directories(sec-gate-oidc INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
-   	target_include_directories(${TARGET_NAME}
-       INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
-    )
-
-    target_compile_options(${TARGET_NAME}
-        PUBLIC  -Wno-unused-variable
-    )
-
-	# Binder exposes a unique public entry point
-	SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES
+# Binder exposes a unique public entry point
+set_target_properties(sec-gate-oidc
+	PROPERTIES
 		PREFIX "libafb-"
-		LABELS "LIBRARY"
-        SUFFIX "-ext.so"
-		# LINK_FLAGS "-Wl,--version-script=${PROJECT_SOURCE_DIR}/conf.d/cmake/afb-ext-link.flags"
-		IMPORTED_LOCATION ${CMAKE_CURRENT_BINARY_DIR}/libafb-${TARGET_NAME}-ext.so
-		OUTPUT_NAME ${TARGET_NAME}
-	)
+		SUFFIX "-ext.so"
+)
+install(TARGETS sec-gate-oidc DESTINATION ${APPDIR}/lib)
 
-INSTALL(FILES ${CHEADERS}
+install(FILES
+		oidc-alias.h
+		oidc-apis.h
+		oidc-core.h
+		oidc-defaults.h
+		oidc-fedid.h
+		oidc-idp.h
+		oidc-idsvc.h
+		oidc-utils.h
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    )
+)
 

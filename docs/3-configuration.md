@@ -19,10 +19,10 @@ The initial part of oidc-config.json is not specific to the secure-gate and is c
   "verbose": 2,
   "port": 1234,
   "https": true,
-  "https-cert": "../conf.d/project/ssl/devel-cert.pem",
-  "https-key": "../conf.d/project/ssl/devel-key.pem",
+  "https-cert": "../data/ssl/devel-cert.pem",
+  "https-key": "../data/ssl/devel-key.pem",
   "extension": "./package/lib/sec-gate-oidc.extso",
-  "rootdir":  "../conf.d/project/htdocs",
+  "rootdir":  "../data/htdocs",
   "roothttp": ".",
 }
 ```

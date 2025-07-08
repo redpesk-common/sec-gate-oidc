@@ -6,15 +6,15 @@
     "configurations": [
         {
           // http://localhost:3000
-          // afb-binder --name=afb-oidc --config=${workspaceFolder}/conf.d/project/etc/oidc-oauth2.json
+          // afb-binder --name=afb-oidc --config=${workspaceFolder}/data/etc/oidc-oauth2.json
           "name": "oidc-oauth2",
           "type": "cppdbg",
           "request": "launch",
           "program": "/usr/local/bin/afb-binder",
           "args": [
             "--name=afb-oidc",
-            "--config=${workspaceFolder}/conf.d/project/etc/oidc-oauth2.json",
-            "--rootdir=${workspaceFolder}/conf.d/project/htdocs",
+            "--config=${workspaceFolder}/data/etc/oidc-oauth2.json",
+            "--rootdir=${workspaceFolder}/data/htdocs",
             "--roothttp=.",
             "--verbose","--verbose","--verbose",
             "--trap-faults=no"
@@ -35,15 +35,15 @@
         },
         {
             // http://localhost:3000
-            // afb-binder --name=afb-oidc --config=${workspaceFolder}/conf.d/project/etc/oidc-local.json
+            // afb-binder --name=afb-oidc --config=${workspaceFolder}/data/etc/oidc-local.json
             "name": "oidc-local",
             "type": "cppdbg",
             "request": "launch",
             "program": "/usr/local/bin/afb-binder",
             "args": [
               "--name=afb-oidc",
-              "--config=${workspaceFolder}/conf.d/project/etc/oidc-local.json",
-              "--rootdir=${workspaceFolder}/conf.d/project/htdocs",
+              "--config=${workspaceFolder}/data/etc/oidc-local.json",
+              "--rootdir=${workspaceFolder}/data/htdocs",
               "--roothttp=.",
               "--verbose","--verbose","--verbose",
               "--trap-faults=no"

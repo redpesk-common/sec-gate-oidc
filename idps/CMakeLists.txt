@@ -1,20 +1,11 @@
-PROJECT_TARGET_ADD(idps-builtin)
 
-	# compile any C file starting with a lower case
-	file(GLOB CSOURCES [a-z]*.c)
 
-	# Define project Targets
-	add_library(${TARGET_NAME} STATIC ${CSOURCES})
-    add_dependencies(${TARGET_NAME} curl-glue-afb)
-    target_link_libraries(${TARGET_NAME} curl-glue-afb)
+# Define project Targets
+add_library(idps-builtin STATIC idp-builtin.c idp-github.c idp-ldap.c idp-oidc.c)
 
-	# oidc Plugin properties
-	SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES
-		OUTPUT_NAME ${TARGET_NAME}
-	)
+add_dependencies(idps-builtin curl-glue-afb)
+target_link_libraries(idps-builtin curl-glue-afb)
 
-	# compilation include path
-	target_include_directories(${TARGET_NAME}
+target_include_directories(idps-builtin
 	    INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
-	    PRIVATE ${CMAKE_SOURCE_DIR}/src
-    )
+	    PRIVATE ${CMAKE_SOURCE_DIR}/src)

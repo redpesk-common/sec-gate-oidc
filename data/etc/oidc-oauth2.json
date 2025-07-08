@@ -1,0 +1,134 @@
+{
+  "name": "sec-gate-oidc",
+  "tracereq": "none",
+  "verbose": 2,
+  "port": 1234,
+  "https": true,
+  "https-cert": "../data/ssl/devel-cert.pem",
+  "https-key": "../data/ssl/devel-key.pem",
+  "extension": "./package/lib/libafb-sec-gate-oidc-ext.so",
+  "roothttp": ".",
+  "rootdir":  "../data/htdocs",
+  "binding" : [{
+    "uid": "fedid-api",
+    "path": "/usr/local/sec-gate-fedid-binding/lib/sec-gate-fedid-binding.so",
+    "config": {"dbpath":"/var/tmp/fedid-oauth2.sqlite"}
+}],
+"@extconfig": {
+    "sec-gate-oidc": {
+      "api": "sgate",
+      "info": "oidc secure gate demo config",
+      "globals": {
+          "info" : "Relative location to HTML pages",
+          "login": "/sgate/common/login.html",
+          "register": "/sgate/common/register.html",
+          "fedlink": "/sgate/common/fedlink.html",
+          "error": "/sgate/common/error.html",
+          "timeout": 600
+      },
+      "idps": [
+        {
+            "uid": "onelogin",
+            "type": "oidc",
+            "info": "OpenIdC free testing IDP (https://www.onelogin.com/developer-signup)",
+            "credentials": {
+                "clientid": "1198ce80-9187-0139-6d83-06d14e293211189676",
+                "secret": "7a180580642702d7b271ba8901a9c3c1503e774dc0a6b5b922ebf4470adfface"
+            },
+            "wellknown": {
+                "lazy": true,
+                "discovery": "https://iot-bzh-dev.onelogin.com/oidc/2/.well-known/openid-configuration"
+            },
+            "schema": {
+                "fedid" :"sub",
+                "avatar":"picture",
+                "pseudo":"preferred_username",
+                "name": "name",
+                "company": "company",
+                "email": "email",
+                "attrs": "groups"
+            },
+            "statics": {
+                "login": "/sgate/onelogin/login",
+                "logout": "/sgate/onelogin/logout",
+                "logo": "/sgate/onelogin/logo-64px.png"
+            },
+            "profiles": [
+                {"uid":"basic", "loa":1, "scope":"openid profile"},
+                {"uid":"group", "loa":2, "scope":"openid profile groups"}
+            ]
+        },
+        {
+            "uid": "phantauth",
+            "type": "oidc",
+            "info": "OpenIdC testing authority (https://www.phantauth.net/)",
+            "credentials": {
+                "clientid": "sec-gate-oidc-iotbzh",
+                "secret": "3ON5yAxX"
+            },
+            "wellknown": {
+                "lazy": true,
+                "discovery": "https://www.phantauth.net/.well-known/openid-configuration"
+            },
+            "schema": {
+                "fedid" :"sub",
+                "avatar":"picture",
+                "pseudo":"preferred_username",
+                "name": "name",
+                "company": "company",
+                "email": "email"
+            },
+            "statics": {
+                "login": "/sgate/phantauth/login",
+                "logo": "/sgate/phantauth/logo-64px.png",
+                "timeout": 600
+            },
+            "profiles": [
+                {"uid":"basic", "loa":1, "scope":"openid profile"}
+            ]
+        }, {
+            "uid": "github",
+            "info": "Github Social Authentication",
+            "credentials": {
+                "clientid": "7899e605a7c15ae42f07",
+                "secret": "385bbb1d7633e300aea137cf612ecd8ebdc98970"
+            },
+            "wellknown": {
+                "tokenid": "https://github.com/login/oauth/access_token",
+                "authorize": "https://github.com/login/oauth/authorize",
+                "userinfo": "https://api.github.com/user"
+            },
+            "statics": {
+                "login": "/sgate/github/login",
+                "logo": "/sgate/github/logo-64px.png",
+                "timeout": 600
+            },
+            "profiles": [
+                {"uid":"basic", "loa":1, "scope":"user:email"},
+                {"uid":"teams", "loa":2, "scope":"read: org", "attrs":"organizations_url"}
+            ]
+        }
+      ],
+      "apis": [
+        {"uid": "fedid","info":"embedded social federated user identity svc","loa":0,"uri":"@fedid"},
+        {"uid": "test1","lazy":1},
+        {"uid": "test2","uri":"unix:@test2", "loa":1, "require": ["user"], "lazy":1},
+        {"uid": "test3","uri":"tcp:localhost:1235/test3", "loa":2, "require": ["user","admin"], "lazy":1},
+        {"uid": "simple","uri":"unix:/tmp/spawn-binding/simple", "loa":1, "require": ["user"], "lazy":1}
+        ],
+      "alias": [
+        {"uid": "idp-common", "url":"/sgate/common", "path":"idps/common" },
+        {"uid": "idp-github"  , "url":"/sgate/github","loa":0, "path":"idps/github" },
+        {"uid": "idp-pam"     , "url":"/sgate/pam"   ,"loa":0, "path":"idps/pam" },
+        {"uid": "idp-ldap"    , "url":"/sgate/ldap"   ,"loa":0, "path":"idps/ldap" },
+        {"uid": "idp-phantauth" , "url":"/sgate/phantauth"   ,"loa":0, "path":"idps/phantauth" },
+        {"uid": "idp-onelogin" , "url":"/sgate/onelogin"   ,"loa":0, "path":"idps/onelogin" },
+        {"uid": "public" , "info": "Anonymous access allowed", "url":"/public", "path":"public" },
+        {"uid": "private", "info": "Required basic authentication", "url":"/private",  "loa":1, "path":"private" },
+        {"uid": "confidential", "info": "Required teams authentication", "url":"/confidential", "loa":2, "path":"confidential" },
+        {"uid": "admin", "info": "Required admin security attribute", "url":"/admin", "loa":1, "path":"admin", "require": ["wheel","iotbzh","sudo"]}
+      ]
+    }
+  }
+}
+

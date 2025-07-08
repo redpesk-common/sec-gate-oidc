@@ -1,4 +1,4 @@
 
+add_subdirectory(libcurl-glue)
+add_subdirectory(pcscd-client)
 
-#This component should be included as a submodule and wont compile as standalone
-project_subdirs_add ()

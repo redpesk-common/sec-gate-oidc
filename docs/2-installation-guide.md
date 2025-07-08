@@ -48,7 +48,7 @@ Use one of the default config templates to write your own one and start the bind
 Connect your browser to your sec-gate-oidc service with ```https://target:port``` to display corresponding HTML5 test page. When testing on your local machine redirect uri should look like https://localhost:1234 when running sgate on a target, then your should use https://target-ip-addr
 
 * Note:
-  * HTTPS requires SSL certificates. Check $PROJECT/conf.d/project/ssl/gen-cert.sh to generated self signed SSL certificates. For development you may also choose to remove SSL. To remove SSL simply set 'HTTPS':false within your oidc-config.json
+  * HTTPS requires SSL certificates. Check $PROJECT/data/ssl/gen-cert.sh to generated self signed SSL certificates. For development you may also choose to remove SSL. To remove SSL simply set 'HTTPS':false within your oidc-config.json
   * Warning: most IDPs impose HTTPS connection when using anything different from localhost as redirect login URL.
 
 ## Rebuild 'sec-gate-oidc' from sources
@@ -111,11 +111,11 @@ Both should compile with standard AGL cmake template.
 
 ### Run a test from building tree
 
-Create a custom config file from samples available at '../conf.d/project/etc/oidc-*.json'. When config looks good try it with afb-binder --config. Note that it is a good 'best-practice' to check your json config with 'jq' on equivalent tools before trying to use it.
+Create a custom config file from samples available at '../data/etc/oidc-*.json'. When config looks good try it with afb-binder --config. Note that it is a good 'best-practice' to check your json config with 'jq' on equivalent tools before trying to use it.
 
 ```bash
-    jq < ../conf.d/project/etc/my-oidc-config.json
-    afb-binder --config=../conf.d/project/etc/my-oidc-config.json -v
+    jq < ../data/etc/my-oidc-config.json
+    afb-binder --config=../data/etc/my-oidc-config.json -v
 ```
 
 ### Warning NFC USB reader (ACR122U) with pcscd

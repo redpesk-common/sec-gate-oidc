@@ -54,11 +54,11 @@ Note the "client_id" and "client_secret" fields returned.
     "verbose": 255,
     "port": 1234,
     "https": true,
-    "https-cert": "../conf.d/project/ssl/devel-cert.pem",
-    "https-key": "../conf.d/project/ssl/devel-key.pem",
+    "https-cert": "../data/ssl/devel-cert.pem",
+    "https-key": "../data/ssl/devel-key.pem",
     "extension": "./package/lib/libafb-sec-gate-oidc-ext.so",
-    "roothttp": "../conf.d/project/htdocs",
-    "rootdir": "../conf.d/project/htdocs",
+    "roothttp": "../data/htdocs",
+    "rootdir": "../data/htdocs",
     "binding": [
         {
             "uid": "fedid-api",

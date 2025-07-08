@@ -1,20 +1,11 @@
 
-PROJECT_TARGET_ADD(pam-auth)
+# Define project Targets
+find_library(PAM_DEVEL pam REQUIRED)
+add_library(idp-sgate-pam-auth MODULE oidc-pam.c)
 
-	# compile any C file starting with a lower case
-	file(GLOB CSOURCES [a-z]*.c)
+add_dependencies(idp-sgate-pam-auth curl-glue-afb sec-gate-oidc)
+target_link_libraries(idp-sgate-pam-auth curl-glue-afb pam sec-gate-oidc)
 
-	# Define project Targets
-	find_library (PAM_DEVEL libpam required)
-	add_library(${TARGET_NAME} MODULE ${CSOURCES})
+install(TARGETS idp-sgate-pam-auth
+	DESTINATION ${APPDIR}/lib/plugins)
 
-    add_dependencies(${TARGET_NAME} curl-glue-afb sec-gate-oidc)
-	target_link_libraries(${TARGET_NAME} curl-glue-afb pam sec-gate-oidc)
-
-	# Pam Plugin properties
-	SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES
-			LABELS "PLUGIN"
-			PREFIX "libidp-sgate-"
-			SUFFIX ".so"
-			OUTPUT_NAME ${TARGET_NAME}
-	)

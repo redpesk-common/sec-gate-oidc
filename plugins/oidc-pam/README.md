@@ -66,7 +66,7 @@ There is no clientid/secret the credential section is unused. On the other hand 
     },
 ```
 
-This page should request user login/password and either post it back to the same uri end point, or better as explained before use the websocket API to check login/password validity. Check sample pam login page at $SOURCE/conf.d/project/htdocs/idps/pam/login.html
+This page should request user login/password and either post it back to the same uri end point, or better as explained before use the websocket API to check login/password validity. Check sample pam login page at $SOURCE/data/htdocs/idps/pam/login.html
 
 ![login-page](../../docs/assets/pam/04-pam-login-form-sample.png)
 

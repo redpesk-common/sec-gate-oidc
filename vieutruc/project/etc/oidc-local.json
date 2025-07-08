@@ -3,7 +3,7 @@
   "tracereq": "none",
   "verbose": 2,
   "port": 1234,
-  "https": true,
+  "https": false,
   "https-cert": "../conf.d/project/ssl/devel-cert.pem",
   "https-key": "../conf.d/project/ssl/devel-key.pem",
   "extension": "libafb-sec-gate-oidc-ext.so",
@@ -65,6 +65,7 @@
             "profiles": [
                 {"uid":"login", "loa":1, "scope":"login"}
             ]
+/*
         },{
             "uid": "nfc-scard",
             "type": "pcsc",
@@ -102,6 +103,7 @@
               {"uid":"linked","loa":1, "scope":"fedid", "slave":true},
               {"uid":"admin", "loa":2, "scope":"fedid,pseudo,name,email,company", "attrs":"roles,apps"}
             ]
+*/
         }
       ],
       "apis": [

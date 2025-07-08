@@ -21,14 +21,14 @@ If you run redpesk simply install the package with `dnf install sec-gate-oidc` f
 
 ## set up your HTTPS/TLS environment
 
-You need TLS certificate for your HTTPS connection. In development mode you may use `$SGATE/conf.d/project/ssl/gen-cert.sh` to generate as many as you need.
+You need TLS certificate for your HTTPS connection. In development mode you may use `$SGATE/data/ssl/gen-cert.sh` to generate as many as you need.
 
 Generated certificate should be declared with "https-cert" and "https-key" of afb-binder configuration.
 
 ```json
   "https": true,
-  "https-cert": "../conf.d/project/ssl/devel-cert.pem",
-  "https-key": "../conf.d/project/ssl/devel-key.pem",
+  "https-cert": "../data/ssl/devel-cert.pem",
+  "https-key": "../data/ssl/devel-key.pem",
   "extension": "./package/lib/libafb-sec-gate-oidc-ext.so",
 ```
 
@@ -38,7 +38,7 @@ Make visible your HTML/JS files from sgate in order to expose it to client brows
 
 ```json
    "roothttp": ".",
-   "rootdir":  "../conf.d/project/htdocs",
+   "rootdir":  "../data/htdocs",
 ```
 
 Note: if your application requires some absolute path use alias to make visible external to rootdir file to client browser.
@@ -57,7 +57,7 @@ sgate ships two sets of login pages.
 * Simple/HTML5: for developer to understand the protocols.
 * Angular/HTML5: for people who need a modern and production oriented HTML5/UI.
 
-First one is ship within source code ```$SOURCES/conf.d/project/htdocs```, second is ship through an independent package named ```sec-gate-webui```.
+First one is ship within source code ```$SOURCES/data/htdocs```, second is ship through an independent package named ```sec-gate-webui```.
 
 When installed your HTML pages should match with the global section of your configuration.
 ```json
