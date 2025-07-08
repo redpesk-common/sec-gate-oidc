@@ -119,14 +119,14 @@ OnErrorExit:
 }
 
 
-static httpCallbacksT libafbCbs = {
+static const httpCallbacksT libafbCbs = {
     .multiTimer = glueSetTimerCB,
     .multiSocket = glueSetSocketCB,
     .evtMainLoop = NULL,
     .evtRunLoop = NULL,
 };
 
-httpCallbacksT *glueGetCbs()
+const httpCallbacksT *glueGetCbs()
 {
     return &libafbCbs;
 }

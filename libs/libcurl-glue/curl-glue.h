@@ -111,11 +111,11 @@ typedef struct httpPoolS
     CURLM *multi;
     void *evtLoop;
     void *evtTimer;
-    httpCallbacksT *callback;
+    const httpCallbacksT *callback;
 } httpPoolT;
 
 // glue proto to get mainloop callbacks
-httpCallbacksT *glueGetCbs(void);
+const httpCallbacksT *glueGetCbs(void);
 
 // API to build and lauch request (if httpPoolT==NULL then run synchronously)
 int httpBuildQuery(const char *uid, char *response, size_t maxlen, const char *prefix, const char *url, httpKeyValT *query);
@@ -123,7 +123,7 @@ int httpSendPost(httpPoolT *pool, const char *url, const httpOptsT *opts, httpKe
 int httpSendGet(httpPoolT *pool, const char *url, const httpOptsT *opts, httpKeyValT *tokens, httpRqtCbT callback, void *ctx);
 
 // init curl multi pool with an abstract mainloop and corresponding callbacks
-httpPoolT *httpCreatePool(void *evtLoop, httpCallbacksT *mainLoopCbs, int verbose);
+httpPoolT *httpCreatePool(void *evtLoop, const httpCallbacksT *mainLoopCbs, int verbose);
 
 // curl action callback to be called from glue layer
 int httpOnSocketCB(httpPoolT *httpPool, int sock, int action);

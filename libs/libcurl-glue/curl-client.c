@@ -486,7 +486,7 @@ static int multiSetTimerCB(CURLM *curl, long timeout, void *ctx)
 }
 
 // Create CURL multi httpPool and attach it to systemd evtLoop
-httpPoolT *httpCreatePool(void *evtLoop, httpCallbacksT *mainLoopCbs, int verbose)
+httpPoolT *httpCreatePool(void *evtLoop, const httpCallbacksT *mainLoopCbs, int verbose)
 {
 
     // First call initialise global CURL static data
