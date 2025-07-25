@@ -34,6 +34,7 @@ typedef struct oidcApisS {
     int lazy;
     const char **roles;
     oidcCoreHdlT *oidc;
+    struct afb_apiset *apiset;
 } oidcApisT;
 
 oidcApisT *apisParseConfig (oidcCoreHdlT * oidc, json_object * apisJ);

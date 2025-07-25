@@ -29,6 +29,7 @@
 
 #include "oidc-core.h"
 #include "oidc-apis.h"
+#include "oidc-alias.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -68,15 +69,51 @@ apisCreateSvc (oidcCoreHdlT * oidc, oidcApisT * apiSvc, afb_apiset * declare_set
     EXT_CRITICAL ("[fail-api-create] ext=%s api=%s fail to register (apisCreateSvc)", oidc->uid, apiSvc->uid);
 }
 
+static void on_protected_api_request(void *closure, struct afb_req_common *req)
+{
+    oidcApisT *api = (oidcApisT *) closure;
+    int session_loa = afb_session_get_loa (req->session, oidcSessionCookie);
+
+    if (session_loa < api->loa) {
+        // insufficient LOA
+        afb_req_common_reply_hookable(req, AFB_ERRNO_FORBIDDEN, 0, NULL);
+    }
+    else {
+        // forward request to the backend "protected" api
+	afb_req_common_process(afb_req_common_addref(req), api->apiset);
+    }
+}
+
+static struct afb_api_itf api_frontend_itf = {.process = on_protected_api_request};
+
 // import API client from uri and map corresponding roles into apis hashtable
 int apisRegisterOne (oidcCoreHdlT * oidc, oidcApisT * api, afb_apiset * declare_set, afb_apiset * call_set)
 {
     int err, index;
+    struct afb_api_item api_item;
     afb_apiset *public_set = afb_apiset_subset_find(declare_set, "public") ?: declare_set;
 
     // if API is not runnning within the binder register client API
     if (api->uri[0] != '@') {
-        int err = afb_api_ws_add_client (api->uri, public_set, call_set, !api->lazy);
+
+        // get the public set
+        public_set = afb_apiset_subset_find(declare_set, "public") ?: declare_set;
+        if (api->loa == 0 || declare_set == public_set) {
+            // the api is obviously public
+            err = afb_api_ws_add_client (api->uri, public_set, call_set, !api->lazy);
+        }
+        else {
+            // add a (private) client to the protected api
+            api->apiset = declare_set;
+            err = afb_api_ws_add_client (api->uri, declare_set, call_set, !api->lazy);
+            if (err) goto OnErrorExit;
+            // expose a public filtered api
+            api_item.itf = &api_frontend_itf;
+            api_item.group = NULL;
+            api_item.closure = api;
+            // reuse the same api name for the public part
+            err = afb_apiset_add(public_set, api->uid, api_item);
+        }
         if (err) goto OnErrorExit;
     }
     // Extract API from URI
