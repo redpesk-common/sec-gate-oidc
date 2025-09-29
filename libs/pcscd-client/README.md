@@ -30,9 +30,6 @@ The code was tested with Mifare classic tokens but pcsc-lite supports most of CC
 
 * NXP Mifare <https://www.nxp.com/docs/en/data-sheet/MF1S70YYX_V1.pdf>
 * online acl <http://calc.gmss.ru/Mifare1k/>
-<!-- * Workaround since link from pdf (pmdz061) does not appear anymore -->
-<!-- * SpringCore <https://www.springcard.com/en/download/find/file/pmdz061> (`https://docs.springcard.com/books/SpringCore/PCSC_Operation/APDU_Interpreter/Command_list`) -->
-* SpringCore <https://docs.springcard.com/books/SpringCore/PCSC_Operation/APDU_Interpreter/Command_list>
 * ACR 122 reader <http://downloads.acs.com.hk/drivers/en/API-ACR122U-2.02.pdf>
 * Card IDs  <http://pcscworkgroup.com/Download/Specifications/pcsc3_v2.01.09_sup.pdf>
 
