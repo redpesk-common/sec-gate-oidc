@@ -1,6 +1,7 @@
 # Running/Testing
 
-afb-sec-gate-oidc is an afb-binder-v4 extension and cannot work with afb-binder-v3. Check with 'afb-binder --version' that your version >= 4.0.0
+afb-sec-gate-oidc is an afb-binder-v4 extension and cannot work with afb-binder-v3. \
+Check with `afb-binder --version` that your version >= 4.0.0
 
 ## Requirements
 
@@ -8,9 +9,9 @@ afb-sec-gate-oidc is an afb-binder-v4 extension and cannot work with afb-binder-
 * you should write or copy a sample oidc-config.json
 * you should know the path to:
 
-  * 'libafb-sec-gate-oidc-ext.so' extension
-  * 'fedid-binding.so' binding
-  * 'libfedid-types.so' type converters
+  * `libafb-sec-gate-oidc-ext.so` extension
+  * `fedid-binding.so` binding
+  * `libfedid-types.so` type converters
 
 * you need a test client
   * `sec-gate-oidc` basic HTML/JS testing pages.
@@ -20,7 +21,7 @@ If you run redpesk simply install the package with `dnf install sec-gate-oidc` f
 
 ## set up your HTTPS/TLS environment
 
-You need TLS certificate for your HTTPS connection. In development mode you may use $SGATE/conf.d/project/ssl/gen-cert.sh to generate as many as you need.
+You need TLS certificate for your HTTPS connection. In development mode you may use `$SGATE/conf.d/project/ssl/gen-cert.sh` to generate as many as you need.
 
 Generated certificate should be declared with "https-cert" and "https-key" of afb-binder configuration.
 

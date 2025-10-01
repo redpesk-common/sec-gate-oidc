@@ -153,7 +153,7 @@ Here after default configuration for a new scard.
     // ----
 ```
 
-For further information: check NXP Mifare chaper 8.7.2 [MF1S70YYX](https://www.nxp.com/docs/en/data-sheet/MF1S70YYX_V1.pdf)
+For further information: check NXP Mifare chapter 8.7.2 [MF1S70YYX](https://www.nxp.com/docs/en/data-sheet/MF1S70YYX_V1.pdf)
 
 ## Sample full config
 
@@ -260,7 +260,7 @@ Low level commands, most users may prefer to rather pcscExecOneCmd.
   * secIdx: sector index. Use with NFC-type2 but not with MiFare
   * blkIdx: block index. Note that with Mifare/classic sector/page is equivalent to blocIdx/4.
   * dataBut: the buffer to write
-  * dataLen: the length to write. Depending on your scard/token length as contrains. With Mifare/classic you should write full block len=0x10,0x20,x30 and should not break page/sector boundary. Do not forget that you may write by block, but then authentication is by sector/page.
+  * dataLen: the length to write. Depending on your scard/token length as constrains. With Mifare/classic you should write full block len=0x10,0x20,x30 and should not break page/sector boundary. Do not forget that you may write by block, but then authentication is by sector/page.
   * key: key handle to be used for operation authentication.
 
 * **pcscReadBlock**: read bloc on scard/token.
