@@ -19,12 +19,12 @@
  *  General Public License requirements will be met
  *  https://www.gnu.org/licenses/gpl-3.0.html.
  * $RP_END_LICENSE$
-*/
+ */
 
 #pragma once
 
 #include "oidc-idp.h"
 
 // github.c
-int githubRegisterAlias (oidcIdpT * idp, afb_hsrv * hsrv);
-int githubRegisterConfig (oidcIdpT * idp, json_object * idpJ);
+int githubRegisterAlias(oidcIdpT *idp, afb_hsrv *hsrv);
+int githubRegisterConfig(oidcIdpT *idp, json_object *idpJ);

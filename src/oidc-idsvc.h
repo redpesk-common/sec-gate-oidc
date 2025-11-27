@@ -19,13 +19,14 @@
  *  General Public License requirements will be met
  *  https://www.gnu.org/licenses/gpl-3.0.html.
  * $RP_END_LICENSE$
-*/
-
+ */
 
 #pragma once
 #include "oidc-core.h"
 
 extern void *idsvcEvtCookie;
 
-int idsvcDeclare (oidcCoreHdlT *oidc, afb_apiset *declare_set, afb_apiset *call_set);
-int idscvPushEvent (afb_session *session, json_object *eventJ);
+int idsvcDeclare(oidcCoreHdlT *oidc,
+                 afb_apiset *declare_set,
+                 afb_apiset *call_set);
+int idscvPushEvent(afb_session *session, json_object *eventJ);

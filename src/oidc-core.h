@@ -19,7 +19,7 @@
  *  General Public License requirements will be met
  *  https://www.gnu.org/licenses/gpl-3.0.html.
  * $RP_END_LICENSE$
-*/
+ */
 
 #pragma once
 
@@ -33,21 +33,22 @@ typedef struct oidcIdpS oidcIdpT;
 typedef struct httpPoolS httpPoolT;
 typedef struct idpPluginS idpPluginT;
 
-#define MAGIC_OIDC_MAIN 321987
-#define MAGIC_OIDC_SESSION(VAR) void *VAR=&VAR
+#define MAGIC_OIDC_MAIN         321987
+#define MAGIC_OIDC_SESSION(VAR) void *VAR = &VAR
 
-#define URL_OIDC_USR_ERROR "/sgate/common/error.html"
-#define URL_OIDC_USR_LOGIN "/sgate/common/login.html"
+#define URL_OIDC_USR_ERROR    "/sgate/common/error.html"
+#define URL_OIDC_USR_LOGIN    "/sgate/common/login.html"
 #define URL_OIDC_USR_REGISTER "/sgate/common/register.html"
-#define URL_OIDC_USR_FEDLINK "/sgate/common/fedlink.html"
-#define URL_OIDC_USR_HOME "/"
-#define URL_OIDC_AUTH_CACHE  5000       // 5sec alias authen cache
-#define MAX_OIDC_IDPS 16 // max number of IDPS in config
+#define URL_OIDC_USR_FEDLINK  "/sgate/common/fedlink.html"
+#define URL_OIDC_USR_HOME     "/"
+#define URL_OIDC_AUTH_CACHE   5000  // 5sec alias authen cache
+#define MAX_OIDC_IDPS         16    // max number of IDPS in config
 
 #define STATUS_OIDC_AUTH_DENY 403
 #define STATUS_OIDC_LOA_RESET 423
 
-typedef struct {
+typedef struct
+{
     const char *loginUrl;
     const char *errorUrl;
     const char *registerUrl;
@@ -59,7 +60,8 @@ typedef struct {
 } oidGlobalsT;
 
 // this structure is returned by plugin registration callback
-typedef struct {
+typedef struct
+{
     long magic;
     const char *uid;
     const char *info;

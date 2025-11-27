@@ -19,7 +19,7 @@
  *  General Public License requirements will be met
  *  https://www.gnu.org/licenses/gpl-3.0.html.
  * $RP_END_LICENSE$
-*/
+ */
 
 #pragma once
 
@@ -29,8 +29,8 @@
 extern void *oidcSessionCookie;
 extern void *oidcAliasCookie;
 
-
-typedef struct oidcAliasesS {
+typedef struct oidcAliasesS
+{
     const char *uid;
     const char *info;
     int loa;
@@ -42,5 +42,5 @@ typedef struct oidcAliasesS {
     ulong tCache;
 } oidcAliasT;
 
-oidcAliasT *aliasParseConfig (oidcCoreHdlT * oidc, json_object * aliasesJ);
-int aliasRegisterOne (oidcCoreHdlT * oidc, oidcAliasT * alias, afb_hsrv * hsrv);
+oidcAliasT *aliasParseConfig(oidcCoreHdlT *oidc, json_object *aliasesJ);
+int aliasRegisterOne(oidcCoreHdlT *oidc, oidcAliasT *alias, afb_hsrv *hsrv);

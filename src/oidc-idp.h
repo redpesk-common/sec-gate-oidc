@@ -19,21 +19,21 @@
  *  General Public License requirements will be met
  *  https://www.gnu.org/licenses/gpl-3.0.html.
  * $RP_END_LICENSE$
-*/
+ */
 
 #pragma once
 
-#include <libafb/afb-v4.h>
-#include "oidc-core.h"
-#include "curl-glue.h"
 #include <fedid-types.h>
+#include <libafb/afb-v4.h>
+#include "curl-glue.h"
+#include "oidc-core.h"
 
 extern void *oidcIdpProfilCookie;
 
 typedef struct oidcIdpS oidcIdpT;
 
 typedef enum {
-    IDP_CLIENT_SECRET_UNKNOWN=0,
+    IDP_CLIENT_SECRET_UNKNOWN = 0,
     IDP_CLIENT_SECRET_POST,
     IDP_CLIENT_SECRET_BASIC,
     IDP_CLIENT_SECRET_JWT,
@@ -41,14 +41,14 @@ typedef enum {
 } oidcAuthMethodT;
 
 typedef enum {
-    IDP_RESPOND_TYPE_UNKNOWN=0,
+    IDP_RESPOND_TYPE_UNKNOWN = 0,
     IDP_RESPOND_TYPE_CODE,
     IDP_RESPOND_TYPE_ID_TOKEN,
     IDP_RESPOND_TYPE_ID_TOKEN_TOKEN,
 } oidcRespondTypeT;
 
-
-typedef struct {
+typedef struct
+{
     const char *discovery;
     const char *tokenid;
     const char *authorize;
@@ -56,19 +56,21 @@ typedef struct {
     const char *jwks;
     oidcAuthMethodT authMethod;
     oidcRespondTypeT respondType;
-    const char* respondLabel;
-    const char* authLabel;
-    const char* errorLabel;
+    const char *respondLabel;
+    const char *authLabel;
+    const char *errorLabel;
     int lazy;
 } oidcWellknownT;
 
-typedef struct {
-    int timeout; // connection timeout to authority in seconds
+typedef struct
+{
+    int timeout;  // connection timeout to authority in seconds
     const char *clientId;
     const char *secret;
 } oidcCredentialsT;
 
-typedef struct {
+typedef struct
+{
     const char *uid;
     const char *info;
     const char *scope;
@@ -81,7 +83,8 @@ typedef struct {
     oidcIdpT *idp;
 } oidcProfileT;
 
-typedef struct oidcStaticsS {
+typedef struct oidcStaticsS
+{
     int loa;
     ulong sTimeout;
     const char *aliasLogo;
@@ -89,7 +92,8 @@ typedef struct oidcStaticsS {
     const char *aliasLogout;
 } oidcStaticsT;
 
-typedef struct oidcIdpS {
+typedef struct oidcIdpS
+{
     int magic;
     const char *uid;
     const char *info;
@@ -106,7 +110,8 @@ typedef struct oidcIdpS {
     void *userData;
 } oidcIdpT;
 
-typedef struct {
+typedef struct
+{
     const oidcCredentialsT *credentials;
     const oidcStaticsT *statics;
     const oidcWellknownT *wellknown;
@@ -115,7 +120,8 @@ typedef struct {
 } oidcDefaultsT;
 
 // request handle store federation attribute during multiple IDP async calls
-typedef struct {
+typedef struct
+{
     int ucount;
     const char *uuid;
     oidcIdpT *idp;
@@ -129,36 +135,61 @@ typedef struct {
 } idpRqtCtxT;
 
 // generic IDP utility callback
-typedef struct idpGenericCbS {
+typedef struct idpGenericCbS
+{
     const oidcMagicT magic;
-    const oidcCredentialsT *(*parseCredentials) (oidcIdpT * idp, json_object * credentialJ, const oidcCredentialsT * defaults);
-    const oidcStaticsT *(*parsestatic) (oidcIdpT * idp, json_object * staticJ, const oidcStaticsT * defaults);
-    const oidcWellknownT *(*parseWellknown) (oidcIdpT * idp, json_object * wellknownJ, const oidcWellknownT * defaults);
-    const httpKeyValT *(*parseHeaders) (oidcIdpT * idp, json_object * headersJ, const httpKeyValT * defaults);
-    int (*parseConfig) (oidcIdpT * idp, json_object * configJ, oidcDefaultsT * defaults, void *ctx);
-    int (*fedidCheck) (idpRqtCtxT *idpRqtCtx);
-    int (*pluginRegister) (const char *pluginUid, idpPluginT * pluginCbs);
+    const oidcCredentialsT *(*parseCredentials)(
+        oidcIdpT *idp,
+        json_object *credentialJ,
+        const oidcCredentialsT *defaults);
+    const oidcStaticsT *(*parsestatic)(oidcIdpT *idp,
+                                       json_object *staticJ,
+                                       const oidcStaticsT *defaults);
+    const oidcWellknownT *(*parseWellknown)(oidcIdpT *idp,
+                                            json_object *wellknownJ,
+                                            const oidcWellknownT *defaults);
+    const httpKeyValT *(*parseHeaders)(oidcIdpT *idp,
+                                       json_object *headersJ,
+                                       const httpKeyValT *defaults);
+    int (*parseConfig)(oidcIdpT *idp,
+                       json_object *configJ,
+                       oidcDefaultsT *defaults,
+                       void *ctx);
+    int (*fedidCheck)(idpRqtCtxT *idpRqtCtx);
+    int (*pluginRegister)(const char *pluginUid, idpPluginT *pluginCbs);
 } idpGenericCbT;
 
-
-typedef struct idpPluginS {
+typedef struct idpPluginS
+{
     const char *uid;
     const char *info;
-    int (*registerConfig) (oidcIdpT * idp, json_object * idpJ);
-    int (*registerApis) (oidcIdpT * idp, struct afb_apiset * declare_set, struct afb_apiset * call_set);
-    int (*registerAlias) (oidcIdpT * idp, afb_hsrv * hsrv);
+    int (*registerConfig)(oidcIdpT *idp, json_object *idpJ);
+    int (*registerApis)(oidcIdpT *idp,
+                        struct afb_apiset *declare_set,
+                        struct afb_apiset *call_set);
+    int (*registerAlias)(oidcIdpT *idp, afb_hsrv *hsrv);
     void (*resetSession)(const oidcProfileT *idpProfile, void *ctx);
     void *ctx;
 } idpPluginT;
 
 // idp callback definition
-typedef int (*oidcPluginInitCbT) (oidcCoreHdlT * oidc, idpGenericCbT * idpGenericCb);
+typedef int (*oidcPluginInitCbT)(oidcCoreHdlT *oidc,
+                                 idpGenericCbT *idpGenericCb);
 
 // idp exported functions
-const oidcIdpT *idpParseConfig (oidcCoreHdlT * oidc, json_object * idpsJ);
-int idpParseOidcConfig (oidcIdpT * idp, json_object * configJ, oidcDefaultsT * defaults, void *ctx);
-int idpRegisterApis (oidcCoreHdlT * oidc, oidcIdpT * idp, struct afb_apiset *declare_set, struct afb_apiset *call_set);
-int idpRegisterAlias (oidcCoreHdlT * oidc, oidcIdpT * idp, afb_hsrv * hsrv);
-json_object *idpLoaProfilsGet (oidcCoreHdlT * oidc, int loa, const char **idps, int noslave);
-int idpPLuginRegistryInit (void);
-void idpRqtCtxFree (idpRqtCtxT * rqtCtx);
+const oidcIdpT *idpParseConfig(oidcCoreHdlT *oidc, json_object *idpsJ);
+int idpParseOidcConfig(oidcIdpT *idp,
+                       json_object *configJ,
+                       oidcDefaultsT *defaults,
+                       void *ctx);
+int idpRegisterApis(oidcCoreHdlT *oidc,
+                    oidcIdpT *idp,
+                    struct afb_apiset *declare_set,
+                    struct afb_apiset *call_set);
+int idpRegisterAlias(oidcCoreHdlT *oidc, oidcIdpT *idp, afb_hsrv *hsrv);
+json_object *idpLoaProfilsGet(oidcCoreHdlT *oidc,
+                              int loa,
+                              const char **idps,
+                              int noslave);
+int idpPLuginRegistryInit(void);
+void idpRqtCtxFree(idpRqtCtxT *rqtCtx);

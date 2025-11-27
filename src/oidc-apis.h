@@ -19,14 +19,14 @@
  *  General Public License requirements will be met
  *  https://www.gnu.org/licenses/gpl-3.0.html.
  * $RP_END_LICENSE$
-*/
-
+ */
 
 #pragma once
 
 #include "oidc-core.h"
 
-typedef struct oidcApisS {
+typedef struct oidcApisS
+{
     const char *uid;
     const char *uri;
     const char *info;
@@ -37,6 +37,13 @@ typedef struct oidcApisS {
     struct afb_apiset *apiset;
 } oidcApisT;
 
-oidcApisT *apisParseConfig (oidcCoreHdlT * oidc, json_object * apisJ);
-int apisRegisterOne (oidcCoreHdlT * oidc, oidcApisT * api, afb_apiset * declare_set, afb_apiset * call_set);
-int apisCreateSvc (oidcCoreHdlT * oidc, oidcApisT * api, afb_apiset * declare_set, afb_apiset * call_set, afb_verb_v4 * apiVerbs);
+oidcApisT *apisParseConfig(oidcCoreHdlT *oidc, json_object *apisJ);
+int apisRegisterOne(oidcCoreHdlT *oidc,
+                    oidcApisT *api,
+                    afb_apiset *declare_set,
+                    afb_apiset *call_set);
+int apisCreateSvc(oidcCoreHdlT *oidc,
+                  oidcApisT *api,
+                  afb_apiset *declare_set,
+                  afb_apiset *call_set,
+                  afb_verb_v4 *apiVerbs);

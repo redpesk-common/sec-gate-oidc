@@ -19,7 +19,7 @@
  *  General Public License requirements will be met
  *  https://www.gnu.org/licenses/gpl-3.0.html.
  * $RP_END_LICENSE$
-*/
+ */
 
 #pragma once
 
@@ -31,31 +31,29 @@
 #include <libafb/misc/afb-verbose.h>
 
 // few magic to help debugging
-typedef enum {
-    MAGIC_OIDC_IDP = 12345678,
-    MAGIC_OIDC_CBS = 654852
-} oidcMagicT;
+typedef enum { MAGIC_OIDC_IDP = 12345678, MAGIC_OIDC_CBS = 654852 } oidcMagicT;
 
 // redefine debug/log to avoid conflict
 #ifndef EXT_EMERGENCY
-#define EXT_EMERGENCY(...)            _LIBAFB_VERBOSE_(afb_Log_Level_Emergency, __VA_ARGS__)
-#define EXT_ALERT(...)                _LIBAFB_VERBOSE_(afb_Log_Level_Alert, __VA_ARGS__)
-#define EXT_CRITICAL(...)             _LIBAFB_VERBOSE_(afb_Log_Level_Critical, __VA_ARGS__)
-#define EXT_ERROR(...)                _LIBAFB_VERBOSE_(afb_Log_Level_Error, __VA_ARGS__)
-#define EXT_WARNING(...)              _LIBAFB_VERBOSE_(afb_Log_Level_Warning, __VA_ARGS__)
-#define EXT_NOTICE(...)               _LIBAFB_VERBOSE_(afb_Log_Level_Notice, __VA_ARGS__)
-#define EXT_INFO(...)                 _LIBAFB_VERBOSE_(afb_Log_Level_Info, __VA_ARGS__)
-#define EXT_DEBUG(...)                _LIBAFB_VERBOSE_(afb_Log_Level_Debug, __VA_ARGS__)
+#define EXT_EMERGENCY(...) \
+    _LIBAFB_VERBOSE_(afb_Log_Level_Emergency, __VA_ARGS__)
+#define EXT_ALERT(...)    _LIBAFB_VERBOSE_(afb_Log_Level_Alert, __VA_ARGS__)
+#define EXT_CRITICAL(...) _LIBAFB_VERBOSE_(afb_Log_Level_Critical, __VA_ARGS__)
+#define EXT_ERROR(...)    _LIBAFB_VERBOSE_(afb_Log_Level_Error, __VA_ARGS__)
+#define EXT_WARNING(...)  _LIBAFB_VERBOSE_(afb_Log_Level_Warning, __VA_ARGS__)
+#define EXT_NOTICE(...)   _LIBAFB_VERBOSE_(afb_Log_Level_Notice, __VA_ARGS__)
+#define EXT_INFO(...)     _LIBAFB_VERBOSE_(afb_Log_Level_Info, __VA_ARGS__)
+#define EXT_DEBUG(...)    _LIBAFB_VERBOSE_(afb_Log_Level_Debug, __VA_ARGS__)
 #endif
 
 // few defaults
-#define EXT_HIGHEST_PRIO 100
-#define EXT_URL_MAX_LEN  512
-#define EXT_TOKEN_MAX_LEN  256
-#define EXT_HEADER_MAX_LEN  256
+#define EXT_HIGHEST_PRIO      100
+#define EXT_URL_MAX_LEN       512
+#define EXT_TOKEN_MAX_LEN     256
+#define EXT_HEADER_MAX_LEN    256
 #define EXT_HTTP_UNAUTHORIZED 401
-#define EXT_HTTP_CONFLICT 409
-#define EXT_SESSION_TIMEOUT 600 // session timeout in seconds
+#define EXT_HTTP_CONFLICT     409
+#define EXT_SESSION_TIMEOUT   600  // session timeout in seconds
 
 #define HREQ_REDIR_TMPY 0
 #define HREQ_REDIR_TERM 1
@@ -67,7 +65,6 @@ typedef enum {
 
 // return code
 #define AFB_HSRV_OK 1
-
 
 // make our live simpler
 typedef struct afb_hsrv afb_hsrv;

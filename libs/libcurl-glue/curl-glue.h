@@ -3,30 +3,29 @@
  * Author "Fulup Ar Foll" <fulup@iot.bzh>
  *
  * Use of this source code is governed by an MIT-style
- * license that can be found in the LICENSE file or at https://opensource.org/licenses/MIT.
- * $RP_END_LICENSE$
+ * license that can be found in the LICENSE file or at
+ * https://opensource.org/licenses/MIT. $RP_END_LICENSE$
  *
  * Examples:
- *  GET  httpSendGet(oidc->httpPool, "https://example.com", idp->headers, NULL|token, NULL|opts, callback, ctx);
- *  POST httpSendPost(oidc->httpPool, url, idp->headers, NULL|token, NULL|opts, (void*)post,datalen, callback, ctx);
+ *  GET  httpSendGet(oidc->httpPool, "https://example.com", idp->headers,
+ * NULL|token, NULL|opts, callback, ctx); POST httpSendPost(oidc->httpPool, url,
+ * idp->headers, NULL|token, NULL|opts, (void*)post,datalen, callback, ctx);
  */
 
 #pragma once
 
 #include <curl/curl.h>
-#include <sys/types.h>
 #include <stdint.h>
+#include <sys/types.h>
 
-#define MAGIC_HTTP_RQT 951357
-#define MAGIC_HTTP_POOL 583498
+#define MAGIC_HTTP_RQT      951357
+#define MAGIC_HTTP_POOL     583498
 #define DFLT_HEADER_MAX_LEN 1024
-#define HTTP_DFLT_AGENT "sec-gate-oidc/1.0"
-
+#define HTTP_DFLT_AGENT     "sec-gate-oidc/1.0"
 
 typedef struct httpPoolS httpPoolT;
 
-typedef enum
-{
+typedef enum {
     HTTP_HANDLE_FREE,
     HTTP_HANDLE_KEEP,
 } httpRqtActionT;
@@ -91,7 +90,11 @@ typedef struct httpRqtS
 // mainloop glue API interface
 typedef void *(*evtMainLoopCbT)();
 typedef int (*multiTimerCbT)(httpPoolT *httpPool, long timeout);
-typedef int (*multiSocketCbT)(httpPoolT *httpPool, CURL *easy, int sock, int action, void *sockp);
+typedef int (*multiSocketCbT)(httpPoolT *httpPool,
+                              CURL *easy,
+                              int sock,
+                              int action,
+                              void *sockp);
 typedef int (*evtRunLoopCbT)(httpPoolT *httpPool, long seconds);
 
 // glue callbacks handle
@@ -118,15 +121,34 @@ typedef struct httpPoolS
 const httpCallbacksT *glueGetCbs(void);
 
 // API to build and lauch request (if httpPoolT==NULL then run synchronously)
-int httpBuildQuery(const char *uid, char *query, size_t maxlen, const char *prefix, const char *url, httpKeyValT *params);
-int httpSendPost(httpPoolT *pool, const char *url, const httpOptsT *opts, httpKeyValT *tokens, void *databuf, long datalen, httpRqtCbT callback, void *ctx);
-int httpSendGet(httpPoolT *pool, const char *url, const httpOptsT *opts, httpKeyValT *tokens, httpRqtCbT callback, void *ctx);
+int httpBuildQuery(const char *uid,
+                   char *query,
+                   size_t maxlen,
+                   const char *prefix,
+                   const char *url,
+                   httpKeyValT *params);
+int httpSendPost(httpPoolT *pool,
+                 const char *url,
+                 const httpOptsT *opts,
+                 httpKeyValT *tokens,
+                 void *databuf,
+                 long datalen,
+                 httpRqtCbT callback,
+                 void *ctx);
+int httpSendGet(httpPoolT *pool,
+                const char *url,
+                const httpOptsT *opts,
+                httpKeyValT *tokens,
+                httpRqtCbT callback,
+                void *ctx);
 
 // init curl multi pool with an abstract mainloop and corresponding callbacks
-httpPoolT *httpCreatePool(void *evtLoop, const httpCallbacksT *mainLoopCbs, int verbose);
+httpPoolT *httpCreatePool(void *evtLoop,
+                          const httpCallbacksT *mainLoopCbs,
+                          int verbose);
 
 // curl action callback to be called from glue layer
 int httpOnSocketCB(httpPoolT *httpPool, int sock, int action);
 int httpOnTimerCB(httpPoolT *httpPool);
-char * httpEncode64 (const char* inputData, size_t inputLen);
-char * httpDecode64 (const char* inputData, size_t inputLen, int url);
+char *httpEncode64(const char *inputData, size_t inputLen);
+char *httpDecode64(const char *inputData, size_t inputLen, int url);

@@ -19,7 +19,7 @@
  *  General Public License requirements will be met
  *  https://www.gnu.org/licenses/gpl-3.0.html.
  * $RP_END_LICENSE$
-*/
+ */
 
 #pragma once
 
@@ -29,7 +29,8 @@
 // #define IDP_RESPOND_TYPE_DEFAULT IDP_RESPOND_TYPE_CODE
 #define IDP_RESPOND_TYPE_DEFAULT IDP_RESPOND_TYPE_CODE
 
-typedef struct {
+typedef struct
+{
     const char *fedid;
     const char *pseudo;
     const char *avatar;
@@ -43,5 +44,5 @@ typedef struct {
 } oidcSchemaT;
 
 // oidc.c
-int oidcRegisterAlias (oidcIdpT * idp, afb_hsrv * hsrv);
-int oidcRegisterConfig (oidcIdpT * idp, json_object * idpJ);
+int oidcRegisterAlias(oidcIdpT *idp, afb_hsrv *hsrv);
+int oidcRegisterConfig(oidcIdpT *idp, json_object *idpJ);

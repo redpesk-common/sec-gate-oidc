@@ -19,24 +19,24 @@
  *  General Public License requirements will be met
  *  https://www.gnu.org/licenses/gpl-3.0.html.
  * $RP_END_LICENSE$
-*/
+ */
 
 #pragma once
 
+#include <fedid-types.h>
 #include "oidc-defaults.h"
 #include "oidc-idp.h"
-#include <fedid-types.h>
 
 #define FEDID_LINK_REQUESTED -1
-#define FEDID_LINK_RESET 0
+#define FEDID_LINK_RESET     0
 
-typedef struct {
+typedef struct
+{
     int timerId;
 } fedidSessionT;
 
-
 typedef enum {
-    OIDC_SCHEMA_UNKNOWN=0,
+    OIDC_SCHEMA_UNKNOWN = 0,
     OIDC_SCHEMA_PSEUDO,
     OIDC_SCHEMA_NAME,
     OIDC_SCHEMA_EMAIL,
@@ -44,8 +44,8 @@ typedef enum {
     OIDC_SCHEMA_COMPANY,
 } oidcFedidSchemaE;
 
-int fedidCheck (idpRqtCtxT *rqtCtx);
-void fedidsessionReset (afb_session *session, const oidcProfileT *idpProfile);
+int fedidCheck(idpRqtCtxT *rqtCtx);
+void fedidsessionReset(afb_session *session, const oidcProfileT *idpProfile);
 
 extern void *oidcFedUserCookie;
 extern void *oidcFedSocialCookie;

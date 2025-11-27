@@ -24,23 +24,34 @@
  *      https://onelogin.com
  *      https://www.phantauth.net/
  *      https://benmcollins.github.io/libjwt/group__jwt__header.html#ga308c00b85ab5ebfa76b1d2485a494104
-*/
+ */
 
 #define _GNU_SOURCE
 
-#include <libafb/afb-v4.h>
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
+#include <libafb/afb-v4.h>
 
-#include "oidc-idp.h"
 #include "idp-github.h"
 #include "idp-ldap.h"
 #include "idp-oidc.h"
+#include "oidc-idp.h"
 
-// Builtin in output formater. Note that first one is used when cmd does not define a format
+// Builtin in output formater. Note that first one is used when cmd does not
+// define a format
 idpPluginT idpBuiltin[] = {
-    {.uid = "oidc",.info = "openid connect idp",.registerConfig = oidcRegisterConfig,.registerAlias= oidcRegisterAlias},
-    {.uid = "github",.info = "github public oauth2 idp",.registerConfig = githubRegisterConfig,.registerAlias= githubRegisterAlias},
-    {.uid = "ldap"  ,.info = "ldap internal users",.registerConfig = ldapRegsterConfig,.registerAlias= ldapRegisterAlias, .registerApis=ldapRegisterApis},
-    {.uid = NULL}               // must be null terminated
+    {.uid = "oidc",
+     .info = "openid connect idp",
+     .registerConfig = oidcRegisterConfig,
+     .registerAlias = oidcRegisterAlias},
+    {.uid = "github",
+     .info = "github public oauth2 idp",
+     .registerConfig = githubRegisterConfig,
+     .registerAlias = githubRegisterAlias},
+    {.uid = "ldap",
+     .info = "ldap internal users",
+     .registerConfig = ldapRegsterConfig,
+     .registerAlias = ldapRegisterAlias,
+     .registerApis = ldapRegisterApis},
+    {.uid = NULL}  // must be null terminated
 };

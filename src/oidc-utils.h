@@ -19,7 +19,7 @@
  *  General Public License requirements will be met
  *  https://www.gnu.org/licenses/gpl-3.0.html.
  * $RP_END_LICENSE$
-*/
+ */
 
 #pragma once
 
@@ -33,18 +33,20 @@
 #define OIDC_MAX_ARG_LABEL 64
 #endif
 
-typedef struct {
+typedef struct
+{
     const char *label;
-    const int  value;
+    const int value;
 } nsKeyEnumT;
 
-typedef struct {
+typedef struct
+{
     char *str;
     u_int8_t sep;
     size_t index;
 } str2TokenT;
 
-char *utilStr2Token (str2TokenT *handle, u_int8_t separator, const char* data);
-int utilLabel2Value (const nsKeyEnumT *keyvals, const char *label);
-char* utilsExpandJson (const char* src, json_object *keysJ);
-const char *utillValue2Label (const nsKeyEnumT *keyvals, const int value);
+char *utilStr2Token(str2TokenT *handle, u_int8_t separator, const char *data);
+int utilLabel2Value(const nsKeyEnumT *keyvals, const char *label);
+char *utilsExpandJson(const char *src, json_object *keysJ);
+const char *utillValue2Label(const nsKeyEnumT *keyvals, const int value);

@@ -19,13 +19,15 @@
  *  General Public License requirements will be met
  *  https://www.gnu.org/licenses/gpl-3.0.html.
  * $RP_END_LICENSE$
-*/
+ */
 
 #pragma once
 
 #include "oidc-idp.h"
 
 // ldap.c
-int ldapRegisterAlias (oidcIdpT * idp, afb_hsrv * hsrv);
-int ldapRegsterConfig (oidcIdpT * idp, json_object * idpJ);
-int ldapRegisterApis (oidcIdpT * idp, struct afb_apiset *declare_set, struct afb_apiset *call_set);
+int ldapRegisterAlias(oidcIdpT *idp, afb_hsrv *hsrv);
+int ldapRegsterConfig(oidcIdpT *idp, json_object *idpJ);
+int ldapRegisterApis(oidcIdpT *idp,
+                     struct afb_apiset *declare_set,
+                     struct afb_apiset *call_set);
