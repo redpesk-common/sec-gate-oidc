@@ -26,30 +26,31 @@
             <th>Level</th>
             <th>LOA</th>
           </tr>
-        <tr onclick="window.location.replace('/public');">
+        <tr onclick="window.location.assign('/public');">
             <td ><img class="table_img" src="/assets/iot-bzh-korigan.png" ></td>
             <td class="table_label">Public</td>
             <td class="table_info">No authentication required</td>
             <td class="table_loa">0</td>
         </tr>
-        <tr onclick="window.location.replace('/private');">
+        <tr onclick="window.location.assign('/private');">
             <td><img  class="table_img" src="/assets/iot-bzh-elfe.png"></td>
             <td class="table_label">Private</td>
             <td class="table_info">Basic authentication required</td>
             <td class="table_loa">1</td>
         </tr>
-        <tr onclick="window.location.replace('/confidential');">
+        <tr onclick="window.location.assign('/confidential');">
             <td><img  class="table_img" src="/assets/iot-bzh-ankou.png"></td>
             <td class="table_label">Confidential</td>
             <td class="table_info">Advanced authentication required</td>
             <td class="table_loa">2</td>
         </tr>
-<!--         <tr onclick="window.location.replace('/admin');">
+<!--
+	<tr onclick="window.location.assign('/admin');">
             <td><img  class="table_img" src="/assets/iot-bzh-captain.png"></td>
             <td class="table_label">Admin</td>
             <td class="table_info">Admin security attribute required</td>
             <td class="table_loa">1</td>
-        </tr> <
+        </tr>
 -->
     </table>
     </div>

@@ -14,7 +14,7 @@
     <h1 class="center">oidc/sgate admin sample page</h1>
     <button id="afb_link"  class="sgate_button" onclick="init()">Binder WS Fail</button>
     <button id="afb_ping"  class="sgate_button" onclick="callbinder('sgate','ping' ,{});">sec-gate-oidc/ping</button>
-    <button id="afb_close" class="sgate_button" onclick="callbinder('sgate','session-reset' ,{});window.location.replace('/')">sec-gate-oidc/session-reset</button>
+    <button id="afb_close" class="sgate_button" onclick="callbinder('sgate','session-reset' ,{});window.location.assign('/')">sec-gate-oidc/session-reset</button>
     <br>
     <img src="/assets/iot-bzh-captain.png" style="width: 30%;">
 

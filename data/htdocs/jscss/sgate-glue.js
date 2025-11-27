@@ -225,10 +225,10 @@ function sgateReset() {
     .then(function (res) {
         log.reply(res);
         // redirect to requested URL
-        window.location.replace(res.response.login);
+        window.location.assign(res.response.login);
     })
     .catch(function (err) {
-        window.location.replace("/")
+        window.location.assign("/")
     });
 }
 
@@ -271,7 +271,7 @@ function sgateSubmit() {
     .then(function (res) {
         log.reply(res);
         // redirect to requested URL
-        window.location.replace(res.response.target);
+        window.location.assign(res.response.target);
 
     })
     .catch(function (err) {
@@ -310,7 +310,7 @@ function passwordUser(verb) {
     .then(function (res) {
         log.reply(res);
         // redirect to requested URL
-        window.location.replace(res.response.target);
+        window.location.assign(res.response.target);
 
     })
     .catch(function (err) {
@@ -336,7 +336,7 @@ function pcscReadCard(verb) {
     .then(function (res) {
         log.reply(res);
         // redirect to requested URL
-        window.location.replace(res.response.target);
+        window.location.assign(res.response.target);
 
     })
     .catch(function (err) {
