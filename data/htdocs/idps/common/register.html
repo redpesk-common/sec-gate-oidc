@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>sec-gate-oidc-register</title>
+    <link rel="stylesheet" href="/jscss/sgate-binding.css">
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <script type="text/javascript" src="/jscss/afb-websock.js"></script>
+    <script type="text/javascript" src="/jscss/sgate-binding.js"></script>
+    <script type="text/javascript" src="/jscss/sgate-glue.js"></script>
+</head>
+
+<body class="page-content" onload="init(getSession);">
+    <img src="/assets/iot-bzh-logo-small.png">
+
+    <h1>oidc/sgate register</h1>
+    <button id="afb_link"  class="sgate_button" onclick="init(getSession)">Binder WS Fail</button>
+    <br>
+
+    <div id="sgate_div" class="sgate_box">
+        <div id=sgate_error class="sgate_error"></div>
+        <br>
+        <form id="sgate_form">
+            <label class="sgate_label" for="pseudo">pseudo  :</label>
+            <input class="sgate_input" type="text" id="pseudo" name="pseudo" required onFocusOut="sgateCheckAttr('pseudo');"><br><br>
+
+            <label class="sgate_label" for="email">email  :</label>
+            <input class="sgate_input" type="text" id="email" name="email" required onFocusOut="sgateCheckAttr('email');"><br><br>
+
+            <label class="sgate_label"for="name">name  :</label>
+            <input class="sgate_input" type="text" id="name" name="name"><br><br>
+
+            <label class="sgate_label"for="company">company  :</label>
+            <input class="sgate_input" type="text" id="company" name="company"><br><br>
+
+            <input type="button" id="sgate_register" class="sgate_button" value="Register" onclick="sgateSubmit();">
+            <input type="button" id="sgate_cancel"   class="sgate_button" value="Cancel" onclick="sgateReset();">
+        </form>
+    </div>
+
+    <div id="afb_api">
+        <ol>
+            <li>Question
+                <pre id="question"></pre>
+            </li>
+            <li>Response
+                <pre id="output"></pre>
+            </li>
+        </ol>
+    </div>
+
+</body>

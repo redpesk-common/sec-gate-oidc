@@ -1,0 +1,174 @@
+body.page-content {
+    height: 100%;
+    width: auto;
+    margin-top: 20px;
+    background: url("/assets/background_iot_bzh_light.jpg") 0 0 no-repeat;
+    background-size: cover;
+    background-position: center;
+}
+
+.left {
+    float: left;
+}
+
+.center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+.right {
+    float: right;
+}
+
+.sgate_logo {
+    width: 50px;
+    height: 50px;
+}
+
+.sgate_button {
+    opacity: 1.0;
+    width: 250px;
+    margin-left: 10px;
+    margin-top: 0;
+    border-radius: 25px;
+    padding: 20px;
+    border: 3px solid #73AD21;
+}
+
+.sgate_submit {
+    opacity: 1.0;
+    width: 250px;
+    margin-left: 10px;
+    margin-top: 0;
+    border-radius: 25px;
+    padding: 20px;
+    border: 3px solid grey;
+}
+
+.sgate_on {
+    color: green;     
+    border: 3px solid #73AD21;  
+}
+
+.sgate_off {
+    color: lightgrey;
+    border: 3px solid #e2329e;  
+}
+
+.sgate_info {
+    color: whitesmoke;
+    margin-left: 20px;
+}
+
+.sgate_error {
+    color: red;
+    margin-left: 20px;
+}
+
+.sgate_extra {
+    text-align: right;
+    color: lightsteelblue;
+    font-size: small;
+}
+
+.sgate_label {
+    width: 150px;
+    margin-left: 20px;
+    display: inline-block;
+    border-radius: 25px;
+}
+
+.sgate_input {
+    margin-left: 10px;
+    display: inline-block;
+    opacity: 1.0;
+    width: 250px;
+    margin-left: 10px;
+    margin-top: 0;
+    padding: 10px;
+    border-radius: 5px;
+    border: 3px solid grey;
+}
+
+.sgate_table {
+    margin-left: 10px;
+    display: inline-block;
+}
+
+.sgate_box {
+    background-color: grey;
+    opacity: 0.8;
+    vertical-align:middle; 
+    margin:10px;
+    border-radius: 25px;
+    border: 3px solid #73AD21;
+    padding: 20px; 
+}
+
+#afb_close {
+    float: right;
+}
+
+#sgate_cancel {
+    float: right;
+}
+
+.table_label{
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.table_info{
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.table_img{
+    width: 30%;
+}
+
+.table_loa{
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+table, th, td  {
+    border: 1px solid blueviolet;
+}
+
+pre {
+    outline: 1px solid #ccc;
+    padding: 5px;
+    margin: 5px;
+    background-color: white;
+    opacity: 0.85;
+    min-height: 5pc;
+    max-height: 10pc;
+    overflow: auto;
+}
+
+pre#output {
+    max-height: 30pc;
+}
+
+.string {
+    color: green;
+}
+
+.number {
+    color: darkorange;
+}
+
+.boolean {
+    color: blue;
+}
+
+.null {
+    color: magenta;
+}
+
+.key {
+    color: red;
+}

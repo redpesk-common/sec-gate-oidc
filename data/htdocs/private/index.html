@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>sec-gate-oidc-login</title>
+    <link rel="stylesheet" href="/jscss/sgate-binding.css">
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <script type="text/javascript" src="/jscss/afb-websock.js"></script>
+    <script type="text/javascript" src="/jscss/sgate-binding.js"></script>
+    <script type="text/javascript" src="/jscss/sgate-glue.js"></script>
+</head>
+
+<body class="page-content" onload="init(monitorEvents);">
+    <h1 class="center">oidc/sgate private sample page</h1>
+    <button id="afb_link"  class="sgate_button" onclick="init()">Binder WS Fail</button>
+    <button id="afb_ping"  class="sgate_button" onclick="callbinder('sgate','ping' ,{});">sec-gate-oidc/ping</button>
+    <button id="afb_close" class="sgate_button" onclick="sgateReset()">sec-gate-oidc/session-reset</button>
+    <br>
+    <img src="/assets/iot-bzh-elfe.png" style="width: 30%;">
+
+    <div id="afb_api" class="sgate_debug">
+        <ol>
+            <li>Question
+                <pre id="question"></pre>
+            </li>
+            <li>Response
+                <pre id="output"></pre>
+            </li>
+        </ol>
+    </div>
+</body>
+</html>

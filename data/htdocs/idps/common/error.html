@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>sgate-error</title>
+    <link rel="stylesheet" href="/jscss/sgate-binding.css">
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <script src="/jscss/parse-query.js"></script>
+</head>
+
+<body class="page-content">
+    <div class="center">
+    <img src="/assets/iot-bzh-korigan.png" style="width: 30%;">
+    <h2 id="error_info">
+        No error info available
+    </h2>
+    </div>
+</body>
+
+<script>
+    document.getElementById("error_info").innerHTML= urlQuery["info"];
+</script>
+</html>

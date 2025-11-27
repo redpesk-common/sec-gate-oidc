@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>sec-gate-oidc-login</title>
+    <link rel="stylesheet" href="/jscss/sgate-binding.css">
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <script type="text/javascript" src="/jscss/afb-websock.js"></script>
+    <script type="text/javascript" src="/jscss/sgate-binding.js"></script>
+    <script type="text/javascript" src="/jscss/sgate-glue.js"></script>
+    <script type="text/javascript" src="/jscss/sgate-query.js"></script>
+</head>
+
+<body class="page-content" onload="init();">
+    <img src="/assets/iot-bzh-logo-small.png">
+
+    <h1>oidc/sgate PAM login</h1>
+    <button id="afb_link"  class="sgate_button" onclick="init()">Binder WS Fail</button>
+    <button id="afb_ping"  class="sgate_button" onclick="callbinder('sgate','ping' ,{});">sec-gate-oidc/ping</button>
+    <br>
+    <div id="sgate_div" class="sgate_box">
+        <div id=sgate_error class="sgate_error"></div>
+        <br>
+        <form id="sgate_form" action="JavaScript:passwordUser('pam');">
+            <label class="sgate_label" for="login">login  :</label>
+            <input class="sgate_input" type="text" id="login" name="login" required><br><br>
+
+            <label class="sgate_label" for="password">password  :</label>
+            <input class="sgate_input" type="password" id="password" name="password" required><br><br>
+
+            <input type="hidden" id="state" name="state">
+            <input type="submit" class="sgate_button" value="Done" >
+        </form>
+        <script>
+            document.getElementById("state").value = urlQuery["state"];
+        </script>
+    </div>
+
+    <div id="afb_api" class="sgate_debug">
+        <ol>
+            <li>Question
+                <pre id="question"></pre>
+            </li>
+            <li>Response
+                <pre id="output"></pre>
+            </li>
+        </ol>
+    </div>
+
+</body>
+</html>

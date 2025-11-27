@@ -2,67 +2,67 @@
 <html>
 <head>
     <meta charset="utf-8" />
-	<title>sec-gate-oidc-login</title>
-	<link rel="stylesheet" href="/jscss/sgate-binding.css">
-	<link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
-	<script type="text/javascript" src="/jscss/afb-websock.js"></script>
+    <title>sec-gate-oidc-login</title>
+    <link rel="stylesheet" href="/jscss/sgate-binding.css">
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <script type="text/javascript" src="/jscss/afb-websock.js"></script>
     <script type="text/javascript" src="/jscss/sgate-binding.js"></script>
     <script type="text/javascript" src="/jscss/sgate-glue.js"></script>
 </head>
 
 <body class="page-content" onload="init();">
-	<h1 class="center">oidc/sgate private sample page</h1>
-	<button id="afb_link"  class="sgate_button" onclick="init()">Binder WS Fail</button>
+    <h1 class="center">oidc/sgate private sample page</h1>
+    <button id="afb_link"  class="sgate_button" onclick="init()">Binder WS Fail</button>
     <button id="afb_ping"  class="sgate_button" onclick="callbinder('sgate','ping' ,{});">sec-gate-oidc/ping</button>
     <button id="afb_close" class="sgate_button" onclick="callbinder('sgate','session-reset' ,{}); ">sec-gate-oidc/session-reset</button>
-	<br>
+    <br>
 
-	<div id="sgate_div" class="sgate_box">
-	<div id=sgate_error class="sgate_error"></div>
-	<table class="sgate_table center">
-		<tr>
-			<th>Zone</th>
-			<th>Type</th>
-			<th>Level</th>
-			<th>LOA</th>
-		  </tr>
-		<tr onclick="window.location.replace('/public');">
-			<td ><img class="table_img" src="/assets/iot-bzh-korigan.png" ></td>
-			<td class="table_label">Public</td>
-			<td class="table_info">No authentication required</td>
-			<td class="table_loa">0</td>
-		</tr>
-		<tr onclick="window.location.replace('/private');">
-			<td><img  class="table_img" src="/assets/iot-bzh-elfe.png"></td>
-			<td class="table_label">Private</td>
-			<td class="table_info">Basic authentication required</td>
-			<td class="table_loa">1</td>
-		</tr>
-		<tr onclick="window.location.replace('/confidential');">
-			<td><img  class="table_img" src="/assets/iot-bzh-ankou.png"></td>
-			<td class="table_label">Confidential</td>
-			<td class="table_info">Advanced authentication required</td>
-			<td class="table_loa">2</td>
-		</tr>
-<!-- 		<tr onclick="window.location.replace('/admin');">
-			<td><img  class="table_img" src="/assets/iot-bzh-captain.png"></td>
-			<td class="table_label">Admin</td>
-			<td class="table_info">Admin security attribute required</td>
-			<td class="table_loa">1</td>
-		</tr> <
+    <div id="sgate_div" class="sgate_box">
+    <div id=sgate_error class="sgate_error"></div>
+    <table class="sgate_table center">
+        <tr>
+            <th>Zone</th>
+            <th>Type</th>
+            <th>Level</th>
+            <th>LOA</th>
+          </tr>
+        <tr onclick="window.location.replace('/public');">
+            <td ><img class="table_img" src="/assets/iot-bzh-korigan.png" ></td>
+            <td class="table_label">Public</td>
+            <td class="table_info">No authentication required</td>
+            <td class="table_loa">0</td>
+        </tr>
+        <tr onclick="window.location.replace('/private');">
+            <td><img  class="table_img" src="/assets/iot-bzh-elfe.png"></td>
+            <td class="table_label">Private</td>
+            <td class="table_info">Basic authentication required</td>
+            <td class="table_loa">1</td>
+        </tr>
+        <tr onclick="window.location.replace('/confidential');">
+            <td><img  class="table_img" src="/assets/iot-bzh-ankou.png"></td>
+            <td class="table_label">Confidential</td>
+            <td class="table_info">Advanced authentication required</td>
+            <td class="table_loa">2</td>
+        </tr>
+<!--         <tr onclick="window.location.replace('/admin');">
+            <td><img  class="table_img" src="/assets/iot-bzh-captain.png"></td>
+            <td class="table_label">Admin</td>
+            <td class="table_info">Admin security attribute required</td>
+            <td class="table_loa">1</td>
+        </tr> <
 -->
-	</table>
-	</div>
+    </table>
+    </div>
 
-	<div id="afb_api" class="sgate_debug">
-		<ol>
-			<li>Question
-				<pre id="question"></pre>
-			</li>
-			<li>Response
-				<pre id="output"></pre>
-			</li>
-		</ol>
-	</div>
+    <div id="afb_api" class="sgate_debug">
+        <ol>
+            <li>Question
+                <pre id="question"></pre>
+            </li>
+            <li>Response
+                <pre id="output"></pre>
+            </li>
+        </ol>
+    </div>
 </body>
 </html>
