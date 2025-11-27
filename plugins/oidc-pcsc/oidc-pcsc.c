@@ -305,8 +305,8 @@ OnErrorExit: {
     }
 }
     pcscRqtCtx->status = PCSC_STATUS_REFUSED;
-    fedSocialFreeCB(idpRqtCtx->fedSocial);
-    fedUserFreeCB(idpRqtCtx->fedUser);
+    fedSocialFree(idpRqtCtx->fedSocial);
+    fedUserFree(idpRqtCtx->fedUser);
     return 0;  // keep thread waiting for card to be removed
 }
 

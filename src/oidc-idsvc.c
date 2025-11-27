@@ -90,20 +90,12 @@ static void userCheckAttrCB(void *ctx,
     if (status < 0)
         goto OnErrorExit;
 
-    switch (status) {
-    case FEDID_ATTR_USED:
+    if (status > 0)
         afb_create_data_raw(&reply[0], AFB_PREDEFINED_TYPE_STRINGZ, existMsg,
                             sizeof(existMsg), NULL, NULL);
-        break;
-
-    case FEDID_ATTR_FREE:
+    else
         afb_create_data_raw(&reply[0], AFB_PREDEFINED_TYPE_STRINGZ, freeMsg,
                             sizeof(freeMsg), NULL, NULL);
-        break;
-
-    default:
-        goto OnErrorExit;
-    }
 
     afb_req_reply(wreq, status, 1, reply);
     return;
@@ -138,12 +130,12 @@ static json_object *idpQueryList(afb_req_t wreq, const char **idps)
     json_object *responseJ, *idpsJ, *aliasJ;
     int err;
 
-    // retreive OIDC global context from API handle
+    // retrieve OIDC global context from API handle
     oidcCoreHdlT *oidc = afb_api_get_userdata(afb_req_get_api(wreq));
     if (!oidc || oidc->magic != MAGIC_OIDC_MAIN)
         goto OnErrorExit;
 
-    // retreive oidc config from current alias cookie
+    // retrieve oidc config from current alias cookie
     oidcAliasT *alias;
     afb_session *session = afb_req_v4_get_common(wreq)->session;
     afb_session_cookie_get(session, oidcAliasCookie, (void **)&alias);
@@ -174,35 +166,40 @@ static void idpQueryUserCB(void *ctx,
                            const afb_data_t argv[],
                            afb_req_t wreq)
 {
-    char *errorMsg = "[user-link-fail] internal error (idpQueryUserCB)";
-    fedSocialRawT *fedSocial, *fedToLink;
-    afb_data_t reply[1];
-    afb_data_t argd[1];
+    json_object *obj;
+    afb_data_t data = NULL;
+    const char **idps;
     int err;
 
+    // exit if request returned an error
+    if (status < 0)
+        goto OnErrorExit;
+
+    // check that one value is returned
+    status = AFB_ERRNO_INTERNAL_ERROR;
     if (argc != 1)
         goto OnErrorExit;
 
-    // convert and retreive input arguments
-    const afb_type_t argt[] = {fedUserIdpsObjType, FEDID_TRAILLER};
-    err = afb_data_array_convert(argc, argv, argt, argd);
+    // convert and retrieve input arguments
+    err = afb_data_convert(argv[0], fedUserIdpsObjType, &data);
     if (err < 0)
         goto OnErrorExit;
-    const char **idps = (void *)afb_data_ro_pointer(argd[0]);
+    idps = (void *)afb_data_ro_pointer(data);
 
-    json_object *responseJ = idpQueryList(wreq, idps);
-    if (!responseJ)
+    // get the resulting object
+    obj = idpQueryList(wreq, idps);
+    afb_data_unref(data);
+    if (obj == NULL)
         goto OnErrorExit;
 
-    afb_create_data_raw(reply, AFB_PREDEFINED_TYPE_JSON_C, responseJ, 0,
-                        (void *)json_object_put, responseJ);
-    afb_req_reply(wreq, 0, 1, reply);
-    return;
+    // create the replied data
+    err = afb_create_data_raw(&data, AFB_PREDEFINED_TYPE_JSON_C, obj, 0,
+                        (void *)json_object_put, obj);
+    if (err >= 0)
+        status = 0;
 
 OnErrorExit:
-    afb_create_data_raw(&reply[0], AFB_PREDEFINED_TYPE_STRINGZ, errorMsg,
-                        strlen(errorMsg) + 1, NULL, NULL);
-    afb_req_reply(wreq, -1, 1, reply);
+    afb_req_reply(wreq, status, !status, &data);
     return;
 }
 
@@ -305,51 +302,50 @@ OnErrorExit:
 // Try to store fedsocial and feduser into local store
 static void userRegister(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 {
-    char *errorMsg = "[user-register-fail] invalid session/wreq";
-    afb_event_t evtCookie;
     const oidcProfileT *profile;
+    afb_data_t params[2];
     const fedSocialRawT *fedSocial;
-    int err;
+    int err, status;
 
+    // get first argument and check the request
+    status = AFB_ERRNO_INVALID_REQUEST;
     if (argc != 1)
         goto OnErrorExit;
 
-    // convert input arguments
-    afb_data_t reply[1], argd[2];
-    const afb_type_t argt[] = {fedUserObjType, FEDID_TRAILLER};
-    err = afb_data_array_convert(argc, argv, argt, argd);
+    err = afb_data_convert(argv[0], fedUserObjType, &params[0]);
     if (err < 0)
         goto OnErrorExit;
+
+    status = AFB_ERRNO_BAD_API_STATE;
 
     // retrieve current wreq LOA from session (to be fixed by Jose)
     afb_session *session = afb_req_v4_get_common(wreq)->session;
     afb_session_cookie_get(session, oidcIdpProfilCookie, (void **)&profile);
     if (!profile)
-        goto OnErrorExit;
+        goto OnErrorExit2;
 
-    // retreive fedsocial from session
+    // retrieve fedsocial from session
     afb_session_cookie_get(session, oidcFedSocialCookie, (void **)&fedSocial);
     if (!fedSocial)
-        goto OnErrorExit;
+        goto OnErrorExit2;
 
     // user is new let's register it within fedid DB (do not free fedSocial
     // after call)
-    err = afb_create_data_raw(&argd[1], fedSocialObjType, fedSocial, 0, NULL,
+    status = AFB_ERRNO_INTERNAL_ERROR;
+    err = afb_create_data_raw(&params[1], fedSocialObjType, fedSocial, 0, NULL,
                               NULL);
     if (err < 0)
-        goto OnErrorExit;
+        goto OnErrorExit2;
 
-    afb_req_subcall(wreq, API_OIDC_USR_SVC, "user-create", 2, argd,
+    afb_req_subcall(wreq, API_OIDC_USR_SVC, "user-create", 2, params,
                     afb_req_subcall_on_behalf, userRegisterCB, NULL);
     return;
 
+OnErrorExit2:
+    afb_data_unref(params[0]);
 OnErrorExit:
-    AFB_REQ_ERROR(wreq, "%s", errorMsg);
-    afb_create_data_raw(&reply[0], AFB_PREDEFINED_TYPE_STRINGZ, errorMsg,
-                        strlen(errorMsg) + 1, NULL, NULL);
-    afb_req_reply(wreq, -1, 1, reply);
-    if (argc == 1 && argd[0])
-        afb_data_array_unref(argc, argd);
+    AFB_REQ_ERROR(wreq, "userRegister failed %d", status);
+    afb_req_reply(wreq, status, 0, NULL);
 }
 
 static void userFederateCB(void *ctx,
@@ -368,7 +364,7 @@ static void userFederateCB(void *ctx,
     json_object *responseJ;
     int err;
 
-    if (status < 0 || status == FEDID_ATTR_FREE)
+    if (status <= 0)
         goto OnErrorExit;
 
     // get used IDP profile to access oidc wellknown urls
@@ -412,33 +408,29 @@ static void userFederate(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     afb_event_t evtCookie;
     const oidcProfileT *profile;
     const fedSocialRawT *fedSocial;
+    fedUserRawT *fedUser;
     json_object *responseJ;
-    int err;
+    afb_data_t data;
+    int err, status;
 
+    // get first argument and check the request
+    status = AFB_ERRNO_INVALID_REQUEST;
     if (argc != 1)
         goto OnErrorExit;
 
-    // retreive user registration form value from input argument
-    afb_data_t query, reply[1], argd[2];
-    const afb_type_t argt[] = {fedUserObjType, FEDID_TRAILLER};
-    err = afb_data_array_convert(argc, argv, argt, argd);
+    err = afb_req_param_convert(wreq, 0, fedUserObjType, &data);
     if (err < 0)
         goto OnErrorExit;
-    fedUserRawT *fedUser = afb_data_ro_pointer(argd[0]);
 
     // check if pseudo/email already present within user federation db
-    afb_create_data_raw(&query, fedUserObjType, fedUser, 0, NULL, NULL);
-    afb_req_subcall(wreq, API_OIDC_USR_SVC, "user-exist", 1, &query,
+    afb_data_addref(data);
+    fedUser = afb_data_ro_pointer(data);
+    afb_req_subcall(wreq, API_OIDC_USR_SVC, "user-exist", 1, &data,
                     afb_req_subcall_on_behalf, userFederateCB, fedUser);
     return;
 
 OnErrorExit:
-    AFB_REQ_ERROR(wreq, "%s", errorMsg);
-    afb_create_data_raw(&reply[0], AFB_PREDEFINED_TYPE_STRINGZ, errorMsg,
-                        strlen(errorMsg) + 1, NULL, NULL);
-    afb_req_reply(wreq, -1, 1, reply);
-    if (argc == 1 && argd[0])
-        afb_data_array_unref(argc, argd);
+    afb_req_reply(wreq, status, 0, NULL);
 }
 
 static void sessionReset(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
@@ -585,7 +577,7 @@ static void idpQueryConf(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     json_object *idpsJ, *responseJ, *aliasJ;
     oidcAliasT *alias;
 
-    // retreive OIDC global context from API handle
+    // retrieve OIDC global context from API handle
     oidcCoreHdlT *oidc = afb_api_get_userdata(afb_req_get_api(wreq));
     if (!oidc || oidc->magic != MAGIC_OIDC_MAIN)
         goto OnErrorExit;
@@ -633,7 +625,7 @@ static void urlQuery(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     afb_data_t reply;
     json_object *responseJ;
 
-    // retreive OIDC global context from API handle
+    // retrieve OIDC global context from API handle
     oidcCoreHdlT *oidc = afb_api_get_userdata(afb_req_get_api(wreq));
     if (!oidc || oidc->magic != MAGIC_OIDC_MAIN)
         goto OnErrorExit;
