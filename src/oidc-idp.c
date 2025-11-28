@@ -35,7 +35,6 @@
 #include <string.h>
 
 MAGIC_OIDC_SESSION(oidcIdpProfilCookie);
-extern idpPluginT idpBuiltin[];
 
 typedef struct idpRegistryS
 {
@@ -135,16 +134,13 @@ json_object *idpLoaProfilsGet(oidcCoreHdlT *oidc,
 }
 
 // add a new plugin idp to the registry
-static int idpPluginRegisterCB(const char *pluginUid, idpPluginT *pluginCbs)
+int idpRegisterPlugin(const char *pluginUid, idpPluginT *pluginCbs)
 {
     idpRegistryT *registryIdx, *registryEntry;
 
     // create holding hat for idp/decoder CB
     registryEntry = (idpRegistryT *)calloc(1, sizeof(idpRegistryT));
-    if (pluginUid)
-        registryEntry->uid = pluginUid;
-    else
-        registryEntry->uid = "built-in";
+    registryEntry->uid = pluginUid;
     registryEntry->plugin = pluginCbs;
 
     // if not 1st idp insert at the end of the chain
@@ -473,7 +469,7 @@ OnErrorExit:
 }
 
 // build IDP generic callback handle
-idpGenericCbT idpGenericCB = {
+static idpGenericCbT idpGenericCB = {
     .magic = MAGIC_OIDC_CBS,
     .parseCredentials = idpParseCredentials,
     .parsestatic = idpParsestatic,
@@ -481,7 +477,7 @@ idpGenericCbT idpGenericCB = {
     .parseHeaders = idpParseHeaders,
     .parseConfig = idpParseOidcConfig,
     .fedidCheck = fedidCheck,
-    .pluginRegister = idpPluginRegisterCB,
+    .pluginRegister = idpRegisterPlugin,
 };
 
 static int idpParseOne(oidcCoreHdlT *oidc, json_object *idpJ, oidcIdpT *idp)
@@ -657,10 +653,7 @@ OnErrorExit:
     return 1;
 }
 
-// register callback and use it to register core idps
 int idpPLuginRegistryInit(void)
 {
-    // Builtin idp don't have UID
-    int status = idpPluginRegisterCB(NULL, idpBuiltin);
-    return status;
+    return 0;
 }

@@ -191,5 +191,6 @@ json_object *idpLoaProfilsGet(oidcCoreHdlT *oidc,
                               int loa,
                               const char **idps,
                               int noslave);
+int idpRegisterPlugin(const char *pluginUid, idpPluginT *pluginCbs);
 int idpPLuginRegistryInit(void);
 void idpRqtCtxFree(idpRqtCtxT *rqtCtx);

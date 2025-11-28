@@ -32,6 +32,7 @@
 #include "oidc-core.h"
 #include "oidc-defaults.h"
 #include "oidc-idp.h"
+#include "oidc-builtin-idps.h"
 #include "oidc-idsvc.h"
 
 #include <argp.h>
@@ -41,6 +42,7 @@
 #include <wrap-json.h>
 
 AFB_EXTENSION("sec-gate-oidc")
+
 const struct argp_option AfbExtensionOptionsV1[] = {
     {.name = "logo", .key = 'L', .arg = 0, .doc = "requires a logo"},
     {.name = 0, .key = 0, .doc = 0}};
@@ -96,6 +98,9 @@ int AfbExtensionConfigV1(void **ctx, struct json_object *oidcJ, char const *uid)
 
     // init idp plugin global registry
     err = idpPLuginRegistryInit();
+    if (err)
+        goto OnErrorExit;
+    err = registerBuiltinIdps();
     if (err)
         goto OnErrorExit;
 

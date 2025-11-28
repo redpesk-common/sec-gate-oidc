@@ -14,11 +14,13 @@
 # limitations under the License.
 ###########################################################################
 
+add_subdirectory(builtin-idps)
 
 # Define project Targets
 add_library(sec-gate-oidc SHARED
 	oidc-alias.c
 	oidc-apis.c
+	oidc-builtin-idps.c
 	oidc-core.c
 	oidc-fedid.c
 	oidc-idp.c
@@ -26,10 +28,10 @@ add_library(sec-gate-oidc SHARED
 	oidc-utils.c
 )
 
-add_dependencies(sec-gate-oidc curl-glue-afb idps-builtin)
-target_link_libraries(sec-gate-oidc curl-glue-afb idps-builtin)
+add_dependencies(sec-gate-oidc curl-glue-afb builtin-idps)
+target_link_libraries(sec-gate-oidc curl-glue-afb builtin-idps)
 
-target_include_directories(sec-gate-oidc INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(sec-gate-oidc BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Binder exposes a unique public entry point
 set_target_properties(sec-gate-oidc

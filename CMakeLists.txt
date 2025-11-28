@@ -49,7 +49,6 @@ configure_file(sec-gate-oidc.pc.in sec-gate-oidc.pc @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/sec-gate-oidc.pc
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 
-add_subdirectory(idps)
 add_subdirectory(libs)
 add_subdirectory(src)
 add_subdirectory(plugins)
