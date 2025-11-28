@@ -4,13 +4,15 @@ PREF=/home/jobol/.locenv/secgate
 ROOT=$PREF/redpesk/sec-gate-oidc
 PORT=7777
 HTTPS=false
+CONF=$PREF/config
 
-cat << EOC | afb-binder -C /dev/stdin
+cat << EOC > $CONF
 {
   "name": "afb-oidc",
   "verbose": 2,
   "log": "error+warning+notice+info",
   "tracereq": "common",
+  "trap-faults": "no",
   "port": $PORT,
   "https": $HTTPS,
   "https-cert": "$ROOT/ssl/devel-cert.pem",
@@ -63,10 +65,10 @@ cat << EOC | afb-binder -C /dev/stdin
             },
             "schema": {
                 "info": "generate a curl -u %userdn% %ldapuri%/%groupdn%?dn?sub?%filter%",
-                "uri": "ldap://ldap.ovh.iot",
-                "login": "uid=%login%,ou=People,dc=vannes,dc=iot",
-                "groups": "ou=groups,dc=vannes,dc=iot?dn?sub?(memberUid=%login%)",
-                "people": "ou=people,dc=vannes,dc=iot?uid,gecos,mail?sub?(cn=%login%)"
+                "uri": "ldap://fusion.ovh.iot",
+                "login": "uid=%login%,ou=People,dc=lorient,dc=iot",
+                "groups": "ou=groups,dc=lorient,dc=iot?dn?sub?(memberUid=%login%)",
+                "people": "ou=people,dc=lorient,dc=iot?uid,gecos,mail?sub?(cn=%login%)"
             },
             "wellknown": {
                 "tokenid": "/sgate/ldap/login.html"
@@ -98,4 +100,7 @@ cat << EOC | afb-binder -C /dev/stdin
   }
 }
 EOC
+
+#RUN="gdb -arg"
+exec $RUN afb-binder -C $CONF
 
