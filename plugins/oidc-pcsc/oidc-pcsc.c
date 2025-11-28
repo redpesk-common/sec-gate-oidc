@@ -14,17 +14,6 @@
 
 #define _GNU_SOURCE
 
-#include <libafb/afb-core.h>
-#include <libafb/afb-http.h>
-#include <libafb/afb-v4.h>
-
-#include "oidc-alias.h"
-#include "oidc-core.h"
-#include "oidc-fedid.h"
-#include "oidc-idp.h"
-#include "oidc-utils.h"
-#include "pcsc-config.h"
-
 #include <assert.h>
 #include <locale.h>
 #include <pcsclite.h>
@@ -37,6 +26,19 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#include <rp-utils/rp-jsonc.h>
+
+#include <libafb/afb-core.h>
+#include <libafb/afb-http.h>
+#include <libafb/afb-v4.h>
+
+#include "oidc-alias.h"
+#include "oidc-core.h"
+#include "oidc-fedid.h"
+#include "oidc-idp.h"
+#include "oidc-utils.h"
+#include "pcsc-config.h"
 
 // import pcsc-little API
 #include "pcsc-config.h"
@@ -370,7 +372,7 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
 
     err = afb_data_convert(params[0], &afb_type_predefined_json_c, &args[0]);
     json_object *queryJ = afb_data_ro_pointer(args[0]);
-    err = wrap_json_unpack(queryJ, "{ss s?i s?s}", "state", &state, "pin",
+    err = rp_jsonc_unpack(queryJ, "{ss s?i s?s}", "state", &state, "pin",
                            &pinCode, "scope", &scope);
     if (err)
         goto OnErrorExit;
@@ -538,7 +540,7 @@ static int pcscRegisterConfig(oidcIdpT *idp, json_object *idpJ)
     // check is we have custom options
     json_object *pluginJ = json_object_object_get(idpJ, "plugin");
     if (pluginJ) {
-        err = wrap_json_unpack(pluginJ, "{ss s?i s?i s?s s?b so !}", "ldpath",
+        err = rp_jsonc_unpack(pluginJ, "{ss s?i s?i s?s s?b so !}", "ldpath",
                                &ldpath, "maxdev", &pcscOpts->readerMax,
                                "maxlabel", &pcscOpts->labelMax, "avatar",
                                &pcscOpts->avatarAlias, "verbose", &verbosity,

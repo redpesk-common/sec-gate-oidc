@@ -24,6 +24,12 @@
 
 #define _GNU_SOURCE
 
+#include <assert.h>
+#include <locale.h>
+#include <string.h>
+
+#include <rp-utils/rp-jsonc.h>
+
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
 #include <libafb/afb-v4.h>
@@ -34,10 +40,6 @@
 #include "oidc-fedid.h"
 #include "oidc-idp.h"
 #include "oidc-utils.h"
-
-#include <assert.h>
-#include <locale.h>
-#include <string.h>
 
 // ldap context request handle for callbacks
 typedef struct
@@ -344,7 +346,7 @@ static int ldapAccessProfile(oidcIdpT *idp,
     idpRqtCtx->userData = (void *)ldapRqtCtx;
 
     // place %%login%% with wreq.
-    err = wrap_json_pack(&ldapRqtCtx->loginJ, "{ss}", "login", login);
+    err = rp_jsonc_pack(&ldapRqtCtx->loginJ, "{ss}", "login", login);
     if (err)
         goto OnErrorExit;
 
@@ -407,7 +409,7 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
 
     err = afb_data_convert(params[0], &afb_type_predefined_json_c, &args[0]);
     json_object *queryJ = afb_data_ro_pointer(args[0]);
-    err = wrap_json_unpack(queryJ, "{ss ss s?s s?s s?s}", "login", &login,
+    err = rp_jsonc_unpack(queryJ, "{ss ss s?s s?s s?s}", "login", &login,
                            "state", &state, "passwd", &passwd, "password",
                            &passwd, "scope", &scope);
     if (err)
@@ -614,7 +616,7 @@ int ldapRegsterConfig(oidcIdpT *idp, json_object *idpJ)
     json_object *ldapJ = json_object_object_get(idpJ, "schema");
     if (ldapJ) {
         const char *info;
-        err = wrap_json_unpack(
+        err = rp_jsonc_unpack(
             ldapJ, "{s?s ss ss ss ss s?s s?i s?i !}", "info", &info, "uri",
             &ldapOpts->uri, "login", &ldapOpts->login, "groups", &groups,
             "people", &people, "avatar", &ldapOpts->avatarAlias, "gids",

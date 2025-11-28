@@ -23,9 +23,7 @@
 
 #pragma once
 
-#include <libafb/libafb-config.h>
-
-#include "oidc-defaults.h"
+#include "oidc-common.h"
 
 typedef struct oidcAliasesS oidcAliasT;
 typedef struct oidcApisS oidcApisT;
@@ -54,8 +52,8 @@ typedef struct
     const char *registerUrl;
     const char *fedlinkUrl;
     const char *homeUrl;
-    ulong tCache;
-    ulong sTimeout;
+    unsigned long tCache;
+    unsigned long sTimeout;
     int debug;
 } oidGlobalsT;
 

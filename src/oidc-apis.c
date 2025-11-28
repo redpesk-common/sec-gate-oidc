@@ -23,6 +23,11 @@
 
 #define _GNU_SOURCE
 
+#include <assert.h>
+#include <stdio.h>
+
+#include <rp-utils/rp-jsonc.h>
+
 #include <libafb/afb-core.h>
 #include <libafb/afb-v4.h>
 #include <libafb/apis/afb-api-ws.h>
@@ -30,9 +35,7 @@
 #include "oidc-alias.h"
 #include "oidc-apis.h"
 #include "oidc-core.h"
-
-#include <assert.h>
-#include <stdio.h>
+#include "oidc-defaults.h"
 
 int apisCreateSvc(oidcCoreHdlT *oidc,
                   oidcApisT *apiSvc,
@@ -164,7 +167,7 @@ static int apisParseOne(oidcCoreHdlT *oidc, json_object *apiJ, oidcApisT *api)
     json_object *requirerJ = NULL;
 
     int err =
-        wrap_json_unpack(apiJ, "{ss,s?s,s?s,s?i,s?i,s?o}", "uid", &api->uid,
+        rp_jsonc_unpack(apiJ, "{ss,s?s,s?s,s?i,s?i,s?o}", "uid", &api->uid,
                          "info", &api->info, "uri", &api->uri, "loa", &api->loa,
                          "lazy", &api->lazy, "require", &requirerJ);
     if (err) {

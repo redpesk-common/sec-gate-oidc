@@ -42,8 +42,7 @@
 
 #include <pcsclite.h>
 
-#include <wrap-json.h>
-// #include <libafb/utils/json-locator.h>
+#include <rp-utils/rp-jsonc.h>
 
 static struct option options[] = {
     {"verbose", optional_argument, 0, 'v'},

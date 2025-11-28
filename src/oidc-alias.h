@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include <json-c/json.h>
+
 #include "oidc-core.h"
 
 // MAGIC_OIDC_SESSION() used as session key
@@ -39,7 +41,7 @@ typedef struct oidcAliasesS
     const char *path;
     const char **roles;
     oidcCoreHdlT *oidc;
-    ulong tCache;
+    unsigned long tCache;
 } oidcAliasT;
 
 oidcAliasT *aliasParseConfig(oidcCoreHdlT *oidc, json_object *aliasesJ);

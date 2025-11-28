@@ -25,8 +25,11 @@
 
 #include <fedid-types.h>
 #include <libafb/afb-v4.h>
+#include <json-c/json.h>
+
 #include "curl-glue.h"
 #include "oidc-core.h"
+#include "oidc-defaults.h"
 
 extern void *oidcIdpProfilCookie;
 
@@ -78,8 +81,8 @@ typedef struct
     int loa;
     int group;
     int slave;
-    ulong tCache;
-    ulong sTimeout;
+    unsigned long tCache;
+    unsigned long sTimeout;
     oidcIdpT *idp;
 } oidcProfileT;
 

@@ -11,15 +11,6 @@
 
 #define _GNU_SOURCE
 
-#include <libafb/afb-core.h>
-#include <libafb/afb-http.h>
-#include <libafb/afb-v4.h>
-
-#include "oidc-alias.h"
-#include "oidc-core.h"
-#include "oidc-fedid.h"
-#include "oidc-idp.h"
-
 #include <assert.h>
 #include <locale.h>
 #include <string.h>
@@ -34,6 +25,17 @@
 #include <grp.h>
 #include <pwd.h>
 #include <security/pam_appl.h>
+
+#include <rp-utils/rp-jsonc.h>
+
+#include <libafb/afb-core.h>
+#include <libafb/afb-http.h>
+#include <libafb/afb-v4.h>
+
+#include "oidc-alias.h"
+#include "oidc-core.h"
+#include "oidc-fedid.h"
+#include "oidc-idp.h"
 
 // keep track of oidc-idp.c generic utils callbacks
 static idpGenericCbT *idpCallbacks = NULL;
@@ -186,7 +188,7 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
 
     err = afb_data_convert(params[0], &afb_type_predefined_json_c, &args[0]);
     json_object *queryJ = afb_data_ro_pointer(args[0]);
-    err = wrap_json_unpack(queryJ, "{ss ss s?s s?s s?s}", "login", &login,
+    err = rp_jsonc_unpack(queryJ, "{ss ss s?s s?s s?s}", "login", &login,
                            "state", &state, "passwd", &passwd, "password",
                            &passwd, "scope", &scope);
     if (err)
@@ -421,7 +423,7 @@ static int pamRegisterConfig(oidcIdpT *idp, json_object *idpJ)
     // check is we have custom options
     json_object *pluginJ = json_object_object_get(idpJ, "plugin");
     if (pluginJ) {
-        err = wrap_json_unpack(
+        err = rp_jsonc_unpack(
             pluginJ, "{s?i s?s s?i}", "gids", &dfltOpts.gidsMax, "avatar",
             &dfltOpts.avatarAlias, "uidmin", &dfltOpts.uidMin);
         if (err) {

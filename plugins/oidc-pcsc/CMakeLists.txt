@@ -2,6 +2,7 @@
 add_library(idp-sgate-pcscd-auth MODULE oidc-pcsc.c)
 
 add_dependencies(idp-sgate-pcscd-auth curl-glue-afb sec-gate-oidc)
+target_include_directories(idp-sgate-pcscd-auth BEFORE PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(idp-sgate-pcscd-auth pcscd-glue sec-gate-oidc)
 
 install(TARGETS idp-sgate-pcscd-auth

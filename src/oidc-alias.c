@@ -23,6 +23,13 @@
 
 #define _GNU_SOURCE
 
+#include <locale.h>
+#include <microhttpd.h>
+#include <string.h>
+#include <time.h>
+
+#include <rp-utils/rp-jsonc.h>
+
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
 #include <libafb/afb-v4.h>
@@ -32,11 +39,6 @@
 #include "oidc-core.h"
 #include "oidc-fedid.h"
 #include "oidc-idsvc.h"
-
-#include <locale.h>
-#include <microhttpd.h>
-#include <string.h>
-#include <time.h>
 
 // dummy unique value for session key
 MAGIC_OIDC_SESSION(oidcSessionCookie);
@@ -223,7 +225,7 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
             if (alias->loa > sessionLoa && sessionLoa != abs(alias->loa)) {
                 json_object *eventJ;
 
-                wrap_json_pack(&eventJ, "{ss ss ss si si}", "status",
+                rp_jsonc_pack(&eventJ, "{ss ss ss si si}", "status",
                                "loa-mismatch", "uid", alias->uid, "url",
                                alias->url, "loa-target", alias->loa,
                                "loa-session", sessionLoa);
@@ -311,7 +313,7 @@ static int idpParseOneAlias(oidcCoreHdlT *oidc,
     // set tCache default
     alias->tCache = oidc->globals->tCache;
 
-    int err = wrap_json_unpack(aliasJ, "{ss,s?s,s?s,s?s,s?i,s?i,s?i,s?o}",
+    int err = rp_jsonc_unpack(aliasJ, "{ss,s?s,s?s,s?s,s?i,s?i,s?i,s?o}",
                                "uid", &alias->uid, "info", &alias->info, "url",
                                &alias->url, "path", &alias->path, "prio",
                                &alias->priority, "loa", &alias->loa, "cache",

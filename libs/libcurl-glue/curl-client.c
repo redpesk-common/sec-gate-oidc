@@ -20,7 +20,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#include <wrap-base64.h>
+#include <rp-utils/rp-base64.h>
 
 // callback might be called as many time as needed to transfert all data
 static size_t httpBodyCB(void *data, size_t blkSize, size_t blkCount, void *ctx)
@@ -524,7 +524,7 @@ char *httpEncode64(const char *inputData, size_t inputLen)
     char *data64;
     size_t len64;
 
-    status = wrap_base64_encode((uint8_t *)inputData, inputLen, &data64, &len64,
+    status = rp_base64_encode((uint8_t *)inputData, inputLen, &data64, &len64,
                                 0, 1, 0);
     if (status)
         goto OnErrorExit;
@@ -546,7 +546,7 @@ char *httpDecode64(const char *inputData, size_t inputLen, int url)
     char *data64;
     size_t len64;
 
-    status = wrap_base64_decode(inputData, inputLen, (uint8_t **)&data64,
+    status = rp_base64_decode(inputData, inputLen, (uint8_t **)&data64,
                                 &len64, url);
     if (status)
         goto OnErrorExit;

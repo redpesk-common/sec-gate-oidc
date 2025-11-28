@@ -23,43 +23,48 @@
 
 #define _GNU_SOURCE
 
+#include "oidc-core.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <json-c/json.h>
+#include <rp-utils/rp-jsonc.h>
+
 #include <libafb/afb-v4.h>
+#include <libafb/afb-extension.h>
 #include <libafb/apis/afb-api-ws.h>
 
 #include "curl-glue.h"
 #include "oidc-alias.h"
 #include "oidc-apis.h"
-#include "oidc-core.h"
 #include "oidc-defaults.h"
 #include "oidc-idp.h"
 #include "oidc-builtin-idps.h"
 #include "oidc-idsvc.h"
 
-#include <argp.h>
-#include <json-c/json.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <wrap-json.h>
-
 AFB_EXTENSION("sec-gate-oidc")
-
-const struct argp_option AfbExtensionOptionsV1[] = {
-    {.name = "logo", .key = 'L', .arg = 0, .doc = "requires a logo"},
-    {.name = 0, .key = 0, .doc = 0}};
 
 static oidGlobalsT *globalConfig(json_object *globalsJ)
 {
     int err;
-    json_object *commentJ;
+    json_object *infoJ;
     oidGlobalsT *globals = (oidGlobalsT *)calloc(1, sizeof(oidGlobalsT));
 
     if (globalsJ) {
-        err = wrap_json_unpack(
-            globalsJ, "{s?o s?s s?s s?s s?s s?s s?i s?i s?b !}", "info",
-            &commentJ, "login", &globals->loginUrl, "error", &globals->errorUrl,
-            "register", &globals->registerUrl, "fedlink", &globals->fedlinkUrl,
-            "home", &globals->homeUrl, "cache", &globals->tCache, "timeout",
-            &globals->sTimeout, "debug", &globals->debug);
+        err = rp_jsonc_unpack(globalsJ,
+// clang-format off
+            "{s?o s?s s?s s?s s?s s?s s?i s?i s?b !}",
+            "info", &infoJ,
+            "login", &globals->loginUrl,
+            "error", &globals->errorUrl,
+            "register", &globals->registerUrl,
+            "fedlink", &globals->fedlinkUrl,
+            "home", &globals->homeUrl,
+            "cache", &globals->tCache,
+            "timeout", &globals->sTimeout,
+            "debug", &globals->debug);
+// clang-format on
         if (err < 0)
             goto OnErrorExit;
     }
@@ -105,10 +110,18 @@ int AfbExtensionConfigV1(void **ctx, struct json_object *oidcJ, char const *uid)
         goto OnErrorExit;
 
     json_object *idpsJ = NULL, *aliasJ = NULL, *apisJ = NULL, *globalsJ = NULL;
-    err = wrap_json_unpack(oidcJ, "{s?s,s?s,s?o,s?o,s?o,s?o,s?o,s?i}", "api",
-                           &oidc->api, "info", &oidc->info, "globals",
-                           &globalsJ, "idp", &idpsJ, "idps", &idpsJ, "alias",
-                           &aliasJ, "apis", &apisJ, "verbose", &oidc->verbose);
+    err = rp_jsonc_unpack(oidcJ,
+// clang-format off
+                           "{s?s,s?s,s?o,s?o,s?o,s?o,s?o,s?i}",
+                           "api", &oidc->api,
+                           "info", &oidc->info,
+                           "globals", &globalsJ,
+                           "idp", &idpsJ,
+                           "idps", &idpsJ,
+                           "alias", &aliasJ,
+                           "apis", &apisJ,
+                           "verbose", &oidc->verbose);
+// clang-format on
     if (err) {
         EXT_CRITICAL(
             "[oidc-parsing-error] ext=%s requires: idp(s),alias,apis "
@@ -117,18 +130,29 @@ int AfbExtensionConfigV1(void **ctx, struct json_object *oidcJ, char const *uid)
         goto OnErrorExit;
     }
 
+    // set the api
     if (!oidc->api)
         oidc->api = oidc->uid;
+
+    // set the global config
     oidc->globals = globalConfig(globalsJ);
     if (!oidc->globals)
         goto OnErrorExit;
 
+    // set idps
     oidc->idps = (oidcIdpT *)idpParseConfig(oidc, idpsJ);
+
+    // set aliases
     oidc->aliases = (oidcAliasT *)aliasParseConfig(oidc, aliasJ);
+
+    // set apis
     oidc->apis = (oidcApisT *)apisParseConfig(oidc, apisJ);
+
+    // stop when error in previous setting
     if (!oidc->idps || !oidc->aliases || !oidc->apis)
         goto OnErrorExit;
 
+    // TODO what means the below test?
     if (!oidc->globals->loginUrl &&
         (oidc->idps[1].uid || oidc->idps[0].profiles[1].uid))
         oidc->globals->loginUrl = URL_OIDC_USR_LOGIN;
@@ -220,28 +244,3 @@ OnErrorExit:
     return -1;
 }
 
-int AfbExtensionServeV1(void *ctx, afb_apiset *call_set)
-{
-    oidcCoreHdlT *oidc = (oidcCoreHdlT *)ctx;
-    if (!oidc)
-        goto OnErrorExit;
-    EXT_NOTICE("Extension %s got to serve", oidc->uid);
-
-    return 0;
-
-OnErrorExit:
-    return -1;
-}
-
-int AfbExtensionExitV1(void *ctx, afb_apiset *declare_set)
-{
-    oidcCoreHdlT *oidc = (oidcCoreHdlT *)ctx;
-
-    if (!oidc)
-        goto OnErrorExit;
-    EXT_NOTICE("Extension %s exit", oidc->uid);
-    return 0;
-
-OnErrorExit:
-    return -1;
-}

@@ -25,6 +25,8 @@
 
 #include <string.h>
 
+#include <rp-utils/rp-jsonc.h>
+
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
 #include <libafb/afb-v4.h>
@@ -143,13 +145,13 @@ static json_object *idpQueryList(afb_req_t wreq, const char **idps)
     // build IDP list with corresponding scope for requested LOA
     idpsJ = idpLoaProfilsGet(oidc, 0, idps, 1);
     if (alias)
-        wrap_json_pack(&aliasJ, "{ss ss* ss si}", "uid", alias->uid, "info",
+        rp_jsonc_pack(&aliasJ, "{ss ss* ss si}", "uid", alias->uid, "info",
                        alias->info, "url", alias->url, "loa", alias->loa);
     else
         aliasJ = NULL;
 
     err =
-        wrap_json_pack(&responseJ, "{so so*}", "idps", idpsJ, "alias", aliasJ);
+        rp_jsonc_pack(&responseJ, "{so so*}", "idps", idpsJ, "alias", aliasJ);
     if (err)
         goto OnErrorExit;
 
@@ -220,7 +222,7 @@ static void idpQueryUser(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 
     // if not a slave IDP then use email/pseudo to get IDP list
     if (fedBackup) {
-        wrap_json_pack(&queryJ, "{ss ss}", "email", fedBackup->email, "pseudo",
+        rp_jsonc_pack(&queryJ, "{ss ss}", "email", fedBackup->email, "pseudo",
                        fedBackup->pseudo);
         afb_create_data_raw(&query, AFB_PREDEFINED_TYPE_JSON_C, queryJ, 0,
                             (void *)json_object_put, queryJ);
@@ -286,7 +288,7 @@ static void userRegisterCB(void *ctx,
     afb_session_cookie_get(session, oidcIdpProfilCookie, (void **)&profile);
     afb_session_set_loa(session, oidcSessionCookie, profile->loa);
     afb_session_cookie_get(session, oidcAliasCookie, (void **)&alias);
-    wrap_json_pack(&aliasJ, "{ss}", "target", alias->url ?: "/");
+    rp_jsonc_pack(&aliasJ, "{ss}", "target", alias->url ?: "/");
     afb_create_data_raw(&reply[0], AFB_PREDEFINED_TYPE_JSON_C, aliasJ, 0,
                         (void *)json_object_put, aliasJ);
     afb_req_reply(wreq, status, 1, reply);
@@ -383,7 +385,7 @@ static void userFederateCB(void *ctx,
 
     // force federation mode within fedidCheckCB
     afb_session_set_loa(session, oidcFedSocialCookie, FEDID_LINK_REQUESTED);
-    err = wrap_json_pack(&responseJ, "{ss}", "target",
+    err = rp_jsonc_pack(&responseJ, "{ss}", "target",
                          profile->idp->oidc->globals->fedlinkUrl);
     if (err)
         goto OnErrorExit;
@@ -446,7 +448,7 @@ static void sessionReset(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 
     fedidsessionReset(session, profile);
 
-    wrap_json_pack(&responseJ, "{ss ss* ss*}", "home",
+    rp_jsonc_pack(&responseJ, "{ss ss* ss*}", "home",
                    profile->idp->oidc->globals->homeUrl ?: "/", "login",
                    profile->idp->oidc->globals->loginUrl, "error",
                    profile->idp->oidc->globals->errorUrl);
@@ -477,7 +479,7 @@ static void sessionGet(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     if (!profile)
         goto OnErrorExit;
 
-    wrap_json_pack(&profileJ, "{ss ss si}", "uid", profile->uid, "scope",
+    rp_jsonc_pack(&profileJ, "{ss ss si}", "uid", profile->uid, "scope",
                    profile->scope, "loa", profile->loa);
 
     afb_session_cookie_get(session, oidcFedUserCookie, (void **)&fedUser);
@@ -589,7 +591,7 @@ static void idpQueryConf(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     // build IDP list with corresponding scope for requested LOA
     if (alias) {
         idpsJ = idpLoaProfilsGet(oidc, alias->loa, NULL, 0);
-        wrap_json_pack(&aliasJ, "{ss ss* ss si}", "uid", alias->uid, "info",
+        rp_jsonc_pack(&aliasJ, "{ss ss* ss si}", "uid", alias->uid, "info",
                        alias->info, "url", alias->url, "loa", alias->loa);
     }
     else {
@@ -598,7 +600,7 @@ static void idpQueryConf(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     }
 
     err =
-        wrap_json_pack(&responseJ, "{so so*}", "idps", idpsJ, "alias", aliasJ);
+        rp_jsonc_pack(&responseJ, "{so so*}", "idps", idpsJ, "alias", aliasJ);
     if (err)
         goto OnErrorExit;
 
@@ -630,7 +632,7 @@ static void urlQuery(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     if (!oidc || oidc->magic != MAGIC_OIDC_MAIN)
         goto OnErrorExit;
 
-    err = wrap_json_pack(
+    err = rp_jsonc_pack(
         &responseJ, "{ss ss ss ss ss}", "home", oidc->globals->homeUrl, "login",
         oidc->globals->loginUrl, "federate", oidc->globals->fedlinkUrl,
         "register", oidc->globals->registerUrl, "error",

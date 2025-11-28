@@ -21,6 +21,12 @@
  * $RP_END_LICENSE$
  */
 
+#include <assert.h>
+#include <locale.h>
+#include <string.h>
+
+#include <rp-utils/rp-jsonc.h>
+
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
 #include <libafb/afb-v4.h>
@@ -31,10 +37,6 @@
 #include "oidc-fedid.h"
 #include "oidc-idsvc.h"
 #include "oidc-utils.h"
-
-#include <assert.h>
-#include <locale.h>
-#include <string.h>
 
 MAGIC_OIDC_SESSION(oidcFedUserCookie);
 MAGIC_OIDC_SESSION(oidcFedSocialCookie);
@@ -79,7 +81,7 @@ void fedidsessionReset(afb_session *session, const oidcProfileT *idpProfile)
         }
 
         json_object *eventJ;
-        err = wrap_json_pack(&eventJ, "{ss ss ss* ss*}", "status", "loa-reset",
+        err = rp_jsonc_pack(&eventJ, "{ss ss ss* ss*}", "status", "loa-reset",
                              "home",
                              idpProfile->idp->oidc->globals->homeUrl ?: "/",
                              "login", idpProfile->idp->oidc->globals->loginUrl,
@@ -315,7 +317,7 @@ static void fedidCheckCB(void *ctx,
         struct afb_data *reply;
         json_object *responseJ;
 
-        wrap_json_pack(&responseJ, "{ss}", "target", target);
+        rp_jsonc_pack(&responseJ, "{ss}", "target", target);
 
         EXT_DEBUG("[fedid-check-reply] {'target':'%s'}", target);
         afb_data_create_raw(&reply, &afb_type_predefined_json_c, responseJ, 0,

@@ -28,6 +28,13 @@
 
 #define _GNU_SOURCE
 
+#include <assert.h>
+#include <locale.h>
+#include <string.h>
+#include <uthash.h>
+
+#include <rp-utils/rp-jsonc.h>
+
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
 #include <libafb/afb-v4.h>
@@ -39,11 +46,6 @@
 #include "oidc-fedid.h"
 #include "oidc-idp.h"
 #include "oidc-utils.h"
-
-#include <assert.h>
-#include <locale.h>
-#include <string.h>
-#include <uthash.h>
 
 // import idp authentication enum/label
 extern const nsKeyEnumT idpAuthMethods[];
@@ -127,7 +129,7 @@ static json_object *oidcJwtCheck(oidcSchemaT *schema, char *token[])
     if (!headerJ)
         goto OnErrorExit;
 
-    err = wrap_json_unpack(headerJ, "{ss ss}", "kid", &keyId, "alg", &keyAlg);
+    err = rp_jsonc_unpack(headerJ, "{ss ss}", "kid", &keyId, "alg", &keyAlg);
     if (err)
         goto OnErrorExit;
 
@@ -135,7 +137,7 @@ static json_object *oidcJwtCheck(oidcSchemaT *schema, char *token[])
     for (int idx = 0; idx < json_object_array_length(schema->jwksJ); idx++) {
         json_object *slotJ;
         slotJ = json_object_array_get_idx(schema->jwksJ, idx);
-        err = wrap_json_unpack(slotJ, "{ss ss ss ss ss !}", "kty", &kty, "kid",
+        err = rp_jsonc_unpack(slotJ, "{ss ss ss ss ss !}", "kty", &kty, "kid",
                                &kid, "use", &use, "n", &nkey, "e", &esign);
         if (err)
             goto OnErrorExit;
@@ -344,7 +346,7 @@ static httpRqtActionT oidcAccessTokenCB(httpRqtT *httpRqt)
     if (!responseJ)
         goto OnErrorExit;
 
-    err = wrap_json_unpack(responseJ, "{ss ss s?s}", "access_token", &tokenVal,
+    err = rp_jsonc_unpack(responseJ, "{ss ss s?s}", "access_token", &tokenVal,
                            "token_type", &tokenType, "id_token", &tokenId);
     if (err)
         goto OnErrorExit;
@@ -600,7 +602,7 @@ static int oidcLogoutCB(afb_hreq *hreq, void *ctx)
         goto OnErrorExit;
 
     // tokenid nonce should match with the session uuid to reset
-    err = wrap_json_unpack(fedIdJ, "{ss}", "sid", &sessionUid);
+    err = rp_jsonc_unpack(fedIdJ, "{ss}", "sid", &sessionUid);
     if (err)
         goto OnErrorExit;
 
@@ -669,7 +671,7 @@ static httpRqtActionT oidcDiscoJwksCB(httpRqtT *httpRqt)
     if (!responseJ)
         goto OnErrorExit;
 
-    err = wrap_json_unpack(responseJ, "{so}", "keys", &schema->jwksJ);
+    err = rp_jsonc_unpack(responseJ, "{so}", "keys", &schema->jwksJ);
     if (err || !json_object_is_type(schema->jwksJ, json_type_array))
         goto OnErrorExit;
 
@@ -700,7 +702,7 @@ static httpRqtActionT oidcDiscoveryCB(httpRqtT *httpRqt)
     if (!responseJ)
         goto OnErrorExit;
 
-    wrap_json_unpack(responseJ, "{s?s s?s s?s s?s s?o s?o}", "token_endpoint",
+    rp_jsonc_unpack(responseJ, "{s?s s?s s?s s?s s?o s?o}", "token_endpoint",
                      &wellknown->tokenid, "authorization_endpoint",
                      &wellknown->authorize, "userinfo_endpoint",
                      &wellknown->userinfo, "jwks_uri", &wellknown->jwks,
@@ -816,7 +818,7 @@ int oidcRegisterConfig(oidcIdpT *idp, json_object *configJ)
     json_object *schemaJ = json_object_object_get(configJ, "schema");
     if (schemaJ) {
         const char *info;
-        err = wrap_json_unpack(
+        err = rp_jsonc_unpack(
             schemaJ, "{s?s s?o s?s s?s s?s s?s s?s s?s s?s s?s!}", "info",
             &info, "signed", &schema->jwksJ, "idpsid", &schema->idpsid, "fedid",
             &schema->fedid, "avatar", &schema->avatar, "pseudo",

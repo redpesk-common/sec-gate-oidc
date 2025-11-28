@@ -32,7 +32,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <wrap-json.h>
+#include <rp-utils/rp-jsonc.h>
 
 typedef struct
 {
@@ -144,7 +144,7 @@ static int pcscParseOneKey(pcscConfigT *config,
     json_object *valueJ = NULL;
 
     // {"uid":"abc, "idx": 0, "value":"asci value" }
-    err = wrap_json_unpack(keyJ, "{ss,s?i,so !}", "uid", &key->uid, "idx",
+    err = rp_jsonc_unpack(keyJ, "{ss,s?i,so !}", "uid", &key->uid, "idx",
                            &key->kidx, "value", &valueJ);
     if (err) {
         EXT_CRITICAL(
@@ -176,7 +176,7 @@ static int pcscParseOneTrailer(pcscConfigT *config,
 
     // "trailer": {"keys": ["key-a","keyb"],
     // "acls":["0xF0","0xF7","0x80","0x00"]}
-    err = wrap_json_unpack(trailerJ, "{ss,ss,so !}", "keyA", &keyA, "keyB",
+    err = rp_jsonc_unpack(trailerJ, "{ss,ss,so !}", "keyA", &keyA, "keyB",
                            &keyB, "acls", &valueJ);
     if (err) {
         EXT_CRITICAL(
@@ -217,7 +217,7 @@ static int pcscParseOneCmd(pcscConfigT *config,
 
     // {"uid":"zzz", "action":"write", "blk": xx, "key":"kuid","data": ["0xab",
     // "0x01", ....]},
-    err = wrap_json_unpack(cmdJ, "{ss,ss,s?i,s?i,s?i,s?s,s?o,s?o,s?i !}", "uid",
+    err = rp_jsonc_unpack(cmdJ, "{ss,ss,s?i,s?i,s?i,s?s,s?o,s?o,s?i !}", "uid",
                            &cmd->uid, "action", &cmdAction, "sec", &cmd->sec,
                            "blk", &cmd->blk, "len", &cmd->dlen, "key", &keyUid,
                            "data", &dataJ, "trailer", &trailerJ, "group",
@@ -312,7 +312,7 @@ pcscConfigT *pcscParseConfig(json_object *configJ, const int verbosity)
     config->verbose = verbosity;
     config->maxdev = PCSC_MAX_DEV;
 
-    err = wrap_json_unpack(configJ, "{s?s s?s ss s?i s?i s?i s?o s?o !}", "uid",
+    err = rp_jsonc_unpack(configJ, "{s?s s?s ss s?i s?i s?i s?o s?o !}", "uid",
                            &config->uid, "info", &config->info, "reader",
                            &config->reader, "maxdev", &config->maxdev, "debug",
                            &config->verbose, "timeout", &config->timeout,

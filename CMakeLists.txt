@@ -38,7 +38,8 @@ pkg_check_modules(mod0 REQUIRED
 	libcurl>=7.55.0
 	fedid-types>=2
 	afb-binding>=4.0.2
-	afb-libhelpers>=10.0.0
+	librp-utils-core
+	librp-utils-json-c
 )
 include_directories(${mod0_INCLUDE_DIRS})
 add_compile_options(${mod0_CFLAGS} -fPIC)

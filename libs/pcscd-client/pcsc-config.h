@@ -26,7 +26,7 @@
 
 #include <sys/types.h>
 #include <uthash.h>
-#include <wrap-json.h>
+#include <json-c/json.h>
 
 #define PCSC_MAX_DEV      16  // default max connected readers
 #define PCSC_CONFIG_MAGIC 789654123

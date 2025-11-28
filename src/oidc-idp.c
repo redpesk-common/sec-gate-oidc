@@ -21,6 +21,12 @@
  * $RP_END_LICENSE$
  */
 
+#include <assert.h>
+#include <dlfcn.h>
+#include <string.h>
+
+#include <rp-utils/rp-jsonc.h>
+
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
 #include <libafb/afb-v4.h>
@@ -29,10 +35,6 @@
 #include "oidc-fedid.h"
 #include "oidc-idp.h"
 #include "oidc-utils.h"
-
-#include <assert.h>
-#include <dlfcn.h>
-#include <string.h>
 
 MAGIC_OIDC_SESSION(oidcIdpProfilCookie);
 
@@ -110,7 +112,7 @@ json_object *idpLoaProfilsGet(oidcCoreHdlT *oidc,
             json_object *profileJ;
             if (!profilesJ)
                 profilesJ = json_object_new_array();
-            wrap_json_pack(
+            rp_jsonc_pack(
                 &profileJ, "{ss ss* ss si}", "uid", idp->profiles[jdx].uid,
                 "info", idp->profiles[jdx].info, "scope",
                 idp->profiles[jdx].scope, "loa", idp->profiles[jdx].loa);
@@ -122,7 +124,7 @@ json_object *idpLoaProfilsGet(oidcCoreHdlT *oidc,
             json_object *idpJ;
             if (!idpsJ)
                 idpsJ = json_object_new_array();
-            wrap_json_pack(&idpJ, "{ss ss* ss* ss* ss* so}", "uid", idp->uid,
+            rp_jsonc_pack(&idpJ, "{ss ss* ss* ss* ss* so}", "uid", idp->uid,
                            "info", idp->info, "logo", idp->statics->aliasLogo,
                            "client-id", idp->credentials->clientId, "login-url",
                            idp->statics->aliasLogin, "profiles", profilesJ);
@@ -167,7 +169,7 @@ static const oidcCredentialsT *idpParseCredentials(
         memcpy(credentials, defaults, sizeof(oidcCredentialsT));
 
     if (credentialsJ) {
-        int err = wrap_json_unpack(credentialsJ, "{ss,ss}", "clientid",
+        int err = rp_jsonc_unpack(credentialsJ, "{ss,ss}", "clientid",
                                    &credentials->clientId, "secret",
                                    &credentials->secret);
         if (err) {
@@ -189,7 +191,7 @@ static int idpParseOneHeader(oidcIdpT *idp,
                              json_object *headerJ,
                              httpKeyValT *header)
 {
-    int err = wrap_json_unpack(headerJ, "{ss,ss}", "tag", &header->tag, "value",
+    int err = rp_jsonc_unpack(headerJ, "{ss,ss}", "tag", &header->tag, "value",
                                &header->value);
     if (err) {
         EXT_CRITICAL(
@@ -255,7 +257,7 @@ static int idpParseOneProfil(oidcIdpT *idp,
 {
     profile->sTimeout = idp->statics->sTimeout;
     profile->idp = idp;
-    int err = wrap_json_unpack(
+    int err = rp_jsonc_unpack(
         profileJ, "{ss,s?s,si,ss,s?s,s?i,s?b,s?i !}", "uid", &profile->uid,
         "info", &profile->info, "loa", &profile->loa, "scope", &profile->scope,
         "attrs", &profile->attrs, "group", &profile->group, "slave",
@@ -333,7 +335,7 @@ static const oidcStaticsT *idpParsestatic(oidcIdpT *idp,
     if (!statics->sTimeout)
         statics->sTimeout = idp->oidc->globals->sTimeout;
 
-    int err = wrap_json_unpack(
+    int err = rp_jsonc_unpack(
         staticJ, "{s?s,s?s,s?s,s?i}", "login", &statics->aliasLogin, "logout",
         &statics->aliasLogout, "logo", &statics->aliasLogo, "timeout",
         &statics->sTimeout);
@@ -366,7 +368,7 @@ static const oidcWellknownT *idpParseWellknown(oidcIdpT *idp,
     if (defaults)
         memcpy(wellknown, defaults, sizeof(oidcWellknownT));
 
-    int err = wrap_json_unpack(
+    int err = rp_jsonc_unpack(
         wellknownJ, "{s?b,s?s,s?s,s?s,s?s,s?s,s?s,s?s !}", "lazy",
         &wellknown->lazy, "discovery", &wellknown->discovery, "tokenid",
         &wellknown->tokenid, "authorize", &wellknown->authorize, "userinfo",
@@ -403,7 +405,7 @@ int idpParseOidcConfig(oidcIdpT *idp,
     // unpack main IDP config
     json_object *credentialsJ = NULL, *staticJ = NULL, *wellknownJ = NULL,
                 *headersJ = NULL, *profilesJ, *pluginJ = NULL;
-    int err = wrap_json_unpack(
+    int err = rp_jsonc_unpack(
         configJ, "{ss s?s s?s s?o s?o s?o s?o s?o s?o s?o !}", "uid", &idp->uid,
         "info", &idp->info, "type", &idp->type, "plugin", &pluginJ,
         "credentials", &credentialsJ, "statics", &staticJ, "profiles",

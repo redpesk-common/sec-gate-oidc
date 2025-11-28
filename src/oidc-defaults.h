@@ -23,28 +23,8 @@
 
 #pragma once
 
-#include <json-c/json.h>
-#include <wrap-json.h>
-
-#define AFB_BINDING_NO_ROOT 1
-#include <libafb/afb-extension.h>
-#include <libafb/misc/afb-verbose.h>
-
 // few magic to help debugging
 typedef enum { MAGIC_OIDC_IDP = 12345678, MAGIC_OIDC_CBS = 654852 } oidcMagicT;
-
-// redefine debug/log to avoid conflict
-#ifndef EXT_EMERGENCY
-#define EXT_EMERGENCY(...) \
-    _LIBAFB_VERBOSE_(afb_Log_Level_Emergency, __VA_ARGS__)
-#define EXT_ALERT(...)    _LIBAFB_VERBOSE_(afb_Log_Level_Alert, __VA_ARGS__)
-#define EXT_CRITICAL(...) _LIBAFB_VERBOSE_(afb_Log_Level_Critical, __VA_ARGS__)
-#define EXT_ERROR(...)    _LIBAFB_VERBOSE_(afb_Log_Level_Error, __VA_ARGS__)
-#define EXT_WARNING(...)  _LIBAFB_VERBOSE_(afb_Log_Level_Warning, __VA_ARGS__)
-#define EXT_NOTICE(...)   _LIBAFB_VERBOSE_(afb_Log_Level_Notice, __VA_ARGS__)
-#define EXT_INFO(...)     _LIBAFB_VERBOSE_(afb_Log_Level_Info, __VA_ARGS__)
-#define EXT_DEBUG(...)    _LIBAFB_VERBOSE_(afb_Log_Level_Debug, __VA_ARGS__)
-#endif
 
 // few defaults
 #define EXT_HIGHEST_PRIO      100
@@ -66,13 +46,3 @@ typedef enum { MAGIC_OIDC_IDP = 12345678, MAGIC_OIDC_CBS = 654852 } oidcMagicT;
 // return code
 #define AFB_HSRV_OK 1
 
-// make our live simpler
-typedef struct afb_hsrv afb_hsrv;
-typedef struct afb_hreq afb_hreq;
-typedef struct afb_session afb_session;
-typedef struct afb_apiset afb_apiset;
-typedef struct afb_apiset afb_apiset;
-typedef struct afb_verb_v4 afb_verb_v4;
-typedef struct afb_api_v4 afb_api_v4;
-typedef struct afb_req_v4 afb_req_v4;
-typedef struct afb_data afb_data;
