@@ -27,12 +27,12 @@
 #include <libafb/misc/afb-verbose.h>
 
 #include <assert.h>
+#include <rp-utils/rp-jsonc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <rp-utils/rp-jsonc.h>
 
 typedef struct
 {
@@ -145,7 +145,7 @@ static int pcscParseOneKey(pcscConfigT *config,
 
     // {"uid":"abc, "idx": 0, "value":"asci value" }
     err = rp_jsonc_unpack(keyJ, "{ss,s?i,so !}", "uid", &key->uid, "idx",
-                           &key->kidx, "value", &valueJ);
+                          &key->kidx, "value", &valueJ);
     if (err) {
         EXT_CRITICAL(
             "[pcsc-onekey-fail] json supported keys:[uid,idx,value] "
@@ -177,7 +177,7 @@ static int pcscParseOneTrailer(pcscConfigT *config,
     // "trailer": {"keys": ["key-a","keyb"],
     // "acls":["0xF0","0xF7","0x80","0x00"]}
     err = rp_jsonc_unpack(trailerJ, "{ss,ss,so !}", "keyA", &keyA, "keyB",
-                           &keyB, "acls", &valueJ);
+                          &keyB, "acls", &valueJ);
     if (err) {
         EXT_CRITICAL(
             "[pcsc-onetrailer-fail] json mandatory keys:[keyA,keyA,acls] "
@@ -218,10 +218,10 @@ static int pcscParseOneCmd(pcscConfigT *config,
     // {"uid":"zzz", "action":"write", "blk": xx, "key":"kuid","data": ["0xab",
     // "0x01", ....]},
     err = rp_jsonc_unpack(cmdJ, "{ss,ss,s?i,s?i,s?i,s?s,s?o,s?o,s?i !}", "uid",
-                           &cmd->uid, "action", &cmdAction, "sec", &cmd->sec,
-                           "blk", &cmd->blk, "len", &cmd->dlen, "key", &keyUid,
-                           "data", &dataJ, "trailer", &trailerJ, "group",
-                           &cmd->group);
+                          &cmd->uid, "action", &cmdAction, "sec", &cmd->sec,
+                          "blk", &cmd->blk, "len", &cmd->dlen, "key", &keyUid,
+                          "data", &dataJ, "trailer", &trailerJ, "group",
+                          &cmd->group);
     if (err) {
         EXT_CRITICAL(
             "[pcsc-onecmd-fail] json supported "
@@ -313,10 +313,10 @@ pcscConfigT *pcscParseConfig(json_object *configJ, const int verbosity)
     config->maxdev = PCSC_MAX_DEV;
 
     err = rp_jsonc_unpack(configJ, "{s?s s?s ss s?i s?i s?i s?o s?o !}", "uid",
-                           &config->uid, "info", &config->info, "reader",
-                           &config->reader, "maxdev", &config->maxdev, "debug",
-                           &config->verbose, "timeout", &config->timeout,
-                           "cmds", &cmdsJ, "keys", &keysJ);
+                          &config->uid, "info", &config->info, "reader",
+                          &config->reader, "maxdev", &config->maxdev, "debug",
+                          &config->verbose, "timeout", &config->timeout, "cmds",
+                          &cmdsJ, "keys", &keysJ);
     if (err) {
         EXT_CRITICAL(
             "[pcsc-config-fail] config json supported "

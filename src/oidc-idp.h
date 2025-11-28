@@ -24,8 +24,8 @@
 #pragma once
 
 #include <fedid-types.h>
-#include <libafb/afb-v4.h>
 #include <json-c/json.h>
+#include <libafb/afb-v4.h>
 
 #include "curl-glue.h"
 #include "oidc-core.h"

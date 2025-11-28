@@ -525,7 +525,7 @@ char *httpEncode64(const char *inputData, size_t inputLen)
     size_t len64;
 
     status = rp_base64_encode((uint8_t *)inputData, inputLen, &data64, &len64,
-                                0, 1, 0);
+                              0, 1, 0);
     if (status)
         goto OnErrorExit;
 
@@ -546,8 +546,8 @@ char *httpDecode64(const char *inputData, size_t inputLen, int url)
     char *data64;
     size_t len64;
 
-    status = rp_base64_decode(inputData, inputLen, (uint8_t **)&data64,
-                                &len64, url);
+    status =
+        rp_base64_decode(inputData, inputLen, (uint8_t **)&data64, &len64, url);
     if (status)
         goto OnErrorExit;
 

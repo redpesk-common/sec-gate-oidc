@@ -125,9 +125,9 @@ json_object *idpLoaProfilsGet(oidcCoreHdlT *oidc,
             if (!idpsJ)
                 idpsJ = json_object_new_array();
             rp_jsonc_pack(&idpJ, "{ss ss* ss* ss* ss* so}", "uid", idp->uid,
-                           "info", idp->info, "logo", idp->statics->aliasLogo,
-                           "client-id", idp->credentials->clientId, "login-url",
-                           idp->statics->aliasLogin, "profiles", profilesJ);
+                          "info", idp->info, "logo", idp->statics->aliasLogo,
+                          "client-id", idp->credentials->clientId, "login-url",
+                          idp->statics->aliasLogin, "profiles", profilesJ);
 
             json_object_array_add(idpsJ, idpJ);
         }
@@ -170,8 +170,8 @@ static const oidcCredentialsT *idpParseCredentials(
 
     if (credentialsJ) {
         int err = rp_jsonc_unpack(credentialsJ, "{ss,ss}", "clientid",
-                                   &credentials->clientId, "secret",
-                                   &credentials->secret);
+                                  &credentials->clientId, "secret",
+                                  &credentials->secret);
         if (err) {
             EXT_CRITICAL(
                 "idp=%s parsing fail 'credentials' should define "
@@ -192,7 +192,7 @@ static int idpParseOneHeader(oidcIdpT *idp,
                              httpKeyValT *header)
 {
     int err = rp_jsonc_unpack(headerJ, "{ss,ss}", "tag", &header->tag, "value",
-                               &header->value);
+                              &header->value);
     if (err) {
         EXT_CRITICAL(
             "[idp-header-error] idp=%s parsing fail profile expect: tag,value "

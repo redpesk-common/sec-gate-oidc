@@ -24,7 +24,7 @@
 #pragma once
 
 #include <libafb/libafb-config.h>
-//#define AFB_BINDING_NO_ROOT 1
+// #define AFB_BINDING_NO_ROOT 1
 
 #include <libafb/misc/afb-verbose.h>
 

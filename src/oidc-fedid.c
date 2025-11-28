@@ -82,10 +82,10 @@ void fedidsessionReset(afb_session *session, const oidcProfileT *idpProfile)
 
         json_object *eventJ;
         err = rp_jsonc_pack(&eventJ, "{ss ss ss* ss*}", "status", "loa-reset",
-                             "home",
-                             idpProfile->idp->oidc->globals->homeUrl ?: "/",
-                             "login", idpProfile->idp->oidc->globals->loginUrl,
-                             "error", idpProfile->idp->oidc->globals->errorUrl);
+                            "home",
+                            idpProfile->idp->oidc->globals->homeUrl ?: "/",
+                            "login", idpProfile->idp->oidc->globals->loginUrl,
+                            "error", idpProfile->idp->oidc->globals->errorUrl);
         if (!err)
             count = idscvPushEvent(session, eventJ);
         if (!count)

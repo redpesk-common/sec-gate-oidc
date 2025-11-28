@@ -138,7 +138,7 @@ static json_object *oidcJwtCheck(oidcSchemaT *schema, char *token[])
         json_object *slotJ;
         slotJ = json_object_array_get_idx(schema->jwksJ, idx);
         err = rp_jsonc_unpack(slotJ, "{ss ss ss ss ss !}", "kty", &kty, "kid",
-                               &kid, "use", &use, "n", &nkey, "e", &esign);
+                              &kid, "use", &use, "n", &nkey, "e", &esign);
         if (err)
             goto OnErrorExit;
         if (!strcasecmp(kid, keyId)) {
@@ -347,7 +347,7 @@ static httpRqtActionT oidcAccessTokenCB(httpRqtT *httpRqt)
         goto OnErrorExit;
 
     err = rp_jsonc_unpack(responseJ, "{ss ss s?s}", "access_token", &tokenVal,
-                           "token_type", &tokenType, "id_token", &tokenId);
+                          "token_type", &tokenType, "id_token", &tokenId);
     if (err)
         goto OnErrorExit;
     asprintf(&rqtCtx->token, "%s %s", tokenType, tokenVal);
@@ -703,12 +703,12 @@ static httpRqtActionT oidcDiscoveryCB(httpRqtT *httpRqt)
         goto OnErrorExit;
 
     rp_jsonc_unpack(responseJ, "{s?s s?s s?s s?s s?o s?o}", "token_endpoint",
-                     &wellknown->tokenid, "authorization_endpoint",
-                     &wellknown->authorize, "userinfo_endpoint",
-                     &wellknown->userinfo, "jwks_uri", &wellknown->jwks,
-                     "token_endpoint_auth_methods_supported", &authMethodJ,
-                     "response_types_supported", &respondTypeJ, "jwks_uri",
-                     &wellknown->jwks);
+                    &wellknown->tokenid, "authorization_endpoint",
+                    &wellknown->authorize, "userinfo_endpoint",
+                    &wellknown->userinfo, "jwks_uri", &wellknown->jwks,
+                    "token_endpoint_auth_methods_supported", &authMethodJ,
+                    "response_types_supported", &respondTypeJ, "jwks_uri",
+                    &wellknown->jwks);
 
     if (!wellknown->tokenid || !wellknown->authorize || !wellknown->userinfo)
         goto OnErrorExit;

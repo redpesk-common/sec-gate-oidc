@@ -31,16 +31,16 @@
 #include <json-c/json.h>
 #include <rp-utils/rp-jsonc.h>
 
-#include <libafb/afb-v4.h>
 #include <libafb/afb-extension.h>
+#include <libafb/afb-v4.h>
 #include <libafb/apis/afb-api-ws.h>
 
 #include "curl-glue.h"
 #include "oidc-alias.h"
 #include "oidc-apis.h"
+#include "oidc-builtin-idps.h"
 #include "oidc-defaults.h"
 #include "oidc-idp.h"
-#include "oidc-builtin-idps.h"
 #include "oidc-idsvc.h"
 
 AFB_EXTENSION("sec-gate-oidc")
@@ -52,8 +52,9 @@ static oidGlobalsT *globalConfig(json_object *globalsJ)
     oidGlobalsT *globals = (oidGlobalsT *)calloc(1, sizeof(oidGlobalsT));
 
     if (globalsJ) {
-        err = rp_jsonc_unpack(globalsJ,
-// clang-format off
+        err = rp_jsonc_unpack(
+            globalsJ,
+            // clang-format off
             "{s?o s?s s?s s?s s?s s?s s?i s?i s?b !}",
             "info", &infoJ,
             "login", &globals->loginUrl,
@@ -64,7 +65,7 @@ static oidGlobalsT *globalConfig(json_object *globalsJ)
             "cache", &globals->tCache,
             "timeout", &globals->sTimeout,
             "debug", &globals->debug);
-// clang-format on
+        // clang-format on
         if (err < 0)
             goto OnErrorExit;
     }
@@ -111,7 +112,7 @@ int AfbExtensionConfigV1(void **ctx, struct json_object *oidcJ, char const *uid)
 
     json_object *idpsJ = NULL, *aliasJ = NULL, *apisJ = NULL, *globalsJ = NULL;
     err = rp_jsonc_unpack(oidcJ,
-// clang-format off
+                          // clang-format off
                            "{s?s,s?s,s?o,s?o,s?o,s?o,s?o,s?i}",
                            "api", &oidc->api,
                            "info", &oidc->info,
@@ -121,7 +122,7 @@ int AfbExtensionConfigV1(void **ctx, struct json_object *oidcJ, char const *uid)
                            "alias", &aliasJ,
                            "apis", &apisJ,
                            "verbose", &oidc->verbose);
-// clang-format on
+    // clang-format on
     if (err) {
         EXT_CRITICAL(
             "[oidc-parsing-error] ext=%s requires: idp(s),alias,apis "
@@ -243,4 +244,3 @@ int AfbExtensionHTTPV1(void *ctx, afb_hsrv *hsrv)
 OnErrorExit:
     return -1;
 }
-

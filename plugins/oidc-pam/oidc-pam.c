@@ -189,8 +189,8 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
     err = afb_data_convert(params[0], &afb_type_predefined_json_c, &args[0]);
     json_object *queryJ = afb_data_ro_pointer(args[0]);
     err = rp_jsonc_unpack(queryJ, "{ss ss s?s s?s s?s}", "login", &login,
-                           "state", &state, "passwd", &passwd, "password",
-                           &passwd, "scope", &scope);
+                          "state", &state, "passwd", &passwd, "password",
+                          &passwd, "scope", &scope);
     if (err)
         goto OnErrorExit;
 

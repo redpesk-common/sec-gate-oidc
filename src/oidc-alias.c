@@ -226,9 +226,9 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
                 json_object *eventJ;
 
                 rp_jsonc_pack(&eventJ, "{ss ss ss si si}", "status",
-                               "loa-mismatch", "uid", alias->uid, "url",
-                               alias->url, "loa-target", alias->loa,
-                               "loa-session", sessionLoa);
+                              "loa-mismatch", "uid", alias->uid, "url",
+                              alias->url, "loa-target", alias->loa,
+                              "loa-session", sessionLoa);
 
                 // try to push event to notify the access deny and replay with
                 // redirect to login
@@ -313,11 +313,11 @@ static int idpParseOneAlias(oidcCoreHdlT *oidc,
     // set tCache default
     alias->tCache = oidc->globals->tCache;
 
-    int err = rp_jsonc_unpack(aliasJ, "{ss,s?s,s?s,s?s,s?i,s?i,s?i,s?o}",
-                               "uid", &alias->uid, "info", &alias->info, "url",
-                               &alias->url, "path", &alias->path, "prio",
-                               &alias->priority, "loa", &alias->loa, "cache",
-                               &alias->tCache, "require", &requirerJ);
+    int err = rp_jsonc_unpack(aliasJ, "{ss,s?s,s?s,s?s,s?i,s?i,s?i,s?o}", "uid",
+                              &alias->uid, "info", &alias->info, "url",
+                              &alias->url, "path", &alias->path, "prio",
+                              &alias->priority, "loa", &alias->loa, "cache",
+                              &alias->tCache, "require", &requirerJ);
     if (err) {
         EXT_CRITICAL(
             "[idp-alias-error] oidc=%s parsing fail profile expect: "

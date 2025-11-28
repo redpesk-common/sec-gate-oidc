@@ -45,4 +45,3 @@ typedef enum { MAGIC_OIDC_IDP = 12345678, MAGIC_OIDC_CBS = 654852 } oidcMagicT;
 
 // return code
 #define AFB_HSRV_OK 1
-

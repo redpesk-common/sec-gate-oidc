@@ -373,7 +373,7 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
     err = afb_data_convert(params[0], &afb_type_predefined_json_c, &args[0]);
     json_object *queryJ = afb_data_ro_pointer(args[0]);
     err = rp_jsonc_unpack(queryJ, "{ss s?i s?s}", "state", &state, "pin",
-                           &pinCode, "scope", &scope);
+                          &pinCode, "scope", &scope);
     if (err)
         goto OnErrorExit;
 
@@ -541,10 +541,10 @@ static int pcscRegisterConfig(oidcIdpT *idp, json_object *idpJ)
     json_object *pluginJ = json_object_object_get(idpJ, "plugin");
     if (pluginJ) {
         err = rp_jsonc_unpack(pluginJ, "{ss s?i s?i s?s s?b so !}", "ldpath",
-                               &ldpath, "maxdev", &pcscOpts->readerMax,
-                               "maxlabel", &pcscOpts->labelMax, "avatar",
-                               &pcscOpts->avatarAlias, "verbose", &verbosity,
-                               "config", &pcscConfJ);
+                              &ldpath, "maxdev", &pcscOpts->readerMax,
+                              "maxlabel", &pcscOpts->labelMax, "avatar",
+                              &pcscOpts->avatarAlias, "verbose", &verbosity,
+                              "config", &pcscConfJ);
         if (err) {
             EXT_ERROR(
                 "[pcsc-config-opts] json parse fail "

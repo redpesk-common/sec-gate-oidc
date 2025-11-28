@@ -32,15 +32,14 @@
 #include <libafb/afb-http.h>
 #include <libafb/afb-v4.h>
 
-#include "oidc-idp.h"
 #include "builtin-idps/idp-github.h"
 #include "builtin-idps/idp-ldap.h"
 #include "builtin-idps/idp-oidc.h"
+#include "oidc-idp.h"
 
 // Builtin in output formater. Note that first one is used when cmd does not
 // define a format
-static
-idpPluginT idpBuiltins[] = {
+static idpPluginT idpBuiltins[] = {
     {.uid = "oidc",
      .info = "openid connect idp",
      .registerConfig = oidcRegisterConfig,

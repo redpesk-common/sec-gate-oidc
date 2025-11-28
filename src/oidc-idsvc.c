@@ -146,12 +146,11 @@ static json_object *idpQueryList(afb_req_t wreq, const char **idps)
     idpsJ = idpLoaProfilsGet(oidc, 0, idps, 1);
     if (alias)
         rp_jsonc_pack(&aliasJ, "{ss ss* ss si}", "uid", alias->uid, "info",
-                       alias->info, "url", alias->url, "loa", alias->loa);
+                      alias->info, "url", alias->url, "loa", alias->loa);
     else
         aliasJ = NULL;
 
-    err =
-        rp_jsonc_pack(&responseJ, "{so so*}", "idps", idpsJ, "alias", aliasJ);
+    err = rp_jsonc_pack(&responseJ, "{so so*}", "idps", idpsJ, "alias", aliasJ);
     if (err)
         goto OnErrorExit;
 
@@ -196,7 +195,7 @@ static void idpQueryUserCB(void *ctx,
 
     // create the replied data
     err = afb_create_data_raw(&data, AFB_PREDEFINED_TYPE_JSON_C, obj, 0,
-                        (void *)json_object_put, obj);
+                              (void *)json_object_put, obj);
     if (err >= 0)
         status = 0;
 
@@ -223,7 +222,7 @@ static void idpQueryUser(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     // if not a slave IDP then use email/pseudo to get IDP list
     if (fedBackup) {
         rp_jsonc_pack(&queryJ, "{ss ss}", "email", fedBackup->email, "pseudo",
-                       fedBackup->pseudo);
+                      fedBackup->pseudo);
         afb_create_data_raw(&query, AFB_PREDEFINED_TYPE_JSON_C, queryJ, 0,
                             (void *)json_object_put, queryJ);
         afb_req_subcall(wreq, API_OIDC_USR_SVC, "social-idps", 1, &query,
@@ -386,7 +385,7 @@ static void userFederateCB(void *ctx,
     // force federation mode within fedidCheckCB
     afb_session_set_loa(session, oidcFedSocialCookie, FEDID_LINK_REQUESTED);
     err = rp_jsonc_pack(&responseJ, "{ss}", "target",
-                         profile->idp->oidc->globals->fedlinkUrl);
+                        profile->idp->oidc->globals->fedlinkUrl);
     if (err)
         goto OnErrorExit;
 
@@ -449,9 +448,9 @@ static void sessionReset(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     fedidsessionReset(session, profile);
 
     rp_jsonc_pack(&responseJ, "{ss ss* ss*}", "home",
-                   profile->idp->oidc->globals->homeUrl ?: "/", "login",
-                   profile->idp->oidc->globals->loginUrl, "error",
-                   profile->idp->oidc->globals->errorUrl);
+                  profile->idp->oidc->globals->homeUrl ?: "/", "login",
+                  profile->idp->oidc->globals->loginUrl, "error",
+                  profile->idp->oidc->globals->errorUrl);
     afb_create_data_raw(&reply, AFB_PREDEFINED_TYPE_JSON_C, responseJ, 0,
                         (void *)json_object_put, responseJ);
     afb_req_reply(wreq, 0, 1, &reply);
@@ -480,7 +479,7 @@ static void sessionGet(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
         goto OnErrorExit;
 
     rp_jsonc_pack(&profileJ, "{ss ss si}", "uid", profile->uid, "scope",
-                   profile->scope, "loa", profile->loa);
+                  profile->scope, "loa", profile->loa);
 
     afb_session_cookie_get(session, oidcFedUserCookie, (void **)&fedUser);
     afb_session_cookie_get(session, oidcFedSocialCookie, (void **)&fedSocial);
@@ -592,15 +591,14 @@ static void idpQueryConf(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     if (alias) {
         idpsJ = idpLoaProfilsGet(oidc, alias->loa, NULL, 0);
         rp_jsonc_pack(&aliasJ, "{ss ss* ss si}", "uid", alias->uid, "info",
-                       alias->info, "url", alias->url, "loa", alias->loa);
+                      alias->info, "url", alias->url, "loa", alias->loa);
     }
     else {
         idpsJ = idpLoaProfilsGet(oidc, 0, NULL, 0);
         aliasJ = NULL;
     }
 
-    err =
-        rp_jsonc_pack(&responseJ, "{so so*}", "idps", idpsJ, "alias", aliasJ);
+    err = rp_jsonc_pack(&responseJ, "{so so*}", "idps", idpsJ, "alias", aliasJ);
     if (err)
         goto OnErrorExit;
 

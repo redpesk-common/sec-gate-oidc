@@ -168,8 +168,8 @@ static int apisParseOne(oidcCoreHdlT *oidc, json_object *apiJ, oidcApisT *api)
 
     int err =
         rp_jsonc_unpack(apiJ, "{ss,s?s,s?s,s?i,s?i,s?o}", "uid", &api->uid,
-                         "info", &api->info, "uri", &api->uri, "loa", &api->loa,
-                         "lazy", &api->lazy, "require", &requirerJ);
+                        "info", &api->info, "uri", &api->uri, "loa", &api->loa,
+                        "lazy", &api->lazy, "require", &requirerJ);
     if (err) {
         EXT_CRITICAL(
             "[idp-api-error] idpmake=%s parsing fail profile expect: "
