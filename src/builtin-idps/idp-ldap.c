@@ -233,6 +233,10 @@ static httpRqtActionT ldapAccessProfileCB(httpRqtT *httpRqt)
     if (httpRqt->status < 0)
         goto OnErrorExit;
 
+    // nothing were replied
+    if (httpRqt->bodyLen == 0 || httpRqt->body == NULL)
+        goto OnErrorExit;
+
     // search for "DN:"
     static char dnString[] = "DN:";
     start = sizeof(dnString);
