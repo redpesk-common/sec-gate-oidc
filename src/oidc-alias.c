@@ -269,7 +269,7 @@ OnRedirectExit:
     return 1;  // we're done stop scanning alias callback
 }
 
-int aliasRegisterOne(oidcCoreHdlT *oidc, oidcAliasT *alias, afb_hsrv *hsrv)
+int aliasRegisterOne(oidcAliasT *alias, afb_hsrv *hsrv)
 {
     const char *rootdir;
     int status;

@@ -215,10 +215,12 @@ OnErrorExit:
 
 int AfbExtensionHTTPV1(void *ctx, afb_hsrv *hsrv)
 {
+    int idx, err;
     oidcCoreHdlT *oidc = (oidcCoreHdlT *)ctx;
-    int err;
+
     if (!oidc)
         goto OnErrorExit;
+
     EXT_NOTICE("Extension %s got to http", oidc->uid);
 
     // create libcurl http multi pool
@@ -227,14 +229,16 @@ int AfbExtensionHTTPV1(void *ctx, afb_hsrv *hsrv)
     if (!oidc->httpPool)
         goto OnErrorExit;
 
-    for (int idx = 0; oidc->idps[idx].uid; idx++) {
+    // register IDP
+    for (idx = 0; oidc->idps[idx].uid; idx++) {
         err = idpRegisterAlias(oidc, &oidc->idps[idx], hsrv);
         if (err)
             goto OnErrorExit;
     }
 
-    for (int idx = 0; oidc->aliases[idx].uid; idx++) {
-        err = aliasRegisterOne(oidc, &oidc->aliases[idx], hsrv);
+    // register aliases
+    for (idx = 0; oidc->aliases[idx].uid; idx++) {
+        err = aliasRegisterOne(&oidc->aliases[idx], hsrv);
         if (err)
             goto OnErrorExit;
     }
