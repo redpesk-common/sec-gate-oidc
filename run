@@ -10,7 +10,7 @@ cat << EOC > $CONF
 {
   "name": "afb-oidc",
   "verbose": 2,
-  "log": "error+warning+notice+info",
+  "log": "error+warning+notice+info+debug",
   "tracereq": "common",
   "trap-faults": "no",
   "port": $PORT,
@@ -19,82 +19,179 @@ cat << EOC > $CONF
   "https-key": "$ROOT/ssl/devel-key.pem",
   "extension": "$ROOT/lib/libafb-sec-gate-oidc-ext.so",
   "roothttp": "$ROOT/htdocs",
-  "rootdir":  "$ROOT",
-  "binding" : [{
+  "rootdir": "$ROOT",
+  "binding": [
+    {
       "uid": "fedid-api",
       "path": "$PREF/redpesk/sec-gate-fedid-binding/lib/sec-gate-fedid-binding.so",
-      "config": {"dbpath":"$PREF/fedid-local.sqlite"}
-  }],
+      "config": {
+        "dbpath": "$PREF/fedid-local.sqlite"
+      }
+    }
+  ],
   "@extconfig": {
     "sec-gate-oidc": {
       "api": "sgate",
       "info": "oidc secure gate local authentication sample config",
       "globals": {
-          "login": "/sgate/common/login.html",
-          "register": "/sgate/common/register.html",
-          "fedlink": "/sgate/common/fedlink.html",
-          "error": "/sgate/common/error.html",
-          "timeout": 600
+        "login": "/sgate/common/login.html",
+        "register": "/sgate/common/register.html",
+        "fedlink": "/sgate/common/fedlink.html",
+        "error": "/sgate/common/error.html",
+        "timeout": 600
       },
       "idps": [
         {
-            "uid": "pam",
-            "info": "Linux local authentication",
-            "plugin": {
-              "info": "custom params for pam plugin (note: idp->uid:pam-login should match one plugin idp uid)",
-              "ldpath": "$ROOT/lib/plugins/libidp-sgate-pam-auth.so",
-              "gids":16
-            },
-            "statics": {
-                "login": "/sgate/pam/login",
-                "logo": "/sgate/pam/logo-64px.png",
-                "timeout": 900
-            },
-            "profiles": [
-                {"uid":"login", "loa":1, "scope":"login"}
-            ]
-        }, 
+          "uid": "pam",
+          "info": "Linux local authentication",
+          "plugin": {
+            "info": "custom params for pam plugin (note: idp->uid:pam-login should match one plugin idp uid)",
+            "ldpath": "$ROOT/lib/plugins/libidp-sgate-pam-auth.so",
+            "gids": 16
+          },
+          "statics": {
+            "login": "/sgate/pam/login",
+            "logo": "/sgate/pam/logo-64px.png",
+            "timeout": 900
+          },
+          "profiles": [
+            {
+              "uid": "login",
+              "loa": 1,
+              "scope": "login"
+            }
+          ]
+        },
         {
-            "uid": "ldap-iotbzh",
-            "type": "ldap",
-            "info": "Iot.bzh internal LDAP",
-            "statics": {
-                "login": "/sgate/ldap/login",
-                "logo": "/sgate/ldap/logo-64px.png",
-                "timeout": 900
-            },
-            "schema": {
-                "info": "generate a curl -u %userdn% %ldapuri%/%groupdn%?dn?sub?%filter%",
-                "uri": "ldap://fusion.ovh.iot",
-                "login": "uid=%login%,ou=People,dc=lorient,dc=iot",
-                "groups": "ou=groups,dc=lorient,dc=iot?dn?sub?(memberUid=%login%)",
-                "people": "ou=people,dc=lorient,dc=iot?uid,gecos,mail?sub?(cn=%login%)"
-            },
-            "wellknown": {
-                "tokenid": "/sgate/ldap/login.html"
-            },
-            "profiles": [
-                {"uid":"login", "loa":1, "scope":"login"}
-            ]
+          "uid": "ldap-iotbzh",
+          "type": "ldap",
+          "info": "Iot.bzh internal LDAP",
+          "statics": {
+            "login": "/sgate/ldap/login",
+            "logo": "/sgate/ldap/logo-64px.png",
+            "timeout": 900
+          },
+          "schema": {
+            "info": "generate a curl -u %userdn% %ldapuri%/%groupdn%?dn?sub?%filter%",
+            "uri": "ldap://fusion.ovh.iot",
+            "login": "uid=%login%,ou=People,dc=lorient,dc=iot",
+            "groups": "ou=groups,dc=lorient,dc=iot?dn?sub?(memberUid=%login%)",
+            "people": "ou=people,dc=lorient,dc=iot?uid,gecos,mail?sub?(cn=%login%)"
+          },
+          "wellknown": {
+            "tokenid": "/sgate/ldap/login.html"
+          },
+          "profiles": [
+            {
+              "uid": "login",
+              "loa": 1,
+              "scope": "login"
+            }
+          ]
         }
       ],
       "apis": [
-        {"uid": "fedid","info":"embedded social federated user identity svc","loa":0,"uri":"@fedid"},
-        {"uid": "test1","lazy":1},
-        {"uid": "test2","uri":"unix:@test2", "loa":1, "require": ["user"], "lazy":1},
-        {"uid": "test3","uri":"tcp:localhost:1235/test3", "loa":2, "require": ["user","admin"], "lazy":1},
-        {"uid": "simple","uri":"unix:/tmp/spawn-binding/simple", "loa":1, "require": ["user"], "lazy":1}
-        ],
+        {
+          "uid": "fedid",
+          "info": "embedded social federated user identity svc",
+          "loa": 0,
+          "uri": "@fedid"
+        },
+        {
+          "uid": "test1",
+          "lazy": 1
+        },
+        {
+          "uid": "test2",
+          "uri": "unix:@test2",
+          "loa": 1,
+          "require": [
+            "user"
+          ],
+          "lazy": 1
+        },
+        {
+          "uid": "test3",
+          "uri": "tcp:localhost:1235/test3",
+          "loa": 2,
+          "require": [
+            "user",
+            "admin"
+          ],
+          "lazy": 1
+        },
+        {
+          "uid": "simple",
+          "uri": "unix:/tmp/spawn-binding/simple",
+          "loa": 1,
+          "require": [
+            "user"
+          ],
+          "lazy": 1
+        }
+      ],
       "alias": [
-        {"uid": "idp-common", "url":"/sgate/common", "path":"hidden/idps/common" },
-        {"uid": "idp-github"  , "url":"/sgate/github","loa":0, "path":"hidden/idps/github" },
-        {"uid": "idp-pam"     , "url":"/sgate/pam"   ,"loa":0, "path":"hidden/idps/pam" },
-        {"uid": "idp-ldap"    , "url":"/sgate/ldap"   ,"loa":0, "path":"hidden/idps/ldap" },
-        {"uid": "idp-nfc"    , "url":"/sgate/nfc-auth"   ,"loa":0, "path":"hidden/idps/pcsc-nfc" },
-        {"uid": "public" , "info": "Anonymous access allowed", "url":"/public", "path":"hidden/public" },
-        {"uid": "private", "info": "Required basic authentication", "url":"/private",  "loa":1, "path":"hidden/private" },
-        {"uid": "confidential", "info": "Required teams authentication", "url":"/confidential", "loa":2, "path":"hidden/confidential" },
-        {"uid": "admin", "info": "Required admin security attribute", "url":"/admin", "loa":1, "path":"hidden/admin", "require": ["wheel","iotbzh","sudo"]}
+        {
+          "uid": "idp-common",
+          "url": "/sgate/common",
+          "path": "hidden/idps/common"
+        },
+        {
+          "uid": "idp-github",
+          "url": "/sgate/github",
+          "loa": 0,
+          "path": "hidden/idps/github"
+        },
+        {
+          "uid": "idp-pam",
+          "url": "/sgate/pam",
+          "loa": 0,
+          "path": "hidden/idps/pam"
+        },
+        {
+          "uid": "idp-ldap",
+          "url": "/sgate/ldap",
+          "loa": 0,
+          "path": "hidden/idps/ldap"
+        },
+        {
+          "uid": "idp-nfc",
+          "url": "/sgate/nfc-auth",
+          "loa": 0,
+          "path": "hidden/idps/pcsc-nfc"
+        },
+        {
+          "uid": "public",
+          "info": "Anonymous access allowed",
+          "url": "/public",
+          "path": "hidden/public"
+        },
+        {
+          "uid": "private",
+          "info": "Required basic authentication",
+          "url": "/private",
+          "loa": 1,
+          "path": "hidden/private"
+        },
+        {
+          "uid": "confidential",
+          "info": "Required teams authentication",
+          "url": "/confidential",
+          "loa": 2,
+          "path": "hidden/confidential"
+        },
+        {
+          "uid": "admin",
+          "info": "Required admin security attribute",
+          "url": "/admin",
+          "loa": 1,
+          "path": "hidden/admin",
+          "require": [
+            "wheel",
+            "iotbzh",
+            "sudo"
+          ]
+        }
       ]
     }
   }
