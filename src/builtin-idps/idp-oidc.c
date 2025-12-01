@@ -34,6 +34,7 @@
 #include <uthash.h>
 
 #include <rp-utils/rp-jsonc.h>
+#include <rp-utils/rp-base64.h>
 
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
@@ -281,9 +282,9 @@ OnErrorExit:
 // https://developer.yahoo.com/oauth2/guide/openid_connect/decode_id_token.html?guccounter=1
 static json_object *oidcUserGetByJwt(oidcSchemaT *schema, char *tokenId)
 {
-    int tknIdx = 0, start = 0, index;
+    int tknIdx = 0, start = 0, index, rc;
     char *token[TKN_SIZE];
-    int length[TKN_SIZE];
+    size_t length[TKN_SIZE];
     json_object *bodyJ;
 
     // split jwt token "header64"."body64"."sign64"
@@ -292,19 +293,20 @@ static json_object *oidcUserGetByJwt(oidcSchemaT *schema, char *tokenId)
             if (tknIdx == 3)
                 goto OnErrorExit;
             tokenId[index] = '\0';
-            length[tknIdx] = index - start;
+            length[tknIdx] = (size_t)(index - start);
             token[tknIdx] = &tokenId[start];
             tknIdx++;
             start = index + 1;
         }
     }
     token[tknIdx] = &tokenId[start];
-    length[tknIdx] = index - start;
+    length[tknIdx] = (size_t)(index - start);
 
     // uncode64 and open json object
-    token[TKN_BODY] =
-        httpDecode64(token[TKN_BODY], length[TKN_BODY], ENCODED_URL);
-    if (!token[TKN_BODY])
+    rc = rp_base64_decode(token[TKN_BODY], length[TKN_BODY],
+                          (uint8_t **)&token[TKN_BODY], &length[TKN_BODY],
+                          ENCODED_URL);
+    if (rc != rp_base64_ok)
         goto OnErrorExit;
 
     // if no signature directly open token body as a json object
@@ -312,10 +314,11 @@ static json_object *oidcUserGetByJwt(oidcSchemaT *schema, char *tokenId)
         bodyJ = json_tokener_parse(token[TKN_BODY]);
     }
     else {
-        token[TKN_HEADER] =
-            httpDecode64(token[TKN_HEADER], length[TKN_HEADER], ENCODED_URL);
+        rc = rp_base64_decode(token[TKN_HEADER], length[TKN_HEADER],
+                              (uint8_t **)&token[TKN_HEADER], &length[TKN_HEADER],
+                              ENCODED_URL);
         // signature is not encoded
-        if (!token[TKN_HEADER] || !token[TKN_SIGN])
+        if (rc != rp_base64_ok || !token[TKN_SIGN])
             goto OnErrorExit;
         bodyJ = oidcJwtCheck(schema, token);
     }
