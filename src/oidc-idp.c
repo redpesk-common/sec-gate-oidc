@@ -36,8 +36,6 @@
 #include "oidc-idp.h"
 #include "oidc-utils.h"
 
-MAGIC_OIDC_SESSION(oidcIdpProfilCookie);
-
 typedef struct idpRegistryS
 {
     struct idpRegistryS *next;

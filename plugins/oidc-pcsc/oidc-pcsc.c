@@ -37,6 +37,7 @@
 #include "oidc-core.h"
 #include "oidc-fedid.h"
 #include "oidc-idp.h"
+#include "oidc-session.h"
 #include "oidc-utils.h"
 #include "pcsc-config.h"
 
@@ -120,7 +121,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
     pcscRqtCtxT *pcscRqtCtx = (pcscRqtCtxT *)ctx;
     idpRqtCtxT *idpRqtCtx = pcscRqtCtx->idpRqtCtx;
     pcscOptsT *pcscOpts = pcscRqtCtx->opts;
-    oidcProfileT *idpProfile;
+    const oidcProfileT *idpProfile;
     int status = 0;
     int err;
 
@@ -135,8 +136,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
         switch (pcscRqtCtx->status) {
             // session was authenticated logout session and kill thread
         case PCSC_STATUS_AUTHENTICATED:
-            afb_session_cookie_get(pcscRqtCtx->session, oidcIdpProfilCookie,
-                                   (void **)&idpProfile);
+            idpProfile = oidcSessionGetIdpProfile(pcscRqtCtx->session);
             fedidsessionReset(pcscRqtCtx->session, idpProfile);
             pcscRqtCtxFree(pcscRqtCtx);
             status = 1;  // terminate thread
@@ -382,7 +382,7 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
     if (!state || strcmp(state, afb_session_uuid(session)))
         goto OnErrorExit;
 
-    afb_session_cookie_get(session, oidcAliasCookie, (void **)&alias);
+    alias = oidcSessionGetAlias(session);
     if (alias)
         aliasLoa = alias->loa;
     else
@@ -406,8 +406,7 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
     }
     // store working profile to retreive attached loa and role filter if login
     // succeeded
-    afb_session_cookie_set(session, oidcIdpProfilCookie, (void *)profile, NULL,
-                           NULL);
+    oidcSessionSetIdpProfile(session, profile);
 
     // try to access smart card
     err = pcscScardGet(idp, profile, pinCode, /*hreq */ NULL, wreq);
@@ -436,8 +435,7 @@ int pcscLoginCB(afb_hreq *hreq, void *ctx)
     // Initial redirect redirect user on web page to enter login
     char url[EXT_URL_MAX_LEN];
 
-    afb_session_cookie_get(hreq->comreq.session, oidcAliasCookie,
-                           (void **)&alias);
+    alias = oidcSessionGetAlias(hreq->comreq.session);
     if (alias)
         aliasLoa = alias->loa;
     else
@@ -460,8 +458,7 @@ int pcscLoginCB(afb_hreq *hreq, void *ctx)
     // if loa working and no profile fit exit without trying authentication
     if (!profile)
         goto OnErrorExit;
-    afb_session_cookie_set(hreq->comreq.session, oidcIdpProfilCookie,
-                           (void *)profile, NULL, NULL);
+    oidcSessionSetIdpProfile(hreq->comreq.session, profile);
 
     httpKeyValT query[] = {
         {.tag = "state", .value = afb_session_uuid(hreq->comreq.session)},

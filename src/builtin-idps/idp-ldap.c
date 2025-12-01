@@ -39,6 +39,7 @@
 #include "oidc-core.h"
 #include "oidc-fedid.h"
 #include "oidc-idp.h"
+#include "oidc-session.h"
 #include "oidc-utils.h"
 
 // ldap context request handle for callbacks
@@ -420,7 +421,7 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
     if (!state || strcmp(state, afb_session_uuid(session)))
         goto OnErrorExit;
 
-    afb_session_cookie_get(session, oidcAliasCookie, (void **)&alias);
+    alias = oidcSessionGetAlias(session);
     if (alias)
         aliasLoa = alias->loa;
     else
@@ -472,8 +473,7 @@ static int ldapLoginCB(afb_hreq *hreq, void *ctx)
     const char *passwd = afb_hreq_get_argument(hreq, "passwd");
     const char *scope = afb_hreq_get_argument(hreq, "scope");
 
-    afb_session_cookie_get(hreq->comreq.session, oidcAliasCookie,
-                           (void **)&alias);
+    alias = oidcSessionGetAlias(hreq->comreq.session);
     if (alias)
         aliasLoa = alias->loa;
     else
@@ -507,8 +507,7 @@ static int ldapLoginCB(afb_hreq *hreq, void *ctx)
 
         // store working profile to retreive attached loa and role filter if
         // login succeded
-        afb_session_cookie_set(hreq->comreq.session, oidcIdpProfilCookie,
-                               (void *)profile, NULL, NULL);
+        oidcSessionSetIdpProfile(hreq->comreq.session, profile);
 
         httpKeyValT query[] = {
             {.tag = "state", .value = afb_session_uuid(hreq->comreq.session)},
@@ -535,8 +534,7 @@ static int ldapLoginCB(afb_hreq *hreq, void *ctx)
             goto OnErrorExit;
 
         EXT_DEBUG("[ldap-auth-code] login=%s (ldapLoginCB)", login);
-        afb_session_cookie_get(hreq->comreq.session, oidcIdpProfilCookie,
-                               (void **)&profile);
+        profile = oidcSessionGetIdpProfile(hreq->comreq.session);
         if (!profile)
             goto OnErrorExit;
 

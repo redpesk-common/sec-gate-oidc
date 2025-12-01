@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015-2021 IoT.bzh Company
- * Author "Fulup Ar Foll"
+ * Copyright (C) 2015-2025 IoT.bzh Company
+ * Author <dev-team@iot.bzh>
  *
  * $RP_BEGIN_LICENSE$
  * Commercial License Usage
@@ -21,24 +21,25 @@
  * $RP_END_LICENSE$
  */
 
-#pragma once
+#define _GNU_SOURCE
 
-#include <json-c/json.h>
+#include "oidc-common.h"
+#include "oidc-alias.h"
+#include "oidc-idp.h"
+#include "oidc-fedid.h"
 
-#include "oidc-core.h"
+int oidcSessionGetLOA(afb_session *session);
+int oidcSessionSetLOA(afb_session *session, int LOA);
 
-typedef struct oidcAliasesS
-{
-    const char *uid;
-    const char *info;
-    int loa;
-    int priority;
-    const char *url;
-    const char *path;
-    const char **roles;
-    oidcCoreHdlT *oidc;
-    unsigned long tCache;
-} oidcAliasT;
+int oidcSessionGetExpiration(afb_session *session);
+int oidcSessionSetExpiration(afb_session *session, int expiration);
 
-oidcAliasT *aliasParseConfig(oidcCoreHdlT *oidc, json_object *aliasesJ);
-int aliasRegisterOne(oidcAliasT *alias, afb_hsrv *hsrv);
+const oidcAliasT *oidcSessionGetAlias(afb_session *session);
+int oidcSessionSetAlias(afb_session *session, const oidcAliasT *alias);
+
+const oidcProfileT *oidcSessionGetIdpProfile(afb_session *session);
+int oidcSessionSetIdpProfile(afb_session *session, const oidcProfileT *profile);
+
+fedidSessionT *oidcSessionGetFedId(afb_session *session);
+int oidcSessionSetFedId(afb_session *session, fedidSessionT *fedid);
+

@@ -45,6 +45,7 @@
 #include "oidc-core.h"
 #include "oidc-fedid.h"
 #include "oidc-idp.h"
+#include "oidc-session.h"
 #include "oidc-utils.h"
 
 // import idp authentication enum/label
@@ -407,9 +408,8 @@ static int oidcAccessToken(afb_hreq *hreq,
     rqtCtx->hreq = hreq;
     rqtCtx->idp = idp;
     rqtCtx->uuid = afb_session_uuid(hreq->comreq.session);
-    err = afb_session_cookie_get(hreq->comreq.session, oidcIdpProfilCookie,
-                                 (void **)&rqtCtx->profile);
-    if (err)
+    rqtCtx->profile = oidcSessionGetIdpProfile(hreq->comreq.session);
+    if (rqtCtx->profile == NULL)
         goto OnErrorExit;
 
     switch (idp->wellknown->authMethod) {
@@ -499,8 +499,7 @@ static int oidcLoginCB(afb_hreq *hreq, void *ctx)
     // check if wreq as a code
     const char *code = afb_hreq_get_argument(hreq, "code");
     const char *session = afb_session_uuid(hreq->comreq.session);
-    afb_session_cookie_get(hreq->comreq.session, oidcAliasCookie,
-                           (void **)&alias);
+    alias = oidcSessionGetAlias(hreq->comreq.session);
     if (alias)
         aliasLoa = alias->loa;
     else
@@ -534,8 +533,7 @@ static int oidcLoginCB(afb_hreq *hreq, void *ctx)
 
         // store working profile to retreive attached loa and role filter if
         // login succeeded
-        afb_session_cookie_set(hreq->comreq.session, oidcIdpProfilCookie,
-                               (void *)profile, NULL, NULL);
+        oidcSessionSetIdpProfile(hreq->comreq.session, profile);
 
         httpKeyValT query[] = {
             {.tag = "client_id", .value = idp->credentials->clientId},
@@ -589,7 +587,7 @@ static int oidcLogoutCB(afb_hreq *hreq, void *ctx)
 {
     oidcIdpT *idp = (oidcIdpT *)ctx;
     oidcSchemaT *schema = (oidcSchemaT *)idp->userData;
-    oidcProfileT *idpProfile;
+    const oidcProfileT *idpProfile;
     const char *sessionUid;
     struct afb_session *session;
     sidMapT *sidMap;
@@ -615,7 +613,7 @@ static int oidcLogoutCB(afb_hreq *hreq, void *ctx)
     session = afb_session_search(sessionUid);
     if (!session)
         goto OnErrorExit;
-    afb_session_cookie_get(session, oidcIdpProfilCookie, (void **)&idpProfile);
+    idpProfile = oidcSessionGetIdpProfile(hreq->comreq.session);
     fedidsessionReset(session, idpProfile);
 
     // remove sid from sidmap table

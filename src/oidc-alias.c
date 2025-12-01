@@ -42,8 +42,6 @@
 #include "oidc-session.h"
 
 // dummy unique value for session key
-MAGIC_OIDC_SESSION(oidcSessionCookie);
-MAGIC_OIDC_SESSION(oidcAliasCookie);
 
 // check if one of requested role exist within social cookie
 int aliasCheckAttrs(afb_session *session, oidcAliasT *alias)
@@ -83,12 +81,11 @@ static void aliasRedirectTimeout(afb_hreq *hreq, oidcAliasT *alias)
 {
     char url[EXT_URL_MAX_LEN];
     char redirectUrl[EXT_HEADER_MAX_LEN];
-    oidcProfileT *profile;
+    const oidcProfileT *profile;
     int err;
     afb_session *session = hreq->comreq.session;
 
-    afb_session_cookie_set(session, oidcAliasCookie, alias, NULL,
-                           NULL);
+    oidcSessionSetAlias(session, alias);
     profile = oidcSessionGetIdpProfile(session);
 
     // add afb-binder endpoint to login redirect alias
@@ -132,8 +129,7 @@ static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias)
     int err;
     char url[EXT_URL_MAX_LEN];
 
-    afb_session_cookie_set(hreq->comreq.session, oidcAliasCookie, alias, NULL,
-                           NULL);
+    oidcSessionSetAlias(hreq->comreq.session, alias);
 
     if (alias->oidc->globals->loginUrl) {
         httpKeyValT query[] = {
@@ -182,8 +178,7 @@ static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias)
             goto OnErrorExit;
 
         // keep track of selected idp profile
-        afb_session_cookie_set(hreq->comreq.session, oidcIdpProfilCookie,
-                               (void *)profile, NULL, NULL);
+        oidcSessionSetIdpProfile(hreq->comreq.session, profile);
     }
     EXT_DEBUG("[alias-redirect-login] %s (aliasRedirectLogin)", url);
     afb_hreq_redirect_to(hreq, url, HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
@@ -201,7 +196,7 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
 {
     oidcAliasT *alias = (oidcAliasT *)ctx;
     struct timespec tCurrent;
-    oidcProfileT *idpProfile;
+    const oidcProfileT *idpProfile;
     int sessionLoa, tStamp, tNow, err;
     afb_session *session;
 
@@ -220,16 +215,15 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
 
         // if tCache not expired use jump authent check
         clock_gettime(CLOCK_MONOTONIC, &tCurrent);
-        tStamp = afb_session_get_loa(hreq->comreq.session, oidcAliasCookie);
         tNow = (int)((tCurrent.tv_nsec / 1000000 + tCurrent.tv_sec * 1000) / 100);
+        tStamp = oidcSessionGetExpiration(session);
         if (tNow > tStamp) {
             EXT_NOTICE("session uuid=%s (aliasCheckLoaCB)",
                        afb_session_uuid(session));
 
-            // if LOA too weak redirect to authentication  //afb_session_close
-            // ()
-            sessionLoa =
-                afb_session_get_loa(hreq->comreq.session, oidcSessionCookie);
+            // if LOA too weak redirect to authentication
+            // afb_session_close()
+            sessionLoa = oidcSessionGetLOA(session);
             if (alias->loa > sessionLoa && sessionLoa != abs(alias->loa)) {
                 json_object *eventJ;
 
@@ -244,10 +238,8 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
 
                 // if current profile LOA is enough then fire same idp/profile
                 // authen
-                err = afb_session_cookie_get(hreq->comreq.session,
-                                             oidcIdpProfilCookie,
-                                             (void *)&idpProfile);
-                if (!err && (idpProfile->loa >= alias->loa ||
+                idpProfile = oidcSessionGetIdpProfile(session);
+                if (idpProfile != NULL && (idpProfile->loa >= alias->loa ||
                              idpProfile->loa == abs(alias->loa))) {
                     aliasRedirectTimeout(hreq, alias);
                 }
@@ -266,7 +258,7 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
             }
             // store a timestamp to cache authentication validation
             tStamp = (int)(tNow + alias->tCache / 100);
-            afb_session_set_loa(hreq->comreq.session, oidcAliasCookie, tStamp);
+            oidcSessionSetExpiration(session, tStamp);
         }
     }
     // change hreq bearer

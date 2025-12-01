@@ -37,6 +37,7 @@
 #include "oidc-fedid.h"
 #include "oidc-idp.h"
 #include "oidc-idsvc.h"
+#include "oidc-session.h"
 
 MAGIC_OIDC_SESSION(idsvcEvtCookie);
 MAGIC_OIDC_SESSION(oidcFedLinkCookie);
@@ -138,9 +139,9 @@ static json_object *idpQueryList(afb_req_t wreq, const char **idps)
         goto OnErrorExit;
 
     // retrieve oidc config from current alias cookie
-    oidcAliasT *alias;
+    const oidcAliasT *alias;
     afb_session *session = afb_req_v4_get_common(wreq)->session;
-    afb_session_cookie_get(session, oidcAliasCookie, (void **)&alias);
+    alias = oidcSessionGetAlias(session);
 
     // build IDP list with corresponding scope for requested LOA
     idpsJ = idpLoaProfilsGet(oidc, 0, idps, 1);
@@ -231,10 +232,10 @@ static void idpQueryUser(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     }
     else {
         // if no idps list provided build one from config
-        oidcProfileT *profile;
+        const oidcProfileT *profile;
         const char *idps[MAX_OIDC_IDPS + 1];
         int index = 0;
-        afb_session_cookie_get(session, oidcIdpProfilCookie, (void **)&profile);
+        profile = oidcSessionGetIdpProfile(session);
         for (int idx = 0; profile->idp->oidc->idps[idx].uid; idx++) {
             if (index == MAX_OIDC_IDPS) {
                 EXT_ERROR(
@@ -274,8 +275,8 @@ static void userRegisterCB(void *ctx,
 {
     char *errorMsg = "[user-create-fail]  (idsvcuserRegisterCB)";
     afb_data_t reply[1], argd[2];
-    oidcProfileT *profile;
-    oidcAliasT *alias;
+    const oidcProfileT *profile;
+    const oidcAliasT *alias;
     json_object *aliasJ;
     afb_session *session = afb_req_v4_get_common(wreq)->session;
 
@@ -284,9 +285,9 @@ static void userRegisterCB(void *ctx,
         goto OnErrorExit;
 
     // return destination alias
-    afb_session_cookie_get(session, oidcIdpProfilCookie, (void **)&profile);
-    afb_session_set_loa(session, oidcSessionCookie, profile->loa);
-    afb_session_cookie_get(session, oidcAliasCookie, (void **)&alias);
+    profile = oidcSessionGetIdpProfile(session);
+    oidcSessionSetLOA(session, profile->loa);
+    alias = oidcSessionGetAlias(session);
     rp_jsonc_pack(&aliasJ, "{ss}", "target", alias->url ?: "/");
     afb_create_data_raw(&reply[0], AFB_PREDEFINED_TYPE_JSON_C, aliasJ, 0,
                         (void *)json_object_put, aliasJ);
@@ -321,7 +322,7 @@ static void userRegister(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 
     // retrieve current wreq LOA from session (to be fixed by Jose)
     afb_session *session = afb_req_v4_get_common(wreq)->session;
-    afb_session_cookie_get(session, oidcIdpProfilCookie, (void **)&profile);
+    profile = oidcSessionGetIdpProfile(session);
     if (!profile)
         goto OnErrorExit2;
 
@@ -360,7 +361,7 @@ static void userFederateCB(void *ctx,
     fedUserRawT *fedUser = (fedUserRawT *)ctx;
     fedidLinkT *fedBackup;
     afb_data_t reply[1];
-    oidcProfileT *profile;
+    const oidcProfileT *profile;
     oidcAliasT *alias;
     json_object *responseJ;
     int err;
@@ -370,7 +371,7 @@ static void userFederateCB(void *ctx,
 
     // get used IDP profile to access oidc wellknown urls
     afb_session *session = afb_req_v4_get_common(wreq)->session;
-    afb_session_cookie_get(session, oidcIdpProfilCookie, (void **)&profile);
+    profile = oidcSessionGetIdpProfile(session);
     if (!profile)
         goto OnErrorExit;
 
@@ -441,7 +442,7 @@ static void sessionReset(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     const oidcProfileT *profile;
     afb_data_t reply;
 
-    afb_session_cookie_get(session, oidcIdpProfilCookie, (void **)&profile);
+    profile = oidcSessionGetIdpProfile(session);
     if (!profile)
         goto OnErrorExit;
 
@@ -474,7 +475,7 @@ static void sessionGet(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 
     // retrieve current wreq LOA from session (to be fixed by Jose)
     afb_session *session = afb_req_v4_get_common(wreq)->session;
-    afb_session_cookie_get(session, oidcIdpProfilCookie, (void **)&profile);
+    profile = oidcSessionGetIdpProfile(session);
     if (!profile)
         goto OnErrorExit;
 
@@ -576,7 +577,7 @@ static void idpQueryConf(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     int err;
     afb_data_t reply;
     json_object *idpsJ, *responseJ, *aliasJ;
-    oidcAliasT *alias;
+    const oidcAliasT *alias;
 
     // retrieve OIDC global context from API handle
     oidcCoreHdlT *oidc = afb_api_get_userdata(afb_req_get_api(wreq));
@@ -585,7 +586,7 @@ static void idpQueryConf(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 
     // retrieve current wreq LOA from session (to be fixed by Jose)
     afb_session *session = afb_req_v4_get_common(wreq)->session;
-    afb_session_cookie_get(session, oidcAliasCookie, (void **)&alias);
+    alias = oidcSessionGetAlias(session);
 
     // build IDP list with corresponding scope for requested LOA
     if (alias) {

@@ -36,6 +36,7 @@
 #include "oidc-apis.h"
 #include "oidc-core.h"
 #include "oidc-defaults.h"
+#include "oidc-session.h"
 
 int apisCreateSvc(oidcCoreHdlT *oidc,
                   oidcApisT *apiSvc,
@@ -83,7 +84,7 @@ OnErrorExit:
 static void on_protected_api_request(void *closure, struct afb_req_common *req)
 {
     oidcApisT *api = (oidcApisT *)closure;
-    int session_loa = afb_session_get_loa(req->session, oidcSessionCookie);
+    int session_loa = oidcSessionGetLOA(req->session);
 
     if (session_loa < api->loa) {
         // insufficient LOA

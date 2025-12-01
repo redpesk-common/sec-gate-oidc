@@ -35,6 +35,7 @@
 #include "oidc-core.h"
 #include "oidc-fedid.h"
 #include "oidc-idp.h"
+#include "oidc-session.h"
 
 #include <assert.h>
 #include <locale.h>
@@ -296,9 +297,8 @@ static int githubAccessToken(afb_hreq *hreq,
     // afb_hreq_addref (hreq); // prevent automatic href liberation
     rqtCtx->hreq = hreq;
     rqtCtx->idp = idp;
-    err = afb_session_cookie_get(hreq->comreq.session, oidcIdpProfilCookie,
-                                 (void **)&rqtCtx->profile);
-    if (err)
+    rqtCtx->profile = oidcSessionGetIdpProfile(hreq->comreq.session);
+    if (rqtCtx->profile == NULL)
         goto OnErrorExit;
 
     // send asynchronous post wreq with params in query //
@@ -335,8 +335,7 @@ static int githubLoginCB(afb_hreq *hreq, void *ctx)
     // check if wreq as a code
     const char *code = afb_hreq_get_argument(hreq, "code");
     const char *session = afb_session_uuid(hreq->comreq.session);
-    afb_session_cookie_get(hreq->comreq.session, oidcAliasCookie,
-                           (void **)&alias);
+    alias = oidcSessionGetAlias(hreq->comreq.session);
     if (alias)
         aliasLoa = alias->loa;
     else
@@ -370,8 +369,7 @@ static int githubLoginCB(afb_hreq *hreq, void *ctx)
 
         // store working profile to retreive attached loa and role filter if
         // login succeded
-        afb_session_cookie_set(hreq->comreq.session, oidcIdpProfilCookie,
-                               (void *)profile, NULL, NULL);
+        oidcSessionSetIdpProfile(hreq->comreq.session, profile);
 
         httpKeyValT query[] = {
             {.tag = "client_id", .value = idp->credentials->clientId},

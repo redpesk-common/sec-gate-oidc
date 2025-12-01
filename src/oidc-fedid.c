@@ -36,6 +36,7 @@
 #include "oidc-core.h"
 #include "oidc-fedid.h"
 #include "oidc-idsvc.h"
+#include "oidc-session.h"
 #include "oidc-utils.h"
 
 MAGIC_OIDC_SESSION(oidcFedUserCookie);
@@ -64,8 +65,8 @@ void fedidsessionReset(afb_session *session, const oidcProfileT *idpProfile)
     int count = -1;
 
     // reset session and alias LOA (this will force authentication)
-    afb_session_set_loa(session, oidcSessionCookie, 0);
-    afb_session_set_loa(session, oidcAliasCookie, 0);
+    oidcSessionSetLOA(session, 0);
+    oidcSessionSetExpiration(session, 0);
     EXT_DEBUG("[fedid-session-reset] logout/timeout session uuid=%s ?",
               afb_session_uuid(session));
 
@@ -97,12 +98,12 @@ void fedidsessionReset(afb_session *session, const oidcProfileT *idpProfile)
 static void fedidTimerCB(int signal, void *ctx)
 {
     afb_session *session = (afb_session *)ctx;
-    oidcProfileT *idpProfile;
+    const oidcProfileT *idpProfile;
 
     // signal should be null
     if (signal)
         return;
-    afb_session_cookie_get(session, oidcIdpProfilCookie, (void **)&idpProfile);
+    idpProfile = oidcSessionGetIdpProfile(session);
     fedidsessionReset(session, idpProfile);
 }
 
@@ -121,8 +122,8 @@ static void fedidCheckCB(void *ctx,
     const char *target;
     afb_data_x4_t reply[1], argd[argc];
     fedUserRawT *fedUser;
-    oidcProfileT *idpProfile;
-    oidcAliasT *alias;
+    const oidcProfileT *idpProfile;
+    const oidcAliasT *alias;
     afb_session *session = NULL;
     const char *redirect;
     afb_hreq *hreq = NULL;
@@ -149,11 +150,11 @@ static void fedidCheckCB(void *ctx,
         goto OnErrorExit;
     }
     // user try to login if loa set then reset session
-    int sessionLoa = afb_session_get_loa(session, oidcSessionCookie);
+    int sessionLoa = oidcSessionGetLOA(session);
     if (sessionLoa)
         fedidsessionReset(session, NULL);
 
-    afb_session_cookie_get(session, oidcIdpProfilCookie, (void **)&idpProfile);
+    idpProfile = oidcSessionGetIdpProfile(session);
     if (argc != 1) {  // fedid is not registered and we are not facing a
                       // secondary authentication
         const char *targetUrl;
@@ -243,9 +244,8 @@ static void fedidCheckCB(void *ctx,
                                idpRqtCtx->fedSocial);
 
         // everyting looks good let's return user to original page
-        afb_session_cookie_get(session, oidcIdpProfilCookie,
-                               (void **)&idpProfile);
-        afb_session_cookie_get(session, oidcAliasCookie, (void **)&alias);
+        idpProfile = oidcSessionGetIdpProfile(session);
+        alias = oidcSessionGetAlias(session);
 
         err = httpBuildQuery(idpRqtCtx->idp->uid, url, sizeof(url),
                              NULL /* prefix */, alias->url, NULL);
@@ -268,17 +268,14 @@ static void fedidCheckCB(void *ctx,
 
         // if idp session as a timeout start a rtimer
         if (idpProfile->sTimeout) {
-            fedidSessionT *fedSession;
-            afb_session_cookie_get(session, oidcSessionCookie,
-                                   (void **)&fedSession);
+            fedidSessionT *fedSession = oidcSessionGetFedId(session);
             if (fedSession && fedSession->timerId) {
                 afb_jobs_abort(fedSession->timerId);
                 fedSession->timerId = 0;
             }
             else {
                 fedSession = calloc(1, sizeof(fedSession));
-                afb_session_cookie_set(session, oidcSessionCookie,
-                                       (void *)fedSession, NULL, NULL);
+                oidcSessionSetFedId(session, fedSession);
             }
 
 #if LIBAFB_BEFORE_VERSION(4, 0, 4)
@@ -299,7 +296,7 @@ static void fedidCheckCB(void *ctx,
             }
         }
         // user successfully loggin set session loa to current idp login profile
-        afb_session_set_loa(session, oidcSessionCookie, idpProfile->loa);
+        oidcSessionSetLOA(session, idpProfile->loa);
 
         // if idp request get userdata keep track of them (needed by pcscd to
         // kill monitoring thread)

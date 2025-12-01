@@ -31,8 +31,6 @@
 #include "oidc-core.h"
 #include "oidc-defaults.h"
 
-extern void *oidcIdpProfilCookie;
-
 typedef struct oidcIdpS oidcIdpT;
 
 typedef enum {
@@ -72,7 +70,7 @@ typedef struct
     const char *secret;
 } oidcCredentialsT;
 
-typedef struct
+typedef struct oidcProfileS
 {
     const char *uid;
     const char *info;

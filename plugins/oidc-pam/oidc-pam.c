@@ -36,6 +36,7 @@
 #include "oidc-core.h"
 #include "oidc-fedid.h"
 #include "oidc-idp.h"
+#include "oidc-session.h"
 
 // keep track of oidc-idp.c generic utils callbacks
 static idpGenericCbT *idpCallbacks = NULL;
@@ -199,7 +200,7 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
     if (!state || strcmp(state, afb_session_uuid(session)))
         goto OnErrorExit;
 
-    afb_session_cookie_get(session, oidcAliasCookie, (void **)&alias);
+    alias = oidcSessionGetAlias(session);
     if (alias)
         aliasLoa = alias->loa;
     else
@@ -269,8 +270,7 @@ int pamLoginCB(afb_hreq *hreq, void *ctx)
     const char *passwd = afb_hreq_get_argument(hreq, "passwd");
     const char *scope = afb_hreq_get_argument(hreq, "scope");
 
-    afb_session_cookie_get(hreq->comreq.session, oidcAliasCookie,
-                           (void **)&alias);
+    alias = oidcSessionGetAlias(hreq->comreq.session);
     if (alias)
         aliasLoa = alias->loa;
     else
@@ -312,8 +312,7 @@ int pamLoginCB(afb_hreq *hreq, void *ctx)
 
         // store working profile to retreive attached loa and role filter if
         // login succeded
-        afb_session_cookie_set(hreq->comreq.session, oidcIdpProfilCookie,
-                               (void *)profile, NULL, NULL);
+        oidcSessionSetIdpProfile(hreq->comreq.session, profile);
 
         // build wreq and send it
         err = httpBuildQuery(idp->uid, url, sizeof(url), NULL /* prefix */,
@@ -332,8 +331,7 @@ int pamLoginCB(afb_hreq *hreq, void *ctx)
             goto OnErrorExit;
 
         EXT_DEBUG("[pam-auth-code] login=%s (pamLoginCB)", login);
-        afb_session_cookie_get(hreq->comreq.session, oidcIdpProfilCookie,
-                               (void **)&profile);
+        profile = oidcSessionGetIdpProfile(hreq->comreq.session);
         if (!profile)
             goto OnErrorExit;
 
