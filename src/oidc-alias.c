@@ -29,12 +29,12 @@
 #include <time.h>
 
 #include <rp-utils/rp-jsonc.h>
+#include <rp-utils/rp-escape.h>
 
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
 #include <libafb/afb-v4.h>
 
-#include "curl-glue.h"
 #include "oidc-alias.h"
 #include "oidc-core.h"
 #include "oidc-fedid.h"
@@ -94,20 +94,17 @@ static void aliasRedirectTimeout(afb_hreq *hreq, oidcAliasT *alias)
     if (err < 0)
         goto OnErrorExit;
 
-    httpKeyValT query[] = {
-        {.tag = "client_id", .value = profile->idp->credentials->clientId},
-        {.tag = "response_type",
-         .value = profile->idp->wellknown->respondLabel},
-        {.tag = "state", .value = afb_session_uuid(session)},
-        {.tag = "scope", .value = profile->scope},
-        {.tag = "redirect_uri", .value = redirectUrl},
-        {.tag = "language", .value = setlocale(LC_CTYPE, "")},
-        {NULL}  // terminator
-    };
+    const char *params[] = {
+        "client_id", profile->idp->credentials->clientId,
+        "response_type", profile->idp->wellknown->respondLabel,
+        "state", afb_session_uuid(session),
+        "scope", profile->scope,
+        "redirect_uri", redirectUrl,
+        "language", setlocale(LC_CTYPE, ""),
+        NULL };
+    size_t sz = rp_escape_url_to(NULL, profile->idp->statics->aliasLogin, params, url, sizeof url);
 
-    err = httpBuildQuery(alias->uid, url, sizeof(url), NULL /* prefix */,
-                         profile->idp->statics->aliasLogin, query);
-    if (err) {
+    if (sz >= sizeof url) {
         EXT_ERROR(
             "[fail-login-redirect] fail to build redirect url "
             "(aliasRedirectLogin)");
@@ -132,14 +129,11 @@ static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias)
     oidcSessionSetAlias(hreq->comreq.session, alias);
 
     if (alias->oidc->globals->loginUrl) {
-        httpKeyValT query[] = {
-            {.tag = "language", .value = setlocale(LC_CTYPE, "")},
-            {NULL}  // terminator
-        };
-
-        err = httpBuildQuery(alias->uid, url, sizeof(url), NULL /* prefix */,
-                             alias->oidc->globals->loginUrl, query);
-        if (err) {
+        const char *params[] = {
+            "language", setlocale(LC_CTYPE, ""),
+            NULL };
+        size_t sz = rp_escape_url_to(NULL, alias->oidc->globals->loginUrl, params, url, sizeof url);
+        if (sz >= sizeof url) {
             EXT_ERROR(
                 "[fail-login-redirect] fail to build redirect url "
                 "(aliasRedirectLogin)");
@@ -152,7 +146,7 @@ static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias)
         int status;
         oidcIdpT *idp = &alias->oidc->idps[0];
         const oidcProfileT *profile = &idp->profiles[0];
-        const char *session = afb_session_uuid(hreq->comreq.session);
+        const char *uuid = afb_session_uuid(hreq->comreq.session);
         char redirectUrl[EXT_HEADER_MAX_LEN];
 
         status = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin,
@@ -160,22 +154,24 @@ static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias)
         if (status < 0)
             goto OnErrorExit;
 
-        httpKeyValT query[] = {
-            {.tag = "client_id", .value = idp->credentials->clientId},
-            {.tag = "response_type", .value = idp->wellknown->respondLabel},
-            {.tag = "state", .value = session},
-            {.tag = "nonce", .value = session},
-            {.tag = "scope", .value = profile->scope},
-            {.tag = "redirect_uri", .value = redirectUrl},
-            {.tag = "language", .value = setlocale(LC_CTYPE, "")},
-            {NULL}  // terminator
-        };
+        const char *params[] = {
+            "client_id", idp->credentials->clientId,
+            "response_type", idp->wellknown->respondLabel,
+            "state", uuid,
+            "nonce", uuid,
+            "scope", profile->scope,
+            "redirect_uri", redirectUrl,
+            "language", setlocale(LC_CTYPE, ""),
+            NULL };
 
         // build wreq and send it
-        err = httpBuildQuery(idp->uid, url, sizeof(url), NULL /* prefix */,
-                             idp->wellknown->authorize, query);
-        if (err)
+        size_t sz = rp_escape_url_to(NULL, idp->wellknown->authorize, params, url, sizeof url);
+        if (sz >= sizeof url) {
+            EXT_ERROR(
+                "[fail-login-redirect] fail to build redirect url "
+                "(aliasRedirectLogin)");
             goto OnErrorExit;
+        }
 
         // keep track of selected idp profile
         oidcSessionSetIdpProfile(hreq->comreq.session, profile);
