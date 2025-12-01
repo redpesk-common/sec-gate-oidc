@@ -39,6 +39,7 @@
 #include "oidc-core.h"
 #include "oidc-fedid.h"
 #include "oidc-idsvc.h"
+#include "oidc-session.h"
 
 // dummy unique value for session key
 MAGIC_OIDC_SESSION(oidcSessionCookie);
@@ -80,27 +81,27 @@ OnErrorExit:
 // create aliasFrom cookie and redirect to idp profile page
 static void aliasRedirectTimeout(afb_hreq *hreq, oidcAliasT *alias)
 {
+    char url[EXT_URL_MAX_LEN];
+    char redirectUrl[EXT_HEADER_MAX_LEN];
     oidcProfileT *profile;
     int err;
+    afb_session *session = hreq->comreq.session;
 
-    afb_session_cookie_set(hreq->comreq.session, oidcAliasCookie, alias, NULL,
+    afb_session_cookie_set(session, oidcAliasCookie, alias, NULL,
                            NULL);
-    afb_session_cookie_get(hreq->comreq.session, oidcIdpProfilCookie,
-                           (void **)&profile);
+    profile = oidcSessionGetIdpProfile(session);
 
     // add afb-binder endpoint to login redirect alias
-    char redirectUrl[EXT_HEADER_MAX_LEN];
     err = afb_hreq_make_here_url(hreq, profile->idp->statics->aliasLogin,
                                  redirectUrl, sizeof(redirectUrl));
     if (err < 0)
         goto OnErrorExit;
 
-    char url[EXT_URL_MAX_LEN];
     httpKeyValT query[] = {
         {.tag = "client_id", .value = profile->idp->credentials->clientId},
         {.tag = "response_type",
          .value = profile->idp->wellknown->respondLabel},
-        {.tag = "state", .value = afb_session_uuid(hreq->comreq.session)},
+        {.tag = "state", .value = afb_session_uuid(session)},
         {.tag = "scope", .value = profile->scope},
         {.tag = "redirect_uri", .value = redirectUrl},
         {.tag = "language", .value = setlocale(LC_CTYPE, "")},
@@ -193,30 +194,37 @@ OnErrorExit:
                          HREQ_REDIR_TMPY);
 }
 
+/**
+ * check that the client has the required LOA
+ */
 static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
 {
     oidcAliasT *alias = (oidcAliasT *)ctx;
     struct timespec tCurrent;
     oidcProfileT *idpProfile;
     int sessionLoa, tStamp, tNow, err;
+    afb_session *session;
 
     if (alias->loa) {
+        // get session of the request
+        session = hreq->comreq.session;
+
         // in case session create failed
-        if (!hreq->comreq.session) {
+        if (session == NULL) {
             EXT_ERROR(
                 "[fail-hreq-session] fail to initialise hreq session "
                 "(aliasCheckLoaCB)");
             afb_hreq_reply_error(hreq, EXT_HTTP_CONFLICT);
             goto OnRedirectExit;
         }
+
         // if tCache not expired use jump authent check
         clock_gettime(CLOCK_MONOTONIC, &tCurrent);
-        tNow = (int)((tCurrent.tv_nsec) / 1000000 + (tCurrent.tv_sec) * 1000) /
-               100;
         tStamp = afb_session_get_loa(hreq->comreq.session, oidcAliasCookie);
+        tNow = (int)((tCurrent.tv_nsec / 1000000 + tCurrent.tv_sec * 1000) / 100);
         if (tNow > tStamp) {
             EXT_NOTICE("session uuid=%s (aliasCheckLoaCB)",
-                       afb_session_uuid(hreq->comreq.session));
+                       afb_session_uuid(session));
 
             // if LOA too weak redirect to authentication  //afb_session_close
             // ()
@@ -232,7 +240,7 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
 
                 // try to push event to notify the access deny and replay with
                 // redirect to login
-                idscvPushEvent(hreq->comreq.session, eventJ);
+                idscvPushEvent(session, eventJ);
 
                 // if current profile LOA is enough then fire same idp/profile
                 // authen
@@ -250,13 +258,13 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
             }
 
             if (alias->roles) {
-                int err = aliasCheckAttrs(hreq->comreq.session, alias);
+                err = aliasCheckAttrs(session, alias);
                 if (err) {
                     aliasRedirectLogin(hreq, alias);
                     goto OnRedirectExit;
                 }
             }
-            // store a sampstamp to cache authentication validation
+            // store a timestamp to cache authentication validation
             tStamp = (int)(tNow + alias->tCache / 100);
             afb_session_set_loa(hreq->comreq.session, oidcAliasCookie, tStamp);
         }
@@ -269,17 +277,14 @@ OnRedirectExit:
     return 1;  // we're done stop scanning alias callback
 }
 
+/**
+ * Register one alias, described by 'alias', to the HTTP server 'hsrv'
+ */
 int aliasRegisterOne(oidcAliasT *alias, afb_hsrv *hsrv)
 {
     const char *rootdir;
     int status;
 
-    if (alias->loa) {
-        status = afb_hsrv_add_handler(hsrv, alias->url, aliasCheckLoaCB, alias,
-                                      alias->priority);
-        if (status != AFB_HSRV_OK)
-            goto OnErrorExit;
-    }
     // if alias full path does not start with '/' then prefix it with
     // http_root_dir
     if (alias->path[0] == '/')
@@ -287,6 +292,15 @@ int aliasRegisterOne(oidcAliasT *alias, afb_hsrv *hsrv)
     else
         rootdir = afb_common_rootdir_get_path();
 
+    // insert LOA checking if required
+    if (alias->loa) {
+        status = afb_hsrv_add_handler(hsrv, alias->url, aliasCheckLoaCB, alias,
+                                      alias->priority);
+        if (status != AFB_HSRV_OK)
+            goto OnErrorExit;
+    }
+
+    // add with lower priority the redirection
     status = afb_hsrv_add_alias_path(hsrv, alias->url, rootdir, alias->path,
                                      alias->priority - 1, 0 /*not relax */);
     if (status != AFB_HSRV_OK)
@@ -304,6 +318,16 @@ OnErrorExit:
     return 1;
 }
 
+/**
+ * extract from aliasJ the struct oidcAliasT
+ * alias recording the alias
+ *
+ * @param oidc the main structure
+ * @param aliasJ the json object configuration
+ * @param alias the struct to fill
+ *
+ * @return 0 on success or else not zero for error
+ */
 static int idpParseOneAlias(oidcCoreHdlT *oidc,
                             json_object *aliasJ,
                             oidcAliasT *alias)
@@ -312,6 +336,7 @@ static int idpParseOneAlias(oidcCoreHdlT *oidc,
 
     // set tCache default
     alias->tCache = oidc->globals->tCache;
+    alias->oidc = oidc;
 
     int err = rp_jsonc_unpack(aliasJ, "{ss,s?s,s?s,s?s,s?i,s?i,s?i,s?o}", "uid",
                               &alias->uid, "info", &alias->info, "url",
@@ -325,12 +350,14 @@ static int idpParseOneAlias(oidcCoreHdlT *oidc,
             oidc->uid);
         goto OnErrorExit;
     }
+
     // provide some defaults value based on uid
     if (!alias->url)
         asprintf((char **)&alias->url, "/%s", alias->uid);
     if (!alias->path)
         asprintf((char **)&alias->path, "$ROOTDIR/%s", alias->uid);
 
+    // handle required roles
     if (requirerJ) {
         const char **roles;
         int count;
@@ -338,6 +365,8 @@ static int idpParseOneAlias(oidcCoreHdlT *oidc,
         case json_type_array:
             count = (int)json_object_array_length(requirerJ);
             roles = calloc(count + 1, sizeof(char *));
+            if (roles == NULL)
+                goto OnErrorExit;
 
             for (int idx = 0; idx < count; idx++) {
                 json_object *roleJ = json_object_array_get_idx(requirerJ, idx);
@@ -347,6 +376,9 @@ static int idpParseOneAlias(oidcCoreHdlT *oidc,
 
         case json_type_object:
             roles = calloc(2, sizeof(char *));
+            if (roles == NULL)
+                goto OnErrorExit;
+
             roles[0] = json_object_get_string(requirerJ);
             break;
 
@@ -359,26 +391,36 @@ static int idpParseOneAlias(oidcCoreHdlT *oidc,
         }
         alias->roles = roles;
     }
-    alias->oidc = oidc;
     return 0;
 
 OnErrorExit:
     return 1;
 }
 
+/**
+ * extract from aliasesJ the array of structs oidcAliasT
+ * recording aliases
+ *
+ * @param oidc the main structure
+ * @param aliasesJ the json object configuration
+ *
+ * @return NULL on error or the array of aliases
+ */
 oidcAliasT *aliasParseConfig(oidcCoreHdlT *oidc, json_object *aliasesJ)
 {
-    oidcAliasT *aliases;
-    int err;
+    oidcAliasT *aliases = NULL;
+    int err, count, idx;
 
     switch (json_object_get_type(aliasesJ)) {
-        int count;
 
     case json_type_array:
+        /* extract array of aliases */
         count = (int)json_object_array_length(aliasesJ);
         aliases = calloc(count + 1, sizeof(oidcAliasT));
+        if (aliases == NULL)
+                goto OnErrorExit;
 
-        for (int idx = 0; idx < count; idx++) {
+        for (idx = 0; idx < count; idx++) {
             json_object *aliasJ = json_object_array_get_idx(aliasesJ, idx);
             err = idpParseOneAlias(oidc, aliasJ, &aliases[idx]);
             if (err)
@@ -387,7 +429,10 @@ oidcAliasT *aliasParseConfig(oidcCoreHdlT *oidc, json_object *aliasesJ)
         break;
 
     case json_type_object:
+        /* extract single alias */
         aliases = calloc(2, sizeof(oidcAliasT));
+        if (aliases == NULL)
+                goto OnErrorExit;
         err = idpParseOneAlias(oidc, aliasesJ, &aliases[0]);
         if (err)
             goto OnErrorExit;
