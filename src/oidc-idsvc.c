@@ -40,7 +40,8 @@
 #include "oidc-session.h"
 
 MAGIC_OIDC_SESSION(idsvcEvtCookie);
-MAGIC_OIDC_SESSION(oidcFedLinkCookie);
+
+static void *oidcFedLinkCookie = &oidcFedLinkCookie;
 
 typedef struct
 {
@@ -48,12 +49,12 @@ typedef struct
     char *email;
 } fedidLinkT;
 
-static void fedBackupFreeCB(void *ctx)
+static void fedLinkFreeCB(void *ctx)
 {
-    fedidLinkT *backup = (fedidLinkT *)ctx;
-    free(backup->pseudo);
-    free(backup->email);
-    free(backup);
+    fedidLinkT *fedlink = (fedidLinkT *)ctx;
+    free(fedlink->pseudo);
+    free(fedlink->email);
+    free(fedlink);
 }
 
 static void idsvcPing(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
@@ -212,18 +213,18 @@ static void idpQueryUser(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
         "[idp-query-user] federated user unknown within DB (idpQueryUser) ";
 
     int err;
-    fedidLinkT *fedBackup = NULL;
+    fedidLinkT *fedlink = NULL;
     json_object *queryJ;
     afb_data_t query, reply;
 
     // get current social data for further account linking
     afb_session *session = afb_req_v4_get_common(wreq)->session;
-    afb_session_cookie_get(session, oidcFedLinkCookie, (void **)&fedBackup);
+    afb_session_cookie_get(session, oidcFedLinkCookie, (void **)&fedlink);
 
     // if not a slave IDP then use email/pseudo to get IDP list
-    if (fedBackup) {
-        rp_jsonc_pack(&queryJ, "{ss ss}", "email", fedBackup->email, "pseudo",
-                      fedBackup->pseudo);
+    if (fedlink) {
+        rp_jsonc_pack(&queryJ, "{ss ss}", "email", fedlink->email, "pseudo",
+                      fedlink->pseudo);
         afb_create_data_raw(&query, AFB_PREDEFINED_TYPE_JSON_C, queryJ, 0,
                             (void *)json_object_put, queryJ);
         afb_req_subcall(wreq, API_OIDC_USR_SVC, "social-idps", 1, &query,
@@ -359,7 +360,7 @@ static void userFederateCB(void *ctx,
     static char errorMsg[] =
         "[user-federate-unavailable] should try user-register (userFederateCB)";
     fedUserRawT *fedUser = (fedUserRawT *)ctx;
-    fedidLinkT *fedBackup;
+    fedidLinkT *fedlink;
     afb_data_t reply[1];
     const oidcProfileT *profile;
     oidcAliasT *alias;
@@ -377,11 +378,11 @@ static void userFederateCB(void *ctx,
 
     // copy current user social and registration data for further federation
     // request
-    fedBackup = malloc(sizeof(fedSocialRawT));
-    fedBackup->pseudo = strdup(fedUser->pseudo);
-    fedBackup->email = strdup(fedUser->email);
-    afb_session_cookie_set(session, oidcFedLinkCookie, (void *)fedBackup,
-                           fedBackupFreeCB, fedBackup);
+    fedlink = malloc(sizeof(fedSocialRawT));
+    fedlink->pseudo = strdup(fedUser->pseudo);
+    fedlink->email = strdup(fedUser->email);
+    afb_session_cookie_set(session, oidcFedLinkCookie, (void *)fedlink,
+                           fedLinkFreeCB, fedlink);
 
     // force federation mode within fedidCheckCB
     afb_session_set_loa(session, oidcFedSocialCookie, FEDID_LINK_REQUESTED);
