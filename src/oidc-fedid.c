@@ -155,17 +155,19 @@ static void fedidCheckCB(void *ctx,
         EXT_DEBUG("[fedid-register-fail] session missing");
         goto OnErrorExit;
     }
+
     // user try to login if loa set then reset session
     int sessionLoa = oidcSessionGetLOA(session);
     if (sessionLoa)
         fedidsessionReset(session, NULL);
 
     idpProfile = oidcSessionGetIdpProfile(session);
+
     if (argc != 1) {  // fedid is not registered and we are not facing a
                       // secondary authentication
         const char *targetUrl;
 
-        // fedkey not fount let's store social authority profile into session
+        // fedkey not found let's store social authority profile into session
         // and redirect user on userprofil creation
         afb_session_cookie_set(session, oidcFedUserCookie, idpRqtCtx->fedUser,
                                (void *)fedUserFree, idpRqtCtx->fedUser);
@@ -358,3 +360,23 @@ int fedidCheck(idpRqtCtxT *idpRqtCtx)
 OnErrorExit:
     return -1;
 }
+
+// check if an attribute equal to value exists in the session
+// return 1 if that is the case
+// return 0 if none matches
+int fedidsessionHasAttribute(afb_session *session, const char *value)
+{
+    fedSocialRawT *fedSocial = NULL;
+    int rc = afb_session_cookie_get(session, oidcFedSocialCookie, (void **)&fedSocial);
+    if (rc >= 0 && fedSocial != NULL) {
+        const char **attrs = fedSocial->attrs;
+        if (attrs != NULL) {
+            for (; *attrs != NULL; attrs++) {
+                if (!strcasecmp(value, *attrs))
+                    return 1;
+            }
+        }
+    }
+    return 0;
+}
+

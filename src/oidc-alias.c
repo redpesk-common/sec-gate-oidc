@@ -44,35 +44,16 @@
 // dummy unique value for session key
 
 // check if one of requested role exist within social cookie
+// return 0 if that is the case
+// return 1 if none matches
 int aliasCheckAttrs(afb_session *session, oidcAliasT *alias)
 {
-    fedSocialRawT *fedSocial;
-    int err, requestCount = 0, matchCount = 0;
-
-    // search within profile if we have the right role
-    err = afb_session_cookie_get(session, oidcFedSocialCookie,
-                                 (void **)&fedSocial);
-    if (err < 0)
-        goto OnErrorExit;
-
-    // this should be replaced by Cynagora request
-    for (int idx = 0; alias->roles[idx]; idx++) {
-        requestCount++;
-        if (fedSocial->attrs)
-            for (int jdx = 0; fedSocial->attrs[jdx]; jdx++) {
-                if (!strcasecmp(alias->roles[idx], fedSocial->attrs[jdx])) {
-                    matchCount++;
-                    break;
-                }
-            }
-        if (matchCount)
-            break;
+    const char **roles = alias->roles;
+    while(*roles) {
+        if (fedidsessionHasAttribute(session, *roles))
+            return 0;
+        roles++;
     }
-    if (!matchCount)
-        goto OnErrorExit;
-    return 0;
-
-OnErrorExit:
     return 1;
 };
 
@@ -102,8 +83,8 @@ static void aliasRedirectTimeout(afb_hreq *hreq, oidcAliasT *alias)
         "redirect_uri", redirectUrl,
         "language", setlocale(LC_CTYPE, ""),
         NULL };
-    size_t sz = rp_escape_url_to(NULL, profile->idp->statics->aliasLogin, params, url, sizeof url);
 
+    size_t sz = rp_escape_url_to(NULL, profile->idp->statics->aliasLogin, params, url, sizeof url);
     if (sz >= sizeof url) {
         EXT_ERROR(
             "[fail-login-redirect] fail to build redirect url "
