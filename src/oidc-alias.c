@@ -220,7 +220,7 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
             // if LOA too weak redirect to authentication
             // afb_session_close()
             sessionLoa = oidcSessionGetLOA(session);
-            if (alias->loa > sessionLoa && sessionLoa != abs(alias->loa)) {
+            if (alias->loa > sessionLoa) {
                 json_object *eventJ;
 
                 rp_jsonc_pack(&eventJ, "{ss ss ss si si}", "status",
