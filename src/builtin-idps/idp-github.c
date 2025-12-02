@@ -26,6 +26,8 @@
 
 #define _GNU_SOURCE
 
+#include <rp-utils/rp-escape.h>
+
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
 #include <libafb/afb-v4.h>
@@ -284,13 +286,13 @@ static int githubAccessToken(afb_hreq *hreq,
     oidcCoreHdlT *oidc = idp->oidc;
     int err;
 
-    httpKeyValT params[] = {
-        {.tag = "client_id", .value = idp->credentials->clientId},
-        {.tag = "client_secret", .value = idp->credentials->secret},
-        {.tag = "code", .value = code},
-        {.tag = "redirect_uri", .value = redirectUrl},
-        {.tag = "state", .value = afb_session_uuid(hreq->comreq.session)},
-        {NULL}  // terminator
+    const char *params[] = {
+        "client_id", idp->credentials->clientId,
+        "client_secret", idp->credentials->secret,
+        "code", code,
+        "redirect_uri", redirectUrl,
+        "state", afb_session_uuid(hreq->comreq.session),
+        NULL  // terminator
     };
 
     idpRqtCtxT *rqtCtx = calloc(1, sizeof(idpRqtCtxT));
@@ -303,9 +305,9 @@ static int githubAccessToken(afb_hreq *hreq,
 
     // send asynchronous post wreq with params in query //
     // https://gist.github.com/technoweenie/419219
-    err = httpBuildQuery(idp->uid, url, sizeof(url), NULL /* prefix */,
-                         idp->wellknown->tokenid, params);
-    if (err)
+    
+    size_t sz = rp_escape_url_to(NULL, idp->wellknown->tokenid, params, url, sizeof url);
+    if (sz >= sizeof url)
         goto OnErrorExit;
 
     EXT_DEBUG("[github-access-token] curl -X post %s\n", url);
@@ -371,20 +373,19 @@ static int githubLoginCB(afb_hreq *hreq, void *ctx)
         // login succeded
         oidcSessionSetIdpProfile(hreq->comreq.session, profile);
 
-        httpKeyValT query[] = {
-            {.tag = "client_id", .value = idp->credentials->clientId},
-            {.tag = "response_type", .value = "code"},
-            {.tag = "state", .value = session},
-            {.tag = "scope", .value = profile->scope},
-            {.tag = "redirect_uri", .value = redirectUrl},
-            {.tag = "language", .value = setlocale(LC_CTYPE, "")},
-            {NULL}  // terminator
+        const char *params[] = {
+            "client_id", idp->credentials->clientId,
+            "response_type", "code",
+            "state", session,
+            "scope", profile->scope,
+            "redirect_uri", redirectUrl,
+            "language", setlocale(LC_CTYPE, ""),
+            NULL  // terminator
         };
 
         // build wreq and send it
-        err = httpBuildQuery(idp->uid, url, sizeof(url), NULL /* prefix */,
-                             idp->wellknown->authorize, query);
-        if (err)
+        size_t sz = rp_escape_url_to(NULL, idp->wellknown->authorize, params, url, sizeof url);
+        if (sz >= sizeof url)
             goto OnErrorExit;
 
         EXT_DEBUG("[github-redirect-url] %s (githubRegisterAlias)", url);

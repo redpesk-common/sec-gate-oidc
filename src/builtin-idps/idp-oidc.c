@@ -35,6 +35,7 @@
 
 #include <rp-utils/rp-jsonc.h>
 #include <rp-utils/rp-base64.h>
+#include <rp-utils/rp-escape.h>
 
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
@@ -538,21 +539,20 @@ static int oidcLoginCB(afb_hreq *hreq, void *ctx)
         // login succeeded
         oidcSessionSetIdpProfile(hreq->comreq.session, profile);
 
-        httpKeyValT query[] = {
-            {.tag = "client_id", .value = idp->credentials->clientId},
-            {.tag = "response_type", .value = idp->wellknown->respondLabel},
-            {.tag = "state", .value = session},
-            {.tag = "nonce", .value = session},
-            {.tag = "scope", .value = profile->scope},
-            {.tag = "redirect_uri", .value = redirectUrl},
-            {.tag = "language", .value = setlocale(LC_CTYPE, "")},
-            {NULL}  // terminator
+        const char *params[] = {
+            "client_id", idp->credentials->clientId,
+            "response_type", idp->wellknown->respondLabel,
+            "state", session,
+            "nonce", session,
+            "scope", profile->scope,
+            "redirect_uri", redirectUrl,
+            "language", setlocale(LC_CTYPE, ""),
+            NULL  // terminator
         };
 
         // build wreq and send it
-        err = httpBuildQuery(idp->uid, url, sizeof(url), NULL /* prefix */,
-                             idp->wellknown->authorize, query);
-        if (err)
+        size_t sz = rp_escape_url_to(NULL, idp->wellknown->authorize, params, url, sizeof url);
+        if (sz >= sizeof url)
             goto OnErrorExit;
 
         EXT_DEBUG("[oidc-redirect-url] %s (oidcRegisterAlias)", url);

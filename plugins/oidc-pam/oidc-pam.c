@@ -27,6 +27,7 @@
 #include <security/pam_appl.h>
 
 #include <rp-utils/rp-jsonc.h>
+#include <rp-utils/rp-escape.h>
 
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
@@ -302,12 +303,12 @@ int pamLoginCB(afb_hreq *hreq, void *ctx)
         if (!profile)
             goto OnErrorExit;
 
-        httpKeyValT query[] = {
-            {.tag = "state", .value = afb_session_uuid(hreq->comreq.session)},
-            {.tag = "scope", .value = profile->scope},
-            {.tag = "redirect_uri", .value = redirectUrl},
-            {.tag = "language", .value = setlocale(LC_CTYPE, "")},
-            {NULL}  // terminator
+        const char *params[] = {
+            "state", afb_session_uuid(hreq->comreq.session),
+            "scope", profile->scope,
+            "redirect_uri", redirectUrl,
+            "language", setlocale(LC_CTYPE, ""),
+            NULL  // terminator
         };
 
         // store working profile to retreive attached loa and role filter if
@@ -315,9 +316,8 @@ int pamLoginCB(afb_hreq *hreq, void *ctx)
         oidcSessionSetIdpProfile(hreq->comreq.session, profile);
 
         // build wreq and send it
-        err = httpBuildQuery(idp->uid, url, sizeof(url), NULL /* prefix */,
-                             idp->wellknown->tokenid, query);
-        if (err)
+        size_t sz = rp_escape_url_to(NULL, idp->wellknown->tokenid, params, url, sizeof url);
+        if (sz >= sizeof url)
             goto OnErrorExit;
 
         EXT_DEBUG("[pam-redirect-url] %s (pamLoginCB)", url);

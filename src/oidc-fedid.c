@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <rp-utils/rp-jsonc.h>
+#include <rp-utils/rp-escape.h>
 
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
@@ -43,11 +44,16 @@ MAGIC_OIDC_SESSION(oidcFedUserCookie);
 MAGIC_OIDC_SESSION(oidcFedSocialCookie);
 MAGIC_OIDC_SESSION(oidcUsrDataCookie);
 
+// clang-format off
 const nsKeyEnumT oidcFedidSchema[] = {
-    {"pseudo", OIDC_SCHEMA_PSEUDO},   {"name", OIDC_SCHEMA_NAME},
-    {"email", OIDC_SCHEMA_EMAIL},     {"avatar", OIDC_SCHEMA_AVATAR},
-    {"company", OIDC_SCHEMA_COMPANY}, {NULL}  // terminator
+    {"pseudo", OIDC_SCHEMA_PSEUDO},
+    {"name", OIDC_SCHEMA_NAME},
+    {"email", OIDC_SCHEMA_EMAIL},
+    {"avatar", OIDC_SCHEMA_AVATAR},
+    {"company", OIDC_SCHEMA_COMPANY},
+    {NULL}  // terminator
 };
+// clang-format on
 
 typedef struct
 {
@@ -167,11 +173,6 @@ static void fedidCheckCB(void *ctx,
                                idpRqtCtx->fedSocial, (void *)fedSocialFree,
                                idpRqtCtx->fedSocial);
 
-        httpKeyValT query[] = {
-            {.tag = "language", .value = setlocale(LC_CTYPE, "")},
-            {NULL}  // terminator
-        };
-
         if (idpProfile->slave) {
             targetUrl = idpRqtCtx->idp->oidc->globals->fedlinkUrl;
             afb_session_set_loa(session, oidcFedSocialCookie,
@@ -181,9 +182,11 @@ static void fedidCheckCB(void *ctx,
             targetUrl = idpRqtCtx->idp->oidc->globals->registerUrl;
         }
         if (hreq) {
-            err = httpBuildQuery(idpRqtCtx->idp->uid, url, sizeof(url),
-                                 NULL /* prefix */, targetUrl, query);
-            if (err) {
+            const char *params[] = {
+                "language", setlocale(LC_CTYPE, ""),
+                NULL };
+            size_t sz = rp_escape_url_to(NULL, targetUrl, params, url, sizeof url);
+            if (sz >= sizeof url) {
                 EXT_ERROR(
                     "[fedid-register-unknown] fail to build redirect url");
                 goto OnErrorExit;
@@ -247,9 +250,8 @@ static void fedidCheckCB(void *ctx,
         idpProfile = oidcSessionGetIdpProfile(session);
         alias = oidcSessionGetAlias(session);
 
-        err = httpBuildQuery(idpRqtCtx->idp->uid, url, sizeof(url),
-                             NULL /* prefix */, alias->url, NULL);
-        if (err) {
+        size_t sz = rp_escape_url_to(NULL, alias->url, NULL, url, sizeof url);
+        if (sz >= sizeof url) {
             EXT_ERROR("[fedid-register-exist] fail to build redirect url");
             goto OnErrorExit;
         }
