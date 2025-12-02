@@ -64,14 +64,16 @@ static void idsvcPing(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     char *response;
     afb_data_t reply;
 
-    asprintf(&response, "Pong=%d", count++);
+    int sz = asprintf(&response, "Pong=%d", ++count);
     AFB_REQ_NOTICE(wreq, "idp:ping count=%d", count);
 
-    afb_create_data_raw(&reply, AFB_PREDEFINED_TYPE_STRINGZ, response,
-                        strlen(response) + 1, NULL, NULL);
-    afb_req_reply(wreq, 0, 1, &reply);
-
-    return;
+    if (sz < 0)
+        afb_req_reply(wreq, AFB_ERRNO_INTERNAL_ERROR, 0, NULL);
+    else {
+        afb_create_data_raw(&reply, AFB_PREDEFINED_TYPE_STRINGZ, response,
+                        (size_t)(sz + 1), free, response);
+        afb_req_reply(wreq, 0, 1, &reply);
+    }
 }
 
 // get result from /fedid/create-user
