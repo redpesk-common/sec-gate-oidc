@@ -1,6 +1,6 @@
 # API sgate
 
-sgate support following API. Api are defined within oidc-svc.c source file.
+sgate support the following API defined within oidc-idsvc.c source file.
 
 ```C
 static afb_verb_t idsvcVerbs[] = {
@@ -24,10 +24,13 @@ static afb_verb_t idsvcVerbs[] = {
 Simple command to check if binding and API is responding.
 
 Question:
+
 ```json
     ws:/sgate/ping?query={}
 ```
+
 Response:
+
 ```json
 {
   "jtype": "afb-reply",
@@ -41,14 +44,18 @@ Response:
 
 ## idp-query-conf
 
-Return the list of configured IDP matching requested LOA with all necessary information for presenting a login UI to the end-user. This returns any IDP with an LOA greater or equal to requested LOA.
+Return the list of configured IDP matching requested LOA with all necessary
+information for presenting a login UI to the end-user.
+This returns any IDP with an LOA greater or equal to requested LOA.
 
 ```json
 // request
     ws:/sgate/idp-query-conf?query="{'loa':1}"
 ```
 
-The API return IDPs list to present to end-user as well as the alias that requested the permission.
+The API return IDPs list to present to end-user as well as the alias
+that requested the permission.
+
 ```json
 // response
   "jtype": "afb-reply",
@@ -96,14 +103,17 @@ The API return IDPs list to present to end-user as well as the alias that reques
 
 ## idp-query-usr
 
-Return the list of IDP used by an existing user. This API is used to link two federated accounts.
+Return the list of IDP used by an existing user.
+This API is used to link two federated accounts.
 
 ```json
 // request
     ws:/sgate/idp-query-conf?query="{'pseudo':'xxxx', email=:'xxxx'}"
 ```
 
-The API return IDPs list to present to end-user as well as the alias that requested the permission.
+The API return IDPs list to present to end-user as well as the alias
+that requested the permission.
+
 ```json
 // response
   "jtype": "afb-reply",
@@ -143,9 +153,16 @@ The API return IDPs list to present to end-user as well as the alias that reques
 ## session-get
 
 Return current session cookies values as a json array
-* 1st contains federated user as returned from the IDP user info service. The content of this may vary depending on IDP requested scope and are typically what is presented to user for initial provisioning.
-* 2nd contains social identity at the idp side, the two potentially useful pieces of information are: idp->uid and the idp->fedkey.
-* 3rd contains use authentication profile. It contains the requested scope and the attached loa.
+
+* 1st contains federated user as returned from the IDP user info service.
+  The content of this may vary depending on IDP requested scope and
+  are typically what is presented to user for initial provisioning.
+
+* 2nd contains social identity at the idp side, the two potentially useful
+  pieces of information are: idp-\>uid and the idp-\>fedkey.
+
+* 3rd contains use authentication profile.
+  It contains the requested scope and the attached loa.
 
 Question
 ```json
@@ -179,18 +196,24 @@ Response
   ]
 }
 ```
+
 ![session-get](assets/apis/sgate-session-get.png)
 
 
 ## session-reset
 
-Reset session LOA to zero (public access) and return config sgate globals urls. Client UI is responsible to the end-user to adequate HTML page (usually 'home' or 'login').
+Reset session LOA to zero (public access) and return config sgate globals urls.
+Client UI is responsible to the end-user to adequate HTML page
+(usually 'home' or 'login').
 
 Question:
+
 ```json
 ws:/sgate/session-reset?query={}
 ```
+
 Response:
+
 ```json
  {
   "jtype": "afb-reply",
@@ -205,18 +228,27 @@ Response:
   }
 }
 ```
+
 ![session-reset](assets/apis/sgate-session-reset.png)
 
 
 ## session-event
 
-Subscribe to sgate notification event. A new event is generated each time a privilege is refused or a session reset. It is the responsibility of client UI to process these events, and generate an adequate authentication request to provide requested privileges.
+Subscribe to sgate notification event.
+
+A new event is generated each time a privilege is refused or a session reset.
+
+It is the responsibility of client UI to process these events,
+and generate an adequate authentication request to provide requested privileges.
 
 Question:
+
 ```json
     ws:/sgate/session-event?query={}
 ```
+
 Response:
+
 ```json
  {
   "jtype": "afb-reply",
@@ -229,15 +261,19 @@ Response:
 
 ## usr-check
 
-Check if a user attribute is already present in the database federated user store. Technically this request is processed by fedid binding. Response is either 'available' when not present or 'locked' if already present in base.
+Check if a user attribute is already present in the database federated user store.
+Technically this request is processed by fedid binding.
+Response is either 'available' when not present or 'locked' if already present in base.
 
 Question:
+
 ```json
     ws:/sgate/usr-check?query={"label":"pseudo","value":"fulup-bzh"}
     ws:/sgate/usr-check?query={"label":"email","value":"fulup@iot.bzh"}
 ```
 
 Response
+
 ```
 {
   "jtype": "afb-reply",
@@ -251,14 +287,19 @@ Response
 
 ## usr-register
 
-Register a new user if email/pseudo are available. The response when successful includes a target where UI should redirect the end-user. When pseudo/user already exists usr-registers fail with an error status, in this case application should try usr-federate api.
+Register a new user if email/pseudo are available.
+The response when successful includes a target where UI should redirect the end-user.
+When pseudo/user already exists usr-registers fail with an error status,
+in this case application should try usr-federate api.
 
 Question:
+
 ```json
     ws:/sgate/usr-register?query={"pseudo":"fulup-bzh","email":"fulup@iot.bzh","name":"Fulup Ar Foll","company":"IOT","sgate_register":"Register","sgate_cancel":"Cancel"}
 ```
 
 Response:
+
 ```json
 {
   "jtype": "afb-reply",
@@ -271,18 +312,28 @@ Response:
   }
 }
 ```
+
 ![user-register](assets/apis/sgate-usr-register.png)
 
 ## usr-federate
 
-When a user email/pseudo is already used within federated dbstore both social idp accounts need to be linked. In order to initiate account federation linking, UI should call usr-federate api. This API prepares federation and notifies UI where to go to prove ownership of both social accounts and return the target HTML page where the user should be redirected.
+When a user email/pseudo is already used within federated dbstore both social
+idp accounts need to be linked. In order to initiate account federation linking,
+UI should call usr-federate api.
+
+This API prepares federation and notifies UI where to go to prove ownership
+of both social accounts and return the target HTML page where the user should
+be redirected.
 
 Question:
+
 ```json
     ws:/sgate/usr-federate?query={"pseudo":"fulup-bzh","email":"fulup@iot.bzh","name":"Fulup Ar Foll","company":"IOT","sgate_register":"Federate","sgate_cancel":"Cancel"}
 ```
 
-```response
+Response:
+
+```json
 {
   "jtype": "afb-reply",
   "request": {
