@@ -656,36 +656,51 @@ OnErrorExit:
 
 // Static verb not depending on shell json config file
 static afb_verb_t idsvcVerbs[] = {
+    // clang-format off
     /* VERB'S NAME         FUNCTION TO CALL         SHORT DESCRIPTION */
-    {.verb = "ping", .callback = idsvcPing, .info = "ping test"},
-    {.verb = "url-query-conf",
-     .callback = urlQuery,
-     .info = "wreq wellknown url list/tag"},
-    {.verb = "idp-query-conf",
-     .callback = idpQueryConf,
-     .info = "wreq idp list/scope for a given LOA level"},
-    {.verb = "idp-query-user",
-     .callback = idpQueryUser,
-     .info = "return pseudo/email idps list before linking user multiple IDPs"},
-    {.verb = "session-get",
-     .callback = sessionGet,
-     .info = "retrieve current client session [profile, user, social]"},
-    {.verb = "session-event",
-     .callback = subscribeEvent,
-     .info = "subscribe to sgate private client session events"},
-    {.verb = "session-reset",
-     .callback = sessionReset,
-     .info = "reset current session [set loa=0]"},
-    {.verb = "usr-register",
-     .callback = userRegister,
-     .info = "register federated user profile into local fedid store"},
-    {.verb = "usr-check",
-     .callback = userCheckAttr,
-     .info = "check user attribute within local store"},
-    {.verb = "usr-federate",
-     .callback = userFederate,
-     .info = "request federating current user with an other existing IDP"},
+    {
+        .verb = "ping",
+        .callback = idsvcPing,
+        .info = "ping test"
+    }, {
+        .verb = "url-query-conf",
+        .callback = urlQuery,
+        .info = "wreq wellknown url list/tag"
+    }, {
+        .verb = "idp-query-conf",
+        .callback = idpQueryConf,
+        .info = "wreq idp list/scope for a given LOA level"
+    }, {
+        .verb = "idp-query-user",
+        .callback = idpQueryUser,
+        .info = "return pseudo/email idps list before linking user multiple IDPs"
+    }, {
+        .verb = "session-get",
+        .callback = sessionGet,
+        .info = "retrieve current client session [profile, user, social]"
+    }, {
+        .verb = "session-event",
+        .callback = subscribeEvent,
+        .info = "subscribe to sgate private client session events"
+    }, {
+        .verb = "session-reset",
+        .callback = sessionReset,
+        .info = "reset current session [set loa=0]"
+    }, {
+        .verb = "usr-register",
+        .callback = userRegister,
+        .info = "register federated user profile into local fedid store"
+    }, {
+        .verb = "usr-check",
+        .callback = userCheckAttr,
+        .info = "check user attribute within local store"
+    }, {
+        .verb = "usr-federate",
+        .callback = userFederate,
+        .info = "request federating current user with an other existing IDP"
+    },
     {NULL}  // terminator
+    // clang-format on
 };
 
 int idsvcDeclare(oidcCoreHdlT *oidc,
