@@ -33,14 +33,12 @@ function addOneIdp (div_box, idp) {
 // get IDPs list from sec-gate-oidc
 function getConfigIdps() {
 
-    // ws.call return a Promise
+    // callbinder return a Promise
     var api="sgate";
     var verb="idp-query-conf";
     var query="{}";
-    log.command(api, verb, query);
-    ws.call(api + "/" + verb, query)
+    callbinder(api, verb, query)
     .then(function (res) {
-        log.reply(res);
         var div_box;
         var sgate_div= document.getElementById("sgate_data");
         sgate_div.className="sgate_box";
@@ -51,6 +49,9 @@ function getConfigIdps() {
         }
 
         // div box is recreated/deleted each time we get/lost binding connection
+        sgate_box = document.getElementById("sgate_box");
+        if (sgate_box)
+            sgate_box.remove();
         sgate_box= document.createElement("div");
         sgate_box.id="sgate_box";
         sgate_div.appendChild(sgate_box);
@@ -81,14 +82,12 @@ function getConfigIdps() {
 // get IDPs list from sec-gate-oidc
 function getUserIdps() {
 
-    // ws.call return a Promise
+    // callbinder return a Promise
     var api="sgate";
     var verb="idp-query-user";
     var query="{}";
-    log.command(api, verb, query);
-    ws.call(api + "/" + verb, query)
+    callbinder(api, verb, query)
     .then(function (res) {
-        log.reply(res);
         var div_box;
         var sgate_div= document.getElementById("sgate_data");
         sgate_div.className="sgate_box";
@@ -130,14 +129,12 @@ function getUserIdps() {
 // get IDPs list from sec-gate-oidc
 function getSession() {
 
-    // ws.call return a Promise
+    // callbinder return a Promise
     var api="sgate";
     var verb="session-get";
     var query="{}";
-    log.command(api, verb, query);
-    ws.call(api + "/" + verb, query)
+    callbinder(api, verb, query)
     .then(function (res) {
-        log.reply(res);
 
         var form= document.getElementById ("sgate_form");
         if (form === null) {
@@ -189,10 +186,8 @@ function sgateCheckAttr(label) {
     // call user-registration
     var api="sgate";
     var verb="usr-check";
-    log.command(api, verb, query);
-    ws.call(api + "/" + verb, query)
+    callbinder(api, verb, query)
     .then(function (res) {
-        log.reply(res);
         var register= document.getElementById ("sgate_register");
         if (res.response === "locked") {
             // ok for register account
@@ -220,10 +215,8 @@ function sgateReset() {
     var query={};
 
     verb="session-reset";
-    log.command(api, verb, query);
-    ws.call(api + "/" + verb, query)
+    callbinder(api, verb, query)
     .then(function (res) {
-        log.reply(res);
         // redirect to requested URL
         window.location.assign(res.response.login);
     })
@@ -266,10 +259,8 @@ function sgateSubmit() {
     if (register.value == "Federate") verb="usr-federate";
     if (register.value === "Register") verb="usr-register";
 
-    log.command(api, verb, query);
-    ws.call(api + "/" + verb, query)
+    callbinder(api, verb, query)
     .then(function (res) {
-        log.reply(res);
         // redirect to requested URL
         window.location.assign(res.response.target);
 
@@ -305,10 +296,8 @@ function passwordUser(verb) {
 
     // call user-registration
     var api="sgate";
-    log.command(api, verb, query);
-    ws.call(api + "/" + verb, query)
+    callbinder(api, verb, query)
     .then(function (res) {
-        log.reply(res);
         // redirect to requested URL
         window.location.assign(res.response.target);
 
@@ -331,10 +320,8 @@ function pcscReadCard(verb) {
     var api="sgate";
     var verb="nfc-scard"
     var query= {"state": urlQuery["state"]};
-    log.command(api, verb, query);
-    ws.call(api + "/" + verb, query)
+    callbinder(api, verb, query)
     .then(function (res) {
-        log.reply(res);
         // redirect to requested URL
         window.location.assign(res.response.target);
 
@@ -367,12 +354,6 @@ function monitorEvents() {
     var api="sgate";
     var verb="session-event"
     var query= {};
-    log.command(api, verb, query);
-    ws.call(api + "/" + verb, query)
-    .then(function (res) {
-        log.reply(res);
-    })
-    .catch(function (err) {
-        log.reply(err);
-    });
+    callbinder(api, verb, query)
+    .then(function(res){});
 }

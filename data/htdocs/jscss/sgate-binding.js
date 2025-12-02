@@ -8,10 +8,23 @@ var count = 0;
 // Logger
 //**********************************************
 var log = {
-    command: function (api, verb, query) {
+    commandId: function (id, api, verb, query) {
         console.log("request api=" + api + " verb=" + verb + " query=", query);
         var question = "ws:/" + api + "/" + verb + "?query=" + JSON.stringify(query);
-        log._write("question", (count++) + ": " + log.syntaxHighlight(question));
+        log._write("question", id + ": " + log.syntaxHighlight(question));
+    },
+
+    replyId: function (id, obj) {
+        console.log("replyok:" + JSON.stringify(obj));
+        log._write("output", id + ": OK: " + log.syntaxHighlight(obj));
+    },
+
+    command: function (api, verb, query) {
+        log.commandId(0, api, verb, query);
+    },
+
+    reply: function (obj) {
+        log.replyId(0, obj);
     },
 
     event: function (obj) {
@@ -19,14 +32,9 @@ var log = {
         log._write("outevt", (evtidx++) + ": " + JSON.stringify(obj));
     },
 
-    reply: function (obj) {
-        console.log("replyok:" + JSON.stringify(obj));
-        log._write("output", count + ": OK: " + log.syntaxHighlight(obj));
-    },
-
-    error: function (obj) {
+    error: function (id, obj) {
         console.log("replyerr:" + JSON.stringify(obj));
-        log._write("output", count + ": ERROR: " + log.syntaxHighlight(obj));
+        log._write("output", id + ": ERROR: " + log.syntaxHighlight(obj));
     },
 
     _write: function (element, msg) {
@@ -66,16 +74,17 @@ var log = {
 // Generic function to call binder
 //***********************************************
 function callbinder(api, verb, query) {
-    log.command(api, verb, query);
+    var id = ++count;
+    log.commandId(id, api, verb, query);
 
     // ws.call return a Promise
     return ws.call(api + "/" + verb, query)
         .then(function (res) {
-            log.reply(res);
+            log.replyId(id, res);
             return res;
         })
         .catch(function (err) {
-            log.reply(err);
+            log.replyId(id, err);
             throw err;
         });
 }

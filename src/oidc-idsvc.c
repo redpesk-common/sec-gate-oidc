@@ -51,10 +51,8 @@ typedef struct
 static void fedBackupFreeCB(void *ctx)
 {
     fedidLinkT *backup = (fedidLinkT *)ctx;
-    if (backup->pseudo)
-        free(backup->pseudo);
-    if (backup->email)
-        free(backup->email);
+    free(backup->pseudo);
+    free(backup->email);
     free(backup);
 }
 
