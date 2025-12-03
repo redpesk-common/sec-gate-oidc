@@ -32,6 +32,8 @@
 #include <libafb/afb-http.h>
 #include <libafb/afb-v4.h>
 
+#include <fedid-types-glue.h>
+
 #include <curl-glue.h>
 #include "oidc-alias.h"
 #include "oidc-core.h"
@@ -39,10 +41,6 @@
 #include "oidc-idsvc.h"
 #include "oidc-session.h"
 #include "oidc-utils.h"
-
-MAGIC_OIDC_SESSION(oidcFedUserCookie);
-MAGIC_OIDC_SESSION(oidcFedSocialCookie);
-MAGIC_OIDC_SESSION(oidcUsrDataCookie);
 
 // clang-format off
 const nsKeyEnumT oidcFedidSchema[] = {
@@ -55,17 +53,8 @@ const nsKeyEnumT oidcFedidSchema[] = {
 };
 // clang-format on
 
-typedef struct
-{
-    afb_hreq *hreq;
-    struct afb_req_v4 *wreq;
-    oidcIdpT *idp;
-    fedUserRawT *fedUser;
-    fedSocialRawT *fedSocial;
-} oidcFedidHdlT;
-
 // session timeout, reset LOA
-void fedidsessionReset(afb_session *session, const oidcProfileT *idpProfile)
+void fedidsessionReset(oidcSession *session, const oidcProfileT *idpProfile)
 {
     int err;
     int count = -1;
@@ -74,16 +63,14 @@ void fedidsessionReset(afb_session *session, const oidcProfileT *idpProfile)
     oidcSessionSetLOA(session, 0);
     oidcSessionSetExpiration(session, 0);
     EXT_DEBUG("[fedid-session-reset] logout/timeout session uuid=%s ?",
-              afb_session_uuid(session));
+              oidcSessionUUID(session));
 
     if (idpProfile) {
         if (idpProfile->idp->plugin && idpProfile->idp->plugin->resetSession) {
-            void *ctx;
-            afb_session_cookie_get(session, oidcUsrDataCookie, &ctx);
-            if (ctx) {
+            void *ctx = oidcSessionGetOpaqueData(session);
+            if (ctx != NULL) {
                 idpProfile->idp->plugin->resetSession(idpProfile, ctx);
-                afb_session_cookie_set(session, oidcUsrDataCookie, NULL, NULL,
-                                       NULL);
+		oidcSessionSetOpaqueData(session, NULL);
             }
         }
 
@@ -97,13 +84,13 @@ void fedidsessionReset(afb_session *session, const oidcProfileT *idpProfile)
             count = idscvPushEvent(session, eventJ);
         if (!count)
             EXT_DEBUG("[fedid-session-reset] no client subscribed uuid=%s ?",
-                      afb_session_uuid(session));
+                      oidcSessionUUID(session));
     }
 }
 
 static void fedidTimerCB(int signal, void *ctx)
 {
-    afb_session *session = (afb_session *)ctx;
+    oidcSession *session = (oidcSession *)ctx;
     const oidcProfileT *idpProfile;
 
     // signal should be null
@@ -130,7 +117,7 @@ static void fedidCheckCB(void *ctx,
     fedUserRawT *fedUser;
     const oidcProfileT *idpProfile;
     const oidcAliasT *alias;
-    afb_session *session = NULL;
+    oidcSession *session = NULL;
     const char *redirect;
     afb_hreq *hreq = NULL;
     struct afb_req_v4 *wreq = NULL;
@@ -169,16 +156,11 @@ static void fedidCheckCB(void *ctx,
 
         // fedkey not found let's store social authority profile into session
         // and redirect user on userprofil creation
-        afb_session_cookie_set(session, oidcFedUserCookie, idpRqtCtx->fedUser,
-                               (void *)fedUserFree, idpRqtCtx->fedUser);
-        afb_session_cookie_set(session, oidcFedSocialCookie,
-                               idpRqtCtx->fedSocial, (void *)fedSocialFree,
-                               idpRqtCtx->fedSocial);
-
+	oidcSessionSetFedUser(session, idpRqtCtx->fedUser);
+	oidcSessionSetFedSocial(session, idpRqtCtx->fedSocial);
         if (idpProfile->slave) {
             targetUrl = idpRqtCtx->idp->oidc->globals->fedlinkUrl;
-            afb_session_set_loa(session, oidcFedSocialCookie,
-                                FEDID_LINK_REQUESTED);
+	    oidcSessionSetFedIdLinkRequest(session, FEDID_LINK_REQUESTED);
         }
         else {
             targetUrl = idpRqtCtx->idp->oidc->globals->registerUrl;
@@ -206,27 +188,25 @@ static void fedidCheckCB(void *ctx,
         fedUser = (fedUserRawT *)afb_data_ro_pointer(argd[0]);
 
         // check if federation linking is pending
-        fedSocialRawT *fedLinkSocial;
-        afb_session_cookie_get(session, oidcFedSocialCookie,
-                               (void **)&fedLinkSocial);
-        int fedLoa = afb_session_get_loa(session, oidcFedSocialCookie);
+        const fedSocialRawT *fedSocial;
+        fedSocial = oidcSessionGetFedSocial(session);
+        int fedLoa = oidcSessionGetFedIdLinkRequest(session);
 
         // if we have to link two accounts do it before cleaning
-        // oidcFedSocialCookie
         if (fedLoa == FEDID_LINK_REQUESTED) {
-            assert(fedLinkSocial);
+            assert(fedSocial);
             afb_data_x4_t params[2];
             int status;
             unsigned int count;
             afb_data_t data;
 
             // make sure we do not link account twice
-            afb_session_set_loa(session, oidcFedSocialCookie, FEDID_LINK_RESET);
+	    oidcSessionSetFedIdLinkRequest(session, FEDID_LINK_RESET);
 
             // delegate account federation linking to fedid binding
             params[0] = afb_data_addref(argd[0]);
             err = afb_create_data_raw(&params[1], fedSocialObjType,
-                                      fedLinkSocial, 0, NULL, NULL);
+                                      fedSocial, 0, NULL, NULL);
             if (err < 0)
                 goto OnErrorExit;
             err = afb_api_v4_call_sync_hookable(api, API_OIDC_USR_SVC,
@@ -242,11 +222,8 @@ static void fedidCheckCB(void *ctx,
         }
         // let's store user profile into session cookie (/oidc/profile/get
         // serves it)
-        afb_session_cookie_set(session, oidcFedUserCookie, fedUser,
-                               (void *)afb_data_unref, argd[0]);
-        afb_session_cookie_set(session, oidcFedSocialCookie,
-                               idpRqtCtx->fedSocial, (void *)fedSocialFree,
-                               idpRqtCtx->fedSocial);
+	oidcSessionSetFedUser(session, fedUserAddRef(fedUser));
+	oidcSessionSetFedSocial(session, idpRqtCtx->fedSocial);
 
         // everyting looks good let's return user to original page
         idpProfile = oidcSessionGetIdpProfile(session);
@@ -305,8 +282,7 @@ static void fedidCheckCB(void *ctx,
         // if idp request get userdata keep track of them (needed by pcscd to
         // kill monitoring thread)
         if (idpRqtCtx->userData)
-            afb_session_cookie_set(session, oidcUsrDataCookie,
-                                   (void *)idpRqtCtx->userData, NULL, NULL);
+            oidcSessionSetOpaqueData(session, idpRqtCtx->userData);
     }
 
     // free user info handle and redirect to initial targeted url
@@ -364,11 +340,10 @@ OnErrorExit:
 // check if an attribute equal to value exists in the session
 // return 1 if that is the case
 // return 0 if none matches
-int fedidsessionHasAttribute(afb_session *session, const char *value)
+int fedidsessionHasAttribute(oidcSession *session, const char *value)
 {
-    fedSocialRawT *fedSocial = NULL;
-    int rc = afb_session_cookie_get(session, oidcFedSocialCookie, (void **)&fedSocial);
-    if (rc >= 0 && fedSocial != NULL) {
+    const fedSocialRawT *fedSocial = oidcSessionGetFedSocial(session);
+    if (fedSocial != NULL) {
         const char **attrs = fedSocial->attrs;
         if (attrs != NULL) {
             for (; *attrs != NULL; attrs++) {

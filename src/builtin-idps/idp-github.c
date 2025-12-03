@@ -205,10 +205,8 @@ OnErrorExit:
         "status=%ld body='%s'",
         httpRqt->status, httpRqt->body);
     afb_hreq_reply_error(rqtCtx->hreq, EXT_HTTP_UNAUTHORIZED);
-    if (fedSocial)
-        fedSocialFree(fedSocial);
-    if (fedUser)
-        fedUserFree(fedUser);
+    fedSocialUnRef(fedSocial);
+    fedUserUnRef(fedUser);
     return HTTP_HANDLE_FREE;
 }
 
@@ -291,7 +289,7 @@ static int githubAccessToken(afb_hreq *hreq,
         "client_secret", idp->credentials->secret,
         "code", code,
         "redirect_uri", redirectUrl,
-        "state", afb_session_uuid(oidcSessionOfHttpReq(hreq)),
+        "state", oidcSessionUUID(oidcSessionOfHttpReq(hreq)),
         NULL  // terminator
     };
 
@@ -336,7 +334,7 @@ static int githubLoginCB(afb_hreq *hreq, void *ctx)
 
     // check if wreq as a code
     const char *code = afb_hreq_get_argument(hreq, "code");
-    const char *session = afb_session_uuid(oidcSessionOfHttpReq(hreq));
+    const char *session = oidcSessionUUID(oidcSessionOfHttpReq(hreq));
     alias = oidcSessionGetAlias(oidcSessionOfHttpReq(hreq));
     if (alias)
         aliasLoa = alias->loa;

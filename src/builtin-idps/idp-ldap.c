@@ -320,8 +320,8 @@ OnErrorExit:
         afb_req_v4_reply_hookable(idpRqtCtx->wreq, -1, 1, &reply);
     }
 
-    fedSocialFree(idpRqtCtx->fedSocial);
-    fedUserFree(idpRqtCtx->fedUser);
+    fedSocialUnRef(idpRqtCtx->fedSocial);
+    fedUserUnRef(idpRqtCtx->fedUser);
     ldapRqtCtxFree(ldapRqtCtx);
     return HTTP_HANDLE_FREE;
 }
@@ -418,8 +418,8 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
         goto OnErrorExit;
 
     // search for a scope fiting matching loa
-    afb_session *session = oidcSessionOfReq(wreq);
-    if (!state || strcmp(state, afb_session_uuid(session)))
+    oidcSession *session = oidcSessionOfReq(wreq);
+    if (!state || strcmp(state, oidcSessionUUID(session)))
         goto OnErrorExit;
 
     alias = oidcSessionGetAlias(session);
@@ -511,7 +511,7 @@ static int ldapLoginCB(afb_hreq *hreq, void *ctx)
         oidcSessionSetIdpProfile(oidcSessionOfHttpReq(hreq), profile);
 
         const char *params[] = {
-            "state", afb_session_uuid(oidcSessionOfHttpReq(hreq)),
+            "state", oidcSessionUUID(oidcSessionOfHttpReq(hreq)),
             "scope", profile->scope,
             "redirect_uri", redirectUrl,
             "language", setlocale(LC_CTYPE, ""),
@@ -530,7 +530,7 @@ static int ldapLoginCB(afb_hreq *hreq, void *ctx)
         // we have a code check state to assert that the response was generated
         // by us then wreq authentication token
         const char *state = afb_hreq_get_argument(hreq, "state");
-        if (!state || strcmp(state, afb_session_uuid(oidcSessionOfHttpReq(hreq))))
+        if (!state || strcmp(state, oidcSessionUUID(oidcSessionOfHttpReq(hreq))))
             goto OnErrorExit;
 
         EXT_DEBUG("[ldap-auth-code] login=%s (ldapLoginCB)", login);

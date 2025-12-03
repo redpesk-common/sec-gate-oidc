@@ -28,9 +28,6 @@
 #include "oidc-idp.h"
 #include "oidc-session.h"
 
-#define FEDID_LINK_REQUESTED -1
-#define FEDID_LINK_RESET     0
-
 typedef enum {
     OIDC_SCHEMA_UNKNOWN = 0,
     OIDC_SCHEMA_PSEUDO,
@@ -41,8 +38,7 @@ typedef enum {
 } oidcFedidSchemaE;
 
 int fedidCheck(idpRqtCtxT *rqtCtx);
-void fedidsessionReset(afb_session *session, const oidcProfileT *idpProfile);
-int fedidsessionHasAttribute(afb_session *session, const char *value);
+void fedidsessionReset(oidcSession *session, const oidcProfileT *idpProfile);
+int fedidsessionHasAttribute(oidcSession *session, const char *value);
 
 extern void *oidcFedUserCookie;
-extern void *oidcFedSocialCookie;

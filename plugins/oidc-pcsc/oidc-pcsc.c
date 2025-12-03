@@ -100,7 +100,7 @@ typedef struct
     pcscOptsT *opts;
     const char *scope;
     const char *label;
-    afb_session *session;
+    oidcSession *session;
     pcscCardStatusE status;
 } pcscRqtCtxT;
 
@@ -308,8 +308,8 @@ OnErrorExit: {
     }
 }
     pcscRqtCtx->status = PCSC_STATUS_REFUSED;
-    fedSocialFree(idpRqtCtx->fedSocial);
-    fedUserFree(idpRqtCtx->fedUser);
+    fedSocialUnRef(idpRqtCtx->fedSocial);
+    fedUserUnRef(idpRqtCtx->fedUser);
     return 0;  // keep thread waiting for card to be removed
 }
 
@@ -379,8 +379,8 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
         goto OnErrorExit;
 
     // search for a scope fiting wreqing loa
-    afb_session *session = oidcSessionOfReq(wreq);
-    if (!state || strcmp(state, afb_session_uuid(session)))
+    oidcSession *session = oidcSessionOfReq(wreq);
+    if (!state || strcmp(state, oidcSessionUUID(session)))
         goto OnErrorExit;
 
     alias = oidcSessionGetAlias(session);
@@ -462,7 +462,7 @@ int pcscLoginCB(afb_hreq *hreq, void *ctx)
     oidcSessionSetIdpProfile(oidcSessionOfHttpReq(hreq), profile);
 
     const char *params[] = {
-        "state", afb_session_uuid(oidcSessionOfHttpReq(hreq)),
+        "state", oidcSessionUUID(oidcSessionOfHttpReq(hreq)),
         "scope", profile->scope,
         "language", setlocale(LC_CTYPE, ""),
         NULL  // terminator

@@ -411,7 +411,7 @@ static int oidcAccessToken(afb_hreq *hreq,
     idpRqtCtxT *rqtCtx = calloc(1, sizeof(idpRqtCtxT));
     rqtCtx->hreq = hreq;
     rqtCtx->idp = idp;
-    rqtCtx->uuid = afb_session_uuid(oidcSessionOfHttpReq(hreq));
+    rqtCtx->uuid = oidcSessionUUID(oidcSessionOfHttpReq(hreq));
     rqtCtx->profile = oidcSessionGetIdpProfile(oidcSessionOfHttpReq(hreq));
     if (rqtCtx->profile == NULL)
         goto OnErrorExit;
@@ -502,7 +502,7 @@ static int oidcLoginCB(afb_hreq *hreq, void *ctx)
 
     // check if wreq as a code
     const char *code = afb_hreq_get_argument(hreq, "code");
-    const char *session = afb_session_uuid(oidcSessionOfHttpReq(hreq));
+    const char *session = oidcSessionUUID(oidcSessionOfHttpReq(hreq));
     alias = oidcSessionGetAlias(oidcSessionOfHttpReq(hreq));
     if (alias)
         aliasLoa = alias->loa;
@@ -592,7 +592,7 @@ static int oidcLogoutCB(afb_hreq *hreq, void *ctx)
     oidcSchemaT *schema = (oidcSchemaT *)idp->userData;
     const oidcProfileT *idpProfile;
     const char *sessionUid;
-    struct afb_session *session;
+    oidcSession *session;
     sidMapT *sidMap;
     int err;
 
@@ -613,7 +613,7 @@ static int oidcLogoutCB(afb_hreq *hreq, void *ctx)
         goto OnErrorExit;
 
     // search session uuid and close it when exist
-    session = afb_session_search(sessionUid);
+    session = oidcSessionOfUUID(sessionUid);
     if (!session)
         goto OnErrorExit;
     idpProfile = oidcSessionGetIdpProfile(oidcSessionOfHttpReq(hreq));

@@ -12,6 +12,8 @@ cat << EOC > $CONF
   "verbose": 2,
   "log": "error+warning+notice+info+debug",
   "tracereq": "common",
+  "traceapi": "common",
+  "traceevt": "common",
   "trap-faults": "no",
   "port": $PORT,
   "https": $HTTPS,

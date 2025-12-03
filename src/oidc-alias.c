@@ -46,7 +46,7 @@
 // check if one of requested role exist within social cookie
 // return 0 if that is the case
 // return 1 if none matches
-int aliasCheckAttrs(afb_session *session, oidcAliasT *alias)
+int aliasCheckAttrs(oidcSession *session, oidcAliasT *alias)
 {
     const char **roles = alias->roles;
     while(*roles) {
@@ -64,7 +64,7 @@ static void aliasRedirectTimeout(afb_hreq *hreq, oidcAliasT *alias)
     char redirectUrl[EXT_HEADER_MAX_LEN];
     const oidcProfileT *profile;
     int err;
-    afb_session *session = oidcSessionOfHttpReq(hreq);
+    oidcSession *session = oidcSessionOfHttpReq(hreq);
 
     oidcSessionSetAlias(session, alias);
     profile = oidcSessionGetIdpProfile(session);
@@ -78,7 +78,7 @@ static void aliasRedirectTimeout(afb_hreq *hreq, oidcAliasT *alias)
     const char *params[] = {
         "client_id", profile->idp->credentials->clientId,
         "response_type", profile->idp->wellknown->respondLabel,
-        "state", afb_session_uuid(session),
+        "state", oidcSessionUUID(session),
         "scope", profile->scope,
         "redirect_uri", redirectUrl,
         "language", setlocale(LC_CTYPE, ""),
@@ -127,7 +127,7 @@ static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias)
         int status;
         oidcIdpT *idp = &alias->oidc->idps[0];
         const oidcProfileT *profile = &idp->profiles[0];
-        const char *uuid = afb_session_uuid(oidcSessionOfHttpReq(hreq));
+        const char *uuid = oidcSessionUUID(oidcSessionOfHttpReq(hreq));
         char redirectUrl[EXT_HEADER_MAX_LEN];
 
         status = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin,
@@ -175,7 +175,7 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
     struct timespec tCurrent;
     const oidcProfileT *idpProfile;
     int sessionLoa, tStamp, tNow, err;
-    afb_session *session;
+    oidcSession *session;
 
     if (alias->loa) {
         // get session of the request
@@ -196,10 +196,9 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
         tStamp = oidcSessionGetExpiration(session);
         if (tNow > tStamp) {
             EXT_NOTICE("session uuid=%s (aliasCheckLoaCB)",
-                       afb_session_uuid(session));
+                       oidcSessionUUID(session));
 
             // if LOA too weak redirect to authentication
-            // afb_session_close()
             sessionLoa = oidcSessionGetLOA(session);
             if (alias->loa > sessionLoa) {
                 json_object *eventJ;

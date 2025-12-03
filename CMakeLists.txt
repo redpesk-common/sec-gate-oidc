@@ -36,7 +36,7 @@ pkg_check_modules(mod0 REQUIRED
 	json-c
 	libafb>=5.3.8
 	libcurl>=7.55.0
-	fedid-types>=2
+	fedid-types>=2.0.0
 	afb-binding>=4.0.2
 	librp-utils-core
 	librp-utils-json-c

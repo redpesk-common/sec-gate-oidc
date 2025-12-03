@@ -34,23 +34,52 @@ typedef struct
     int timerId;
 } fedidSessionT;
 
-typedef struct afb_session afb_session;
+typedef struct
+{
+    char *pseudo;
+    char *email;
+} fedidLinkT;
 
-afb_session *oidcSessionOfHttpReq(afb_hreq *hreq);
-afb_session *oidcSessionOfReq(afb_req_v4 *wreq);
+#define FEDID_LINK_REQUESTED -1
+#define FEDID_LINK_RESET     0
 
-int oidcSessionGetLOA(afb_session *session);
-int oidcSessionSetLOA(afb_session *session, int LOA);
+typedef struct afb_session oidcSession;
 
-int oidcSessionGetExpiration(afb_session *session);
-int oidcSessionSetExpiration(afb_session *session, int expiration);
+oidcSession *oidcSessionOfHttpReq(afb_hreq *hreq);
+oidcSession *oidcSessionOfReq(afb_req_v4 *wreq);
+oidcSession *oidcSessionOfUUID(const char *uuid);
 
-const oidcAliasT *oidcSessionGetAlias(afb_session *session);
-int oidcSessionSetAlias(afb_session *session, const oidcAliasT *alias);
+const char *oidcSessionUUID(oidcSession *session);
 
-const oidcProfileT *oidcSessionGetIdpProfile(afb_session *session);
-int oidcSessionSetIdpProfile(afb_session *session, const oidcProfileT *profile);
+int oidcSessionGetLOA(oidcSession *session);
+int oidcSessionSetLOA(oidcSession *session, int LOA);
 
-fedidSessionT *oidcSessionGetFedId(afb_session *session);
-int oidcSessionSetFedId(afb_session *session, fedidSessionT *fedid);
+int oidcSessionGetExpiration(oidcSession *session);
+int oidcSessionSetExpiration(oidcSession *session, int expiration);
 
+const oidcAliasT *oidcSessionGetAlias(oidcSession *session);
+int oidcSessionSetAlias(oidcSession *session, const oidcAliasT *alias);
+
+const oidcProfileT *oidcSessionGetIdpProfile(oidcSession *session);
+int oidcSessionSetIdpProfile(oidcSession *session, const oidcProfileT *profile);
+
+fedidSessionT *oidcSessionGetFedId(oidcSession *session);
+int oidcSessionSetFedId(oidcSession *session, fedidSessionT *fedid);
+
+int oidcSessionSetFedIdLink(oidcSession *session, const char *pseudo, const char *email);
+const fedidLinkT *oidcSessionGetFedIdLink(oidcSession *session);
+void oidcSessionDropFedIdLink(oidcSession *session);
+int oidcSessionSetFedIdLinkRequest(oidcSession *session, int request);
+int oidcSessionGetFedIdLinkRequest(oidcSession *session);
+
+int oidcSessionEventSubscribe(afb_req_t wreq);
+int oidcSessionEventPush(oidcSession *session, json_object *eventJ);
+
+const fedSocialRawT *oidcSessionGetFedSocial(oidcSession *session);
+int oidcSessionSetFedSocial(oidcSession *session, fedSocialRawT *fedSocial);
+
+int oidcSessionSetFedUser(oidcSession *session, fedUserRawT *fedUser);
+const fedUserRawT *oidcSessionGetUser(oidcSession *session);
+
+void *oidcSessionGetOpaqueData(oidcSession *session);
+int oidcSessionSetOpaqueData(oidcSession *session, void *data);

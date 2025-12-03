@@ -30,4 +30,4 @@ extern void *idsvcEvtCookie;
 int idsvcDeclare(oidcCoreHdlT *oidc,
                  afb_apiset *declare_set,
                  afb_apiset *call_set);
-int idscvPushEvent(afb_session *session, json_object *eventJ);
+int idscvPushEvent(oidcSession *session, json_object *eventJ);
