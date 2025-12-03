@@ -64,7 +64,7 @@ static void aliasRedirectTimeout(afb_hreq *hreq, oidcAliasT *alias)
     char redirectUrl[EXT_HEADER_MAX_LEN];
     const oidcProfileT *profile;
     int err;
-    afb_session *session = hreq->comreq.session;
+    afb_session *session = oidcSessionOfHttpReq(hreq);
 
     oidcSessionSetAlias(session, alias);
     profile = oidcSessionGetIdpProfile(session);
@@ -107,7 +107,7 @@ static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias)
     int err;
     char url[EXT_URL_MAX_LEN];
 
-    oidcSessionSetAlias(hreq->comreq.session, alias);
+    oidcSessionSetAlias(oidcSessionOfHttpReq(hreq), alias);
 
     if (alias->oidc->globals->loginUrl) {
         const char *params[] = {
@@ -127,7 +127,7 @@ static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias)
         int status;
         oidcIdpT *idp = &alias->oidc->idps[0];
         const oidcProfileT *profile = &idp->profiles[0];
-        const char *uuid = afb_session_uuid(hreq->comreq.session);
+        const char *uuid = afb_session_uuid(oidcSessionOfHttpReq(hreq));
         char redirectUrl[EXT_HEADER_MAX_LEN];
 
         status = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin,
@@ -155,7 +155,7 @@ static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias)
         }
 
         // keep track of selected idp profile
-        oidcSessionSetIdpProfile(hreq->comreq.session, profile);
+        oidcSessionSetIdpProfile(oidcSessionOfHttpReq(hreq), profile);
     }
     EXT_DEBUG("[alias-redirect-login] %s (aliasRedirectLogin)", url);
     afb_hreq_redirect_to(hreq, url, HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
@@ -179,7 +179,7 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
 
     if (alias->loa) {
         // get session of the request
-        session = hreq->comreq.session;
+        session = oidcSessionOfHttpReq(hreq);
 
         // in case session create failed
         if (session == NULL) {

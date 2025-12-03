@@ -143,12 +143,12 @@ static void fedidCheckCB(void *ctx,
     // session is in hreq for REST and in comreq for wbesocket
     if (idpRqtCtx->hreq) {
         hreq = idpRqtCtx->hreq;
-        session = idpRqtCtx->hreq->comreq.session;
+        session = oidcSessionOfHttpReq(idpRqtCtx->hreq);
     }
 
     if (idpRqtCtx->wreq) {
         wreq = idpRqtCtx->wreq;
-        session = afb_req_v4_get_common(wreq)->session;
+        session = oidcSessionOfReq(wreq);
     }
 
     if (!session) {

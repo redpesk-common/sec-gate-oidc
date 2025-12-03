@@ -21,12 +21,23 @@
  * $RP_END_LICENSE$
  */
 
+#pragma once
+
 #define _GNU_SOURCE
 
 #include "oidc-common.h"
 #include "oidc-alias.h"
 #include "oidc-idp.h"
-#include "oidc-fedid.h"
+
+typedef struct
+{
+    int timerId;
+} fedidSessionT;
+
+typedef struct afb_session afb_session;
+
+afb_session *oidcSessionOfHttpReq(afb_hreq *hreq);
+afb_session *oidcSessionOfReq(afb_req_v4 *wreq);
 
 int oidcSessionGetLOA(afb_session *session);
 int oidcSessionSetLOA(afb_session *session, int LOA);

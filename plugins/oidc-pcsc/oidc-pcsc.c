@@ -337,9 +337,9 @@ static int pcscScardGet(oidcIdpT *idp,
     pcscRqtCtx->idpRqtCtx = idpRqtCtx;
 
     if (idpRqtCtx->hreq)
-        pcscRqtCtx->session = idpRqtCtx->hreq->comreq.session;
+        pcscRqtCtx->session = oidcSessionOfHttpReq(idpRqtCtx->hreq);
     if (idpRqtCtx->wreq)
-        pcscRqtCtx->session = afb_req_v4_get_common(wreq)->session;
+        pcscRqtCtx->session = oidcSessionOfReq(wreq);
 
     ulong tid = pcscMonitorReader(pcscOpts->handle, readerMonitorCB,
                                   (void *)pcscRqtCtx);
@@ -379,7 +379,7 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
         goto OnErrorExit;
 
     // search for a scope fiting wreqing loa
-    afb_session *session = afb_req_v4_get_common(wreq)->session;
+    afb_session *session = oidcSessionOfReq(wreq);
     if (!state || strcmp(state, afb_session_uuid(session)))
         goto OnErrorExit;
 
@@ -436,7 +436,7 @@ int pcscLoginCB(afb_hreq *hreq, void *ctx)
     // Initial redirect redirect user on web page to enter login
     char url[EXT_URL_MAX_LEN];
 
-    alias = oidcSessionGetAlias(hreq->comreq.session);
+    alias = oidcSessionGetAlias(oidcSessionOfHttpReq(hreq));
     if (alias)
         aliasLoa = alias->loa;
     else
@@ -459,10 +459,10 @@ int pcscLoginCB(afb_hreq *hreq, void *ctx)
     // if loa working and no profile fit exit without trying authentication
     if (!profile)
         goto OnErrorExit;
-    oidcSessionSetIdpProfile(hreq->comreq.session, profile);
+    oidcSessionSetIdpProfile(oidcSessionOfHttpReq(hreq), profile);
 
     const char *params[] = {
-        "state", afb_session_uuid(hreq->comreq.session),
+        "state", afb_session_uuid(oidcSessionOfHttpReq(hreq)),
         "scope", profile->scope,
         "language", setlocale(LC_CTYPE, ""),
         NULL  // terminator

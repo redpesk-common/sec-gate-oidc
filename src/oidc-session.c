@@ -27,10 +27,21 @@
 #include "oidc-session.h"
 
 #include <libafb/afb-core.h>
+#include <libafb/afb-http.h>
 
 static void *oidcSessionCookie = &oidcSessionCookie;
 static void *oidcAliasCookie = &oidcAliasCookie;
 static void *oidcIdpProfilCookie = &oidcIdpProfilCookie;
+
+afb_session *oidcSessionOfHttpReq(afb_hreq *hreq)
+{
+    return hreq->comreq.session;
+}
+
+afb_session *oidcSessionOfReq(afb_req_v4 *wreq)
+{
+    afb_session *session = afb_req_v4_get_common(wreq)->session;
+}
 
 int oidcSessionGetLOA(afb_session *session)
 {

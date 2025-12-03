@@ -291,7 +291,7 @@ static int githubAccessToken(afb_hreq *hreq,
         "client_secret", idp->credentials->secret,
         "code", code,
         "redirect_uri", redirectUrl,
-        "state", afb_session_uuid(hreq->comreq.session),
+        "state", afb_session_uuid(oidcSessionOfHttpReq(hreq)),
         NULL  // terminator
     };
 
@@ -299,7 +299,7 @@ static int githubAccessToken(afb_hreq *hreq,
     // afb_hreq_addref (hreq); // prevent automatic href liberation
     rqtCtx->hreq = hreq;
     rqtCtx->idp = idp;
-    rqtCtx->profile = oidcSessionGetIdpProfile(hreq->comreq.session);
+    rqtCtx->profile = oidcSessionGetIdpProfile(oidcSessionOfHttpReq(hreq));
     if (rqtCtx->profile == NULL)
         goto OnErrorExit;
 
@@ -336,8 +336,8 @@ static int githubLoginCB(afb_hreq *hreq, void *ctx)
 
     // check if wreq as a code
     const char *code = afb_hreq_get_argument(hreq, "code");
-    const char *session = afb_session_uuid(hreq->comreq.session);
-    alias = oidcSessionGetAlias(hreq->comreq.session);
+    const char *session = afb_session_uuid(oidcSessionOfHttpReq(hreq));
+    alias = oidcSessionGetAlias(oidcSessionOfHttpReq(hreq));
     if (alias)
         aliasLoa = alias->loa;
     else
@@ -371,7 +371,7 @@ static int githubLoginCB(afb_hreq *hreq, void *ctx)
 
         // store working profile to retreive attached loa and role filter if
         // login succeded
-        oidcSessionSetIdpProfile(hreq->comreq.session, profile);
+        oidcSessionSetIdpProfile(oidcSessionOfHttpReq(hreq), profile);
 
         const char *params[] = {
             "client_id", idp->credentials->clientId,

@@ -23,6 +23,7 @@
 
 #pragma once
 #include "oidc-core.h"
+#include "oidc-session.h"
 
 extern void *idsvcEvtCookie;
 

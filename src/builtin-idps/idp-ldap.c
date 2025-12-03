@@ -418,7 +418,7 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
         goto OnErrorExit;
 
     // search for a scope fiting matching loa
-    afb_session *session = afb_req_v4_get_common(wreq)->session;
+    afb_session *session = oidcSessionOfReq(wreq);
     if (!state || strcmp(state, afb_session_uuid(session)))
         goto OnErrorExit;
 
@@ -474,7 +474,7 @@ static int ldapLoginCB(afb_hreq *hreq, void *ctx)
     const char *passwd = afb_hreq_get_argument(hreq, "passwd");
     const char *scope = afb_hreq_get_argument(hreq, "scope");
 
-    alias = oidcSessionGetAlias(hreq->comreq.session);
+    alias = oidcSessionGetAlias(oidcSessionOfHttpReq(hreq));
     if (alias)
         aliasLoa = alias->loa;
     else
@@ -508,10 +508,10 @@ static int ldapLoginCB(afb_hreq *hreq, void *ctx)
 
         // store working profile to retreive attached loa and role filter if
         // login succeded
-        oidcSessionSetIdpProfile(hreq->comreq.session, profile);
+        oidcSessionSetIdpProfile(oidcSessionOfHttpReq(hreq), profile);
 
         const char *params[] = {
-            "state", afb_session_uuid(hreq->comreq.session),
+            "state", afb_session_uuid(oidcSessionOfHttpReq(hreq)),
             "scope", profile->scope,
             "redirect_uri", redirectUrl,
             "language", setlocale(LC_CTYPE, ""),
@@ -530,11 +530,11 @@ static int ldapLoginCB(afb_hreq *hreq, void *ctx)
         // we have a code check state to assert that the response was generated
         // by us then wreq authentication token
         const char *state = afb_hreq_get_argument(hreq, "state");
-        if (!state || strcmp(state, afb_session_uuid(hreq->comreq.session)))
+        if (!state || strcmp(state, afb_session_uuid(oidcSessionOfHttpReq(hreq))))
             goto OnErrorExit;
 
         EXT_DEBUG("[ldap-auth-code] login=%s (ldapLoginCB)", login);
-        profile = oidcSessionGetIdpProfile(hreq->comreq.session);
+        profile = oidcSessionGetIdpProfile(oidcSessionOfHttpReq(hreq));
         if (!profile)
             goto OnErrorExit;
 

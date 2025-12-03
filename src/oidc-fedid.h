@@ -26,14 +26,10 @@
 #include <fedid-types.h>
 #include "oidc-defaults.h"
 #include "oidc-idp.h"
+#include "oidc-session.h"
 
 #define FEDID_LINK_REQUESTED -1
 #define FEDID_LINK_RESET     0
-
-typedef struct
-{
-    int timerId;
-} fedidSessionT;
 
 typedef enum {
     OIDC_SCHEMA_UNKNOWN = 0,

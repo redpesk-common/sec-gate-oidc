@@ -44,8 +44,6 @@
 // make our live simpler
 typedef struct afb_hsrv afb_hsrv;
 typedef struct afb_hreq afb_hreq;
-typedef struct afb_session afb_session;
-typedef struct afb_apiset afb_apiset;
 typedef struct afb_apiset afb_apiset;
 typedef struct afb_verb_v4 afb_verb_v4;
 typedef struct afb_api_v4 afb_api_v4;
