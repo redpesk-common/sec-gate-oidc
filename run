@@ -15,6 +15,7 @@ cat << EOC > $CONF
   "traceapi": "common",
   "traceevt": "common",
   "trap-faults": "no",
+  "apitimeout": 86400,
   "port": $PORT,
   "https": $HTTPS,
   "https-cert": "$ROOT/ssl/devel-cert.pem",

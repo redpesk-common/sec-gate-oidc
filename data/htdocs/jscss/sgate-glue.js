@@ -75,7 +75,6 @@ function getConfigIdps() {
 
     })
     .catch(function (err) {
-        log.reply(err);
     });
 }
 
@@ -121,7 +120,6 @@ function getUserIdps() {
 
     })
     .catch(function (err) {
-        log.reply(err);
     });
 }
 
@@ -162,7 +160,6 @@ function getSession() {
            return;
         }
         info.innerText=err.response;
-        log.reply(err);
     });
 }
 
@@ -206,7 +203,6 @@ function sgateCheckAttr(label) {
            return;
         }
         info.innerText=err.response;
-        log.reply(err);
     });
 }
 
@@ -272,7 +268,6 @@ function sgateSubmit() {
         return;
         }
         info.innerText=err.response;
-        log.reply(err);
     });
 }
 
@@ -309,7 +304,6 @@ function passwordUser(verb) {
            return;
         }
         info.innerText=err.response;
-        log.reply(err);
     });
 
 }
@@ -333,7 +327,6 @@ function pcscReadCard(verb) {
            return;
         }
         info.innerText=err.response;
-        log.reply(err);
         // wait 3 second and try again
         setTimeout(function(){ pcscReadCard(); }, 3000);
     });
