@@ -30,6 +30,21 @@ function addOneIdp (div_box, idp) {
     info.innerHTML = idp.info;
 }
 
+function makeIdpsBox (idplist) {
+    // add all IDP in a share div
+    var box= document.createElement("div");
+    box.id="idps_box";
+    if (Array.isArray(idplist) && idplist.length > 0) {
+        for (const idp of idplist) {
+            addOneIdp(box, idp);
+        }
+    }
+    else {
+        box.innerHTML = "Sorry, no IDP exist for this level of privileges";
+    }
+    return box;
+}
+
 // get IDPs list from sec-gate-oidc
 function getConfigIdps() {
 
@@ -66,11 +81,7 @@ function getConfigIdps() {
         }
 
         // add all IDP in a share div
-        div_box= document.createElement("div");
-        div_box.id="idps_box";
-        for (const idp of res.response.idps) {
-            addOneIdp(div_box, idp);
-        }
+        div_box = makeIdpsBox (res.response.idps);
         sgate_box.appendChild(div_box);
 
     })
@@ -111,11 +122,7 @@ function getUserIdps() {
         }
 
         // add all IDP in a share div
-        div_box= document.createElement("div");
-        div_box.id="idps_box";
-        for (const idp of res.response.idps) {
-            addOneIdp(div_box, idp);
-        }
+        div_box = makeIdpsBox (res.response.idps);
         sgate_box.appendChild(div_box);
 
     })

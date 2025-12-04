@@ -81,29 +81,28 @@ json_object *idpLoaProfilsGet(oidcCoreHdlT *oidc,
                               const char **idps,
                               int noslave)
 {
-    json_object *idpsJ = NULL;
-
-    for (int idx = 0; oidc->idps[idx].uid; idx++) {
-        oidcIdpT *idp = &oidc->idps[idx];
+    json_object *idpsJ = json_object_new_array();
+    const oidcIdpT *idp = oidc->idps;
+    for (; idp->uid; idp++) {
         json_object *profilesJ = NULL;
-
+        const oidcProfileT *prof = idp->profiles;
         // search for requested LOA within idp existing profile
-        for (int jdx = 0; idp->profiles[jdx].uid; jdx++) {
+        for (; prof->uid; prof++) {
             // if loa does not fit ignore IDP
-            if (idp->profiles[jdx].loa < loa &&
-                idp->profiles[jdx].loa != abs(loa))
+            if (prof->loa < loa &&
+                prof->loa != abs(loa))
                 continue;
-            if (noslave && idp->profiles[jdx].slave)
+            if (noslave && prof->slave)
                 continue;
 
             // idp is not within idps list excluse it from list
             if (idps) {
-                int kdx;
-                for (kdx = 0; idps[kdx]; kdx++) {
-                    if (!strcasecmp(idps[kdx], idp->uid))
+                const char **iter = idps;
+                for (; *iter; iter++) {
+                    if (!strcasecmp(*iter, idp->uid))
                         break;
                 }
-                if (!idps[kdx])
+                if (!*iter)
                     continue;
             }
 
@@ -111,17 +110,15 @@ json_object *idpLoaProfilsGet(oidcCoreHdlT *oidc,
             if (!profilesJ)
                 profilesJ = json_object_new_array();
             rp_jsonc_pack(
-                &profileJ, "{ss ss* ss si}", "uid", idp->profiles[jdx].uid,
-                "info", idp->profiles[jdx].info, "scope",
-                idp->profiles[jdx].scope, "loa", idp->profiles[jdx].loa);
+                &profileJ, "{ss ss* ss si}", "uid", prof->uid,
+                "info", prof->info, "scope",
+                prof->scope, "loa", prof->loa);
             json_object_array_add(profilesJ, profileJ);
         }
 
         // only return IDP with a corresponding loa/scope
         if (profilesJ) {
             json_object *idpJ;
-            if (!idpsJ)
-                idpsJ = json_object_new_array();
             rp_jsonc_pack(&idpJ, "{ss ss* ss* ss* ss* so}", "uid", idp->uid,
                           "info", idp->info, "logo", idp->statics->aliasLogo,
                           "client-id", idp->credentials->clientId, "login-url",
