@@ -474,69 +474,83 @@ static idpGenericCbT idpGenericCB = {
     .pluginRegister = idpRegisterPlugin,
 };
 
+static int idpPluginParseOne(oidcCoreHdlT *oidc, json_object *pluginJ)
+{
+    int rc;
+    json_object *obj;
+    char *copy, *head, *next;
+    void *handle;
+    oidcPluginInitCbT registerPluginCB;
+
+    // get the load path copy
+    if (!json_object_object_get_ex(pluginJ, "ldpath", &obj) || !json_object_is_type(obj, json_type_string)) {
+        EXT_ERROR("[oidc-idp] idp plugin config requires a 'ldpath'");
+        return -1;
+    }
+    copy = strdup(json_object_get_string(obj));
+    if (copy == NULL) {
+        EXT_ERROR("[oidc-idp] out of memory");
+        return -1;
+    }
+
+    // iterate over paths of the copy
+    next = NULL;
+    head = strtok_r(copy, ":", &next);
+    while (head != NULL) {
+        handle = dlopen(head, RTLD_NOW | RTLD_LOCAL);
+        if (handle != NULL) {
+            registerPluginCB = dlsym(handle, "oidcPluginInit");
+            if (registerPluginCB == NULL)
+                EXT_WARNING("[oidc-idp] no symbol oidcPluginInit in %s, skipping", head);
+            else {
+                rc = registerPluginCB(oidc, &idpGenericCB);
+                if (rc == 0) {
+                    EXT_INFO("[oidc-idp] using plugin %s", head);
+                    free(copy);
+                    return 0;
+                }
+                EXT_WARNING("[oidc-idp] fail to initialize plugin %s, skipping", head);
+            }
+            dlclose(handle);
+        }
+        head = strtok_r(NULL, ":", &next);
+    }
+    EXT_ERROR("[oidc-idp] no available plugin from %s", json_object_get_string(obj));
+    copy = strdup(json_object_get_string(obj));
+    free(copy);
+    return -1;
+}
+
 static int idpParseOne(oidcCoreHdlT *oidc, json_object *idpJ, oidcIdpT *idp)
 {
     int err;
+    const char *uid, *type;
+    json_object *pluginJ, *obj;
 
-    // search idp with registry
-    const char *uid =
-        json_object_get_string(json_object_object_get(idpJ, "uid"));
-    if (!uid) {
-        EXT_ERROR("[idp-parsing-error] invalid json requires: uid");
+    // get IDP uid
+    if (!json_object_object_get_ex(idpJ, "uid", &obj) || !json_object_is_type(obj, json_type_string)) {
+        EXT_ERROR("[oidc-idp] idp config requires a string 'uid'");
         goto OnErrorExit;
     }
-    const char *type =
-        json_object_get_string(json_object_object_get(idpJ, "type"));
-    if (!type)
-        type = uid;
+    uid = json_object_get_string(obj);
 
-    // if not builtin load plugin before processing any further the config
-    json_object *pluginJ = json_object_object_get(idpJ, "plugin");
-    if (pluginJ) {
-        const char *ldpath =
-            json_object_get_string(json_object_object_get(pluginJ, "ldpath"));
-        if (!ldpath) {
-            EXT_CRITICAL(
-                "[idp-parsing-ldpath] idp=%s invalid json 'ldpath' missing",
-                uid);
+    // compute IDP type
+    if (!json_object_object_get_ex(idpJ, "type", &obj))
+        type = uid;
+    else {
+        if (!json_object_is_type(obj, json_type_string)) {
+            EXT_ERROR("[oidc-idp] idp config 'type' must be a string");
             goto OnErrorExit;
         }
-        else {
-            void *handle = NULL;
-            char *filepath;
-            // split string into multiple configpath
-            str2TokenT tknHandle;
-            for (filepath = utilStr2Token(&tknHandle, ':', ldpath); filepath;
-                 filepath = utilStr2Token(&tknHandle, 0, 0)) {
-                handle = dlopen(filepath, RTLD_NOW | RTLD_LOCAL);
-                if (handle)
-                    break;
-            }
-            if (!handle) {
-                EXT_ERROR("[idp-plugin-load] idp=%s plugin=%s error=%s", uid,
-                          ldpath, dlerror());
-                goto OnErrorExit;
-            }
+        type = json_object_get_string(obj);
+    }
 
-            oidcPluginInitCbT registerPluginCB =
-                (oidcPluginInitCbT)dlsym(handle, "oidcPluginInit");
-            if (!registerPluginCB) {
-                EXT_ERROR(
-                    "[idp-plugin-symb] idp=%s plugin=%s "
-                    "initcb='oidcPluginInit' (symbol not found)",
-                    uid, filepath);
-                goto OnErrorExit;
-            }
-
-            err = registerPluginCB(oidc, &idpGenericCB);
-            if (err) {
-                EXT_ERROR(
-                    "[idp-plugin-init] idp=%s plugin=%s "
-                    "initcb='oidcPluginInit' (call fail)",
-                    uid, filepath);
-                goto OnErrorExit;
-            }
-        }
+    // if not builtin load plugin before processing any further the config
+    pluginJ = json_object_object_get(idpJ, "plugin");
+    if (pluginJ != NULL) {
+        err = idpPluginParseOne(oidc, pluginJ);
+        if (err < 0)
+            goto OnErrorExit;
     }
 
     idp->magic = MAGIC_OIDC_IDP;
@@ -561,17 +575,18 @@ OnErrorExit:
     return 1;
 }
 
+// Parse the configuration object idpJ for idps list
 oidcIdpT *idpParseConfig(oidcCoreHdlT *oidc, json_object *idpsJ)
 {
-    oidcIdpT *idps;
-    int err, count;
+    oidcIdpT *idps = NULL;
+    int err, count, idx;
 
     switch (json_object_get_type(idpsJ)) {
     case json_type_array:
         count = (int)json_object_array_length(idpsJ);
         idps = calloc(count + 1, sizeof(oidcIdpT));
 
-        for (int idx = 0; idx < count; idx++) {
+        for (idx = 0; idx < count; idx++) {
             json_object *idpJ = json_object_array_get_idx(idpsJ, idx);
             err = idpParseOne(oidc, idpJ, &idps[idx]);
             if (err) {
@@ -591,14 +606,13 @@ oidcIdpT *idpParseConfig(oidcCoreHdlT *oidc, json_object *idpsJ)
         break;
 
     default:
-        EXT_ERROR(
-            "[idp-parsing-error] ext=%s idp config should be json/array|object",
-            oidc->uid);
+        EXT_ERROR("[oidc-idp] Bad idps config object");
         goto OnErrorExit;
     }
     return idps;
 
 OnErrorExit:
+    free(idps);
     return NULL;
 }
 
