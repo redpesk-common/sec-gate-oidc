@@ -28,8 +28,8 @@
 #include <string.h>
 #include <time.h>
 
-#include <rp-utils/rp-jsonc.h>
 #include <rp-utils/rp-escape.h>
+#include <rp-utils/rp-jsonc.h>
 
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
@@ -49,7 +49,7 @@
 int aliasCheckAttrs(oidcSession *session, oidcAliasT *alias)
 {
     const char **roles = alias->roles;
-    while(*roles) {
+    while (*roles) {
         if (fedidsessionHasAttribute(session, *roles))
             return 0;
         roles++;
@@ -75,16 +75,22 @@ static void aliasRedirectTimeout(afb_hreq *hreq, oidcAliasT *alias)
     if (err < 0)
         goto OnErrorExit;
 
-    const char *params[] = {
-        "client_id", profile->idp->credentials->clientId,
-        "response_type", profile->idp->wellknown->respondLabel,
-        "state", oidcSessionUUID(session),
-        "scope", profile->scope,
-        "redirect_uri", redirectUrl,
-        "language", setlocale(LC_CTYPE, ""),
-        NULL };
+    const char *params[] = {"client_id",
+                            profile->idp->credentials->clientId,
+                            "response_type",
+                            profile->idp->wellknown->respondLabel,
+                            "state",
+                            oidcSessionUUID(session),
+                            "scope",
+                            profile->scope,
+                            "redirect_uri",
+                            redirectUrl,
+                            "language",
+                            setlocale(LC_CTYPE, ""),
+                            NULL};
 
-    size_t sz = rp_escape_url_to(NULL, profile->idp->statics->aliasLogin, params, url, sizeof url);
+    size_t sz = rp_escape_url_to(NULL, profile->idp->statics->aliasLogin,
+                                 params, url, sizeof url);
     if (sz >= sizeof url) {
         EXT_ERROR(
             "[fail-login-redirect] fail to build redirect url "
@@ -110,10 +116,9 @@ static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias)
     oidcSessionSetAlias(oidcSessionOfHttpReq(hreq), alias);
 
     if (alias->oidc->globals->loginUrl) {
-        const char *params[] = {
-            "language", setlocale(LC_CTYPE, ""),
-            NULL };
-        size_t sz = rp_escape_url_to(NULL, alias->oidc->globals->loginUrl, params, url, sizeof url);
+        const char *params[] = {"language", setlocale(LC_CTYPE, ""), NULL};
+        size_t sz = rp_escape_url_to(NULL, alias->oidc->globals->loginUrl,
+                                     params, url, sizeof url);
         if (sz >= sizeof url) {
             EXT_ERROR(
                 "[fail-login-redirect] fail to build redirect url "
@@ -135,18 +140,25 @@ static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias)
         if (status < 0)
             goto OnErrorExit;
 
-        const char *params[] = {
-            "client_id", idp->credentials->clientId,
-            "response_type", idp->wellknown->respondLabel,
-            "state", uuid,
-            "nonce", uuid,
-            "scope", profile->scope,
-            "redirect_uri", redirectUrl,
-            "language", setlocale(LC_CTYPE, ""),
-            NULL };
+        const char *params[] = {"client_id",
+                                idp->credentials->clientId,
+                                "response_type",
+                                idp->wellknown->respondLabel,
+                                "state",
+                                uuid,
+                                "nonce",
+                                uuid,
+                                "scope",
+                                profile->scope,
+                                "redirect_uri",
+                                redirectUrl,
+                                "language",
+                                setlocale(LC_CTYPE, ""),
+                                NULL};
 
         // build wreq and send it
-        size_t sz = rp_escape_url_to(NULL, idp->wellknown->authorize, params, url, sizeof url);
+        size_t sz = rp_escape_url_to(NULL, idp->wellknown->authorize, params,
+                                     url, sizeof url);
         if (sz >= sizeof url) {
             EXT_ERROR(
                 "[fail-login-redirect] fail to build redirect url "
@@ -192,7 +204,8 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
 
         // if tCache not expired use jump authent check
         clock_gettime(CLOCK_MONOTONIC, &tCurrent);
-        tNow = (int)((tCurrent.tv_nsec / 1000000 + tCurrent.tv_sec * 1000) / 100);
+        tNow =
+            (int)((tCurrent.tv_nsec / 1000000 + tCurrent.tv_sec * 1000) / 100);
         tStamp = oidcSessionGetExpiration(session);
         if (tNow > tStamp) {
             EXT_NOTICE("session uuid=%s (aliasCheckLoaCB)",
@@ -215,8 +228,9 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
                 // if current profile LOA is enough then fire same idp/profile
                 // authen
                 idpProfile = oidcSessionGetIdpProfile(session);
-                if (idpProfile != NULL && (idpProfile->loa >= alias->loa ||
-                             idpProfile->loa == abs(alias->loa))) {
+                if (idpProfile != NULL &&
+                    (idpProfile->loa >= alias->loa ||
+                     idpProfile->loa == abs(alias->loa))) {
                     aliasRedirectTimeout(hreq, alias);
                 }
                 else {
@@ -380,13 +394,12 @@ oidcAliasT *aliasParseConfig(oidcCoreHdlT *oidc, json_object *aliasesJ)
     int err, count, idx;
 
     switch (json_object_get_type(aliasesJ)) {
-
     case json_type_array:
         /* extract array of aliases */
         count = (int)json_object_array_length(aliasesJ);
         aliases = calloc(count + 1, sizeof(oidcAliasT));
         if (aliases == NULL)
-                goto OnErrorExit;
+            goto OnErrorExit;
 
         for (idx = 0; idx < count; idx++) {
             json_object *aliasJ = json_object_array_get_idx(aliasesJ, idx);
@@ -400,7 +413,7 @@ oidcAliasT *aliasParseConfig(oidcCoreHdlT *oidc, json_object *aliasesJ)
         /* extract single alias */
         aliases = calloc(2, sizeof(oidcAliasT));
         if (aliases == NULL)
-                goto OnErrorExit;
+            goto OnErrorExit;
         err = idpParseOneAlias(oidc, aliasesJ, &aliases[0]);
         if (err)
             goto OnErrorExit;

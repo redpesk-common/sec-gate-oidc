@@ -285,11 +285,16 @@ static int githubAccessToken(afb_hreq *hreq,
     int err;
 
     const char *params[] = {
-        "client_id", idp->credentials->clientId,
-        "client_secret", idp->credentials->secret,
-        "code", code,
-        "redirect_uri", redirectUrl,
-        "state", oidcSessionUUID(oidcSessionOfHttpReq(hreq)),
+        "client_id",
+        idp->credentials->clientId,
+        "client_secret",
+        idp->credentials->secret,
+        "code",
+        code,
+        "redirect_uri",
+        redirectUrl,
+        "state",
+        oidcSessionUUID(oidcSessionOfHttpReq(hreq)),
         NULL  // terminator
     };
 
@@ -303,8 +308,9 @@ static int githubAccessToken(afb_hreq *hreq,
 
     // send asynchronous post wreq with params in query //
     // https://gist.github.com/technoweenie/419219
-    
-    size_t sz = rp_escape_url_to(NULL, idp->wellknown->tokenid, params, url, sizeof url);
+
+    size_t sz = rp_escape_url_to(NULL, idp->wellknown->tokenid, params, url,
+                                 sizeof url);
     if (sz >= sizeof url)
         goto OnErrorExit;
 
@@ -372,17 +378,24 @@ static int githubLoginCB(afb_hreq *hreq, void *ctx)
         oidcSessionSetIdpProfile(oidcSessionOfHttpReq(hreq), profile);
 
         const char *params[] = {
-            "client_id", idp->credentials->clientId,
-            "response_type", "code",
-            "state", session,
-            "scope", profile->scope,
-            "redirect_uri", redirectUrl,
-            "language", setlocale(LC_CTYPE, ""),
+            "client_id",
+            idp->credentials->clientId,
+            "response_type",
+            "code",
+            "state",
+            session,
+            "scope",
+            profile->scope,
+            "redirect_uri",
+            redirectUrl,
+            "language",
+            setlocale(LC_CTYPE, ""),
             NULL  // terminator
         };
 
         // build wreq and send it
-        size_t sz = rp_escape_url_to(NULL, idp->wellknown->authorize, params, url, sizeof url);
+        size_t sz = rp_escape_url_to(NULL, idp->wellknown->authorize, params,
+                                     url, sizeof url);
         if (sz >= sizeof url)
             goto OnErrorExit;
 

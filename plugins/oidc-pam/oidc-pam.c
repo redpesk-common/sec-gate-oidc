@@ -26,8 +26,8 @@
 #include <pwd.h>
 #include <security/pam_appl.h>
 
-#include <rp-utils/rp-jsonc.h>
 #include <rp-utils/rp-escape.h>
+#include <rp-utils/rp-jsonc.h>
 
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
@@ -304,10 +304,14 @@ int pamLoginCB(afb_hreq *hreq, void *ctx)
             goto OnErrorExit;
 
         const char *params[] = {
-            "state", oidcSessionUUID(oidcSessionOfHttpReq(hreq)),
-            "scope", profile->scope,
-            "redirect_uri", redirectUrl,
-            "language", setlocale(LC_CTYPE, ""),
+            "state",
+            oidcSessionUUID(oidcSessionOfHttpReq(hreq)),
+            "scope",
+            profile->scope,
+            "redirect_uri",
+            redirectUrl,
+            "language",
+            setlocale(LC_CTYPE, ""),
             NULL  // terminator
         };
 
@@ -316,7 +320,8 @@ int pamLoginCB(afb_hreq *hreq, void *ctx)
         oidcSessionSetIdpProfile(oidcSessionOfHttpReq(hreq), profile);
 
         // build wreq and send it
-        size_t sz = rp_escape_url_to(NULL, idp->wellknown->tokenid, params, url, sizeof url);
+        size_t sz = rp_escape_url_to(NULL, idp->wellknown->tokenid, params, url,
+                                     sizeof url);
         if (sz >= sizeof url)
             goto OnErrorExit;
 
@@ -327,7 +332,8 @@ int pamLoginCB(afb_hreq *hreq, void *ctx)
         // we have a code check state to assert that the response was generated
         // by us then wreq authentication token
         const char *state = afb_hreq_get_argument(hreq, "state");
-        if (!state || strcmp(state, oidcSessionUUID(oidcSessionOfHttpReq(hreq))))
+        if (!state ||
+            strcmp(state, oidcSessionUUID(oidcSessionOfHttpReq(hreq))))
             goto OnErrorExit;
 
         EXT_DEBUG("[pam-auth-code] login=%s (pamLoginCB)", login);

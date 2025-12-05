@@ -89,8 +89,7 @@ json_object *idpLoaProfilsGet(oidcCoreHdlT *oidc,
         // search for requested LOA within idp existing profile
         for (; prof->uid; prof++) {
             // if loa does not fit ignore IDP
-            if (prof->loa < loa &&
-                prof->loa != abs(loa))
+            if (prof->loa < loa && prof->loa != abs(loa))
                 continue;
             if (noslave && prof->slave)
                 continue;
@@ -109,10 +108,8 @@ json_object *idpLoaProfilsGet(oidcCoreHdlT *oidc,
             json_object *profileJ;
             if (!profilesJ)
                 profilesJ = json_object_new_array();
-            rp_jsonc_pack(
-                &profileJ, "{ss ss* ss si}", "uid", prof->uid,
-                "info", prof->info, "scope",
-                prof->scope, "loa", prof->loa);
+            rp_jsonc_pack(&profileJ, "{ss ss* ss si}", "uid", prof->uid, "info",
+                          prof->info, "scope", prof->scope, "loa", prof->loa);
             json_object_array_add(profilesJ, profileJ);
         }
 

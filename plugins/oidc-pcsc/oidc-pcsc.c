@@ -27,8 +27,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <rp-utils/rp-jsonc.h>
 #include <rp-utils/rp-escape.h>
+#include <rp-utils/rp-jsonc.h>
 
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
@@ -462,14 +462,15 @@ int pcscLoginCB(afb_hreq *hreq, void *ctx)
     oidcSessionSetIdpProfile(oidcSessionOfHttpReq(hreq), profile);
 
     const char *params[] = {
-        "state", oidcSessionUUID(oidcSessionOfHttpReq(hreq)),
-        "scope", profile->scope,
+        "state",    oidcSessionUUID(oidcSessionOfHttpReq(hreq)),
+        "scope",    profile->scope,
         "language", setlocale(LC_CTYPE, ""),
         NULL  // terminator
     };
 
     // build wreq and send it
-    size_t sz = rp_escape_url_to(NULL, idp->wellknown->tokenid, params, url, sizeof url);
+    size_t sz = rp_escape_url_to(NULL, idp->wellknown->tokenid, params, url,
+                                 sizeof url);
     if (sz >= sizeof url)
         goto OnErrorExit;
 

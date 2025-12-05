@@ -25,8 +25,8 @@
 #include <locale.h>
 #include <string.h>
 
-#include <rp-utils/rp-jsonc.h>
 #include <rp-utils/rp-escape.h>
+#include <rp-utils/rp-jsonc.h>
 
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
@@ -70,7 +70,7 @@ void fedidsessionReset(oidcSession *session, const oidcProfileT *idpProfile)
             void *ctx = oidcSessionGetOpaqueData(session);
             if (ctx != NULL) {
                 idpProfile->idp->plugin->resetSession(idpProfile, ctx);
-		oidcSessionSetOpaqueData(session, NULL);
+                oidcSessionSetOpaqueData(session, NULL);
             }
         }
 
@@ -156,20 +156,19 @@ static void fedidCheckCB(void *ctx,
 
         // fedkey not found let's store social authority profile into session
         // and redirect user on userprofil creation
-	oidcSessionSetFedUser(session, idpRqtCtx->fedUser);
-	oidcSessionSetFedSocial(session, idpRqtCtx->fedSocial);
+        oidcSessionSetFedUser(session, idpRqtCtx->fedUser);
+        oidcSessionSetFedSocial(session, idpRqtCtx->fedSocial);
         if (idpProfile->slave) {
             targetUrl = idpRqtCtx->idp->oidc->globals->fedlinkUrl;
-	    oidcSessionSetFedIdLinkRequest(session, FEDID_LINK_REQUESTED);
+            oidcSessionSetFedIdLinkRequest(session, FEDID_LINK_REQUESTED);
         }
         else {
             targetUrl = idpRqtCtx->idp->oidc->globals->registerUrl;
         }
         if (hreq) {
-            const char *params[] = {
-                "language", setlocale(LC_CTYPE, ""),
-                NULL };
-            size_t sz = rp_escape_url_to(NULL, targetUrl, params, url, sizeof url);
+            const char *params[] = {"language", setlocale(LC_CTYPE, ""), NULL};
+            size_t sz =
+                rp_escape_url_to(NULL, targetUrl, params, url, sizeof url);
             if (sz >= sizeof url) {
                 EXT_ERROR(
                     "[fedid-register-unknown] fail to build redirect url");
@@ -201,12 +200,12 @@ static void fedidCheckCB(void *ctx,
             afb_data_t data;
 
             // make sure we do not link account twice
-	    oidcSessionSetFedIdLinkRequest(session, FEDID_LINK_RESET);
+            oidcSessionSetFedIdLinkRequest(session, FEDID_LINK_RESET);
 
             // delegate account federation linking to fedid binding
             params[0] = afb_data_addref(argd[0]);
-            err = afb_create_data_raw(&params[1], fedSocialObjType,
-                                      fedSocial, 0, NULL, NULL);
+            err = afb_create_data_raw(&params[1], fedSocialObjType, fedSocial,
+                                      0, NULL, NULL);
             if (err < 0)
                 goto OnErrorExit;
             err = afb_api_v4_call_sync_hookable(api, API_OIDC_USR_SVC,
@@ -222,8 +221,8 @@ static void fedidCheckCB(void *ctx,
         }
         // let's store user profile into session cookie (/oidc/profile/get
         // serves it)
-	oidcSessionSetFedUser(session, fedUserAddRef(fedUser));
-	oidcSessionSetFedSocial(session, idpRqtCtx->fedSocial);
+        oidcSessionSetFedUser(session, fedUserAddRef(fedUser));
+        oidcSessionSetFedSocial(session, idpRqtCtx->fedSocial);
 
         // everyting looks good let's return user to original page
         idpProfile = oidcSessionGetIdpProfile(session);
@@ -354,4 +353,3 @@ int fedidsessionHasAttribute(oidcSession *session, const char *value)
     }
     return 0;
 }
-

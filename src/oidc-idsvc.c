@@ -54,7 +54,7 @@ static void idsvcPing(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
         afb_req_reply(wreq, AFB_ERRNO_INTERNAL_ERROR, 0, NULL);
     else {
         afb_create_data_raw(&reply, AFB_PREDEFINED_TYPE_STRINGZ, response,
-                        (size_t)(sz + 1), free, response);
+                            (size_t)(sz + 1), free, response);
         afb_req_reply(wreq, 0, 1, &reply);
     }
 }
@@ -213,7 +213,7 @@ static void idpQueryUser(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
                             (void *)json_object_put, queryJ);
         afb_req_subcall(wreq, API_OIDC_USR_SVC, "social-idps", 1, &query,
                         afb_req_subcall_on_behalf, idpQueryUserCB, NULL);
-	oidcSessionDropFedIdLink(session);
+        oidcSessionDropFedIdLink(session);
     }
     else {
         // if no idps list provided build one from config
@@ -353,25 +353,25 @@ static void userFederateCB(void *ctx,
 
     // subcall failed
     if (status < 0) {
-    	afb_req_reply(wreq, status, 0, NULL);
-	return;
+        afb_req_reply(wreq, status, 0, NULL);
+        return;
     }
 
     // user isn't recorded
     if (status == 0) {
-	EXT_INFO("user not recorded, pseudo=%s, email=%s",
-		       fedUser->pseudo, fedUser->email);
-    	afb_req_reply(wreq, AFB_USER_ERRNO(0), 0, NULL);
-	return;
+        EXT_INFO("user not recorded, pseudo=%s, email=%s", fedUser->pseudo,
+                 fedUser->email);
+        afb_req_reply(wreq, AFB_USER_ERRNO(0), 0, NULL);
+        return;
     }
 
     // get used IDP profile to access oidc wellknown urls
     session = oidcSessionOfReq(wreq);
     profile = oidcSessionGetIdpProfile(session);
     if (!profile) {
-	EXT_INFO("no recorded IDP");
-    	afb_req_reply(wreq, AFB_USER_ERRNO(1), 0, NULL);
-	return;
+        EXT_INFO("no recorded IDP");
+        afb_req_reply(wreq, AFB_USER_ERRNO(1), 0, NULL);
+        return;
     }
 
     // copy current user social and registration data for further federation

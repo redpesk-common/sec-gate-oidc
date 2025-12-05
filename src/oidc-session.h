@@ -25,8 +25,8 @@
 
 #define _GNU_SOURCE
 
-#include "oidc-common.h"
 #include "oidc-alias.h"
+#include "oidc-common.h"
 #include "oidc-idp.h"
 
 typedef struct
@@ -66,7 +66,9 @@ int oidcSessionSetIdpProfile(oidcSession *session, const oidcProfileT *profile);
 fedidSessionT *oidcSessionGetFedId(oidcSession *session);
 int oidcSessionSetFedId(oidcSession *session, fedidSessionT *fedid);
 
-int oidcSessionSetFedIdLink(oidcSession *session, const char *pseudo, const char *email);
+int oidcSessionSetFedIdLink(oidcSession *session,
+                            const char *pseudo,
+                            const char *email);
 const fedidLinkT *oidcSessionGetFedIdLink(oidcSession *session);
 void oidcSessionDropFedIdLink(oidcSession *session);
 int oidcSessionSetFedIdLinkRequest(oidcSession *session, int request);

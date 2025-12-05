@@ -33,9 +33,9 @@
 #include <string.h>
 #include <uthash.h>
 
-#include <rp-utils/rp-jsonc.h>
 #include <rp-utils/rp-base64.h>
 #include <rp-utils/rp-escape.h>
+#include <rp-utils/rp-jsonc.h>
 
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
@@ -316,8 +316,8 @@ static json_object *oidcUserGetByJwt(oidcSchemaT *schema, char *tokenId)
     }
     else {
         rc = rp_base64_decode(token[TKN_HEADER], length[TKN_HEADER],
-                              (uint8_t **)&token[TKN_HEADER], &length[TKN_HEADER],
-                              ENCODED_URL);
+                              (uint8_t **)&token[TKN_HEADER],
+                              &length[TKN_HEADER], ENCODED_URL);
         // signature is not encoded
         if (rc != rp_base64_ok || !token[TKN_SIGN])
             goto OnErrorExit;
@@ -540,18 +540,26 @@ static int oidcLoginCB(afb_hreq *hreq, void *ctx)
         oidcSessionSetIdpProfile(oidcSessionOfHttpReq(hreq), profile);
 
         const char *params[] = {
-            "client_id", idp->credentials->clientId,
-            "response_type", idp->wellknown->respondLabel,
-            "state", session,
-            "nonce", session,
-            "scope", profile->scope,
-            "redirect_uri", redirectUrl,
-            "language", setlocale(LC_CTYPE, ""),
+            "client_id",
+            idp->credentials->clientId,
+            "response_type",
+            idp->wellknown->respondLabel,
+            "state",
+            session,
+            "nonce",
+            session,
+            "scope",
+            profile->scope,
+            "redirect_uri",
+            redirectUrl,
+            "language",
+            setlocale(LC_CTYPE, ""),
             NULL  // terminator
         };
 
         // build wreq and send it
-        size_t sz = rp_escape_url_to(NULL, idp->wellknown->authorize, params, url, sizeof url);
+        size_t sz = rp_escape_url_to(NULL, idp->wellknown->authorize, params,
+                                     url, sizeof url);
         if (sz >= sizeof url)
             goto OnErrorExit;
 
