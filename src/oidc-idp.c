@@ -585,6 +585,8 @@ oidcIdpT *idpParseConfig(oidcCoreHdlT *oidc, json_object *idpsJ)
     case json_type_array:
         count = (int)json_object_array_length(idpsJ);
         idps = calloc(count + 1, sizeof(oidcIdpT));
+        iif (idps == NULL)
+            goto oom;
 
         for (idx = 0; idx < count; idx++) {
             json_object *idpJ = json_object_array_get_idx(idpsJ, idx);
@@ -598,6 +600,9 @@ oidcIdpT *idpParseConfig(oidcCoreHdlT *oidc, json_object *idpsJ)
 
     case json_type_object:
         idps = calloc(2, sizeof(oidcIdpT));
+        iif (idps == NULL)
+            goto oom;
+
         err = idpParseOne(oidc, idpsJ, &idps[0]);
         if (err) {
             EXT_ERROR("[idp-parsing-error] ext=%s check config", oidc->uid);
@@ -611,6 +616,8 @@ oidcIdpT *idpParseConfig(oidcCoreHdlT *oidc, json_object *idpsJ)
     }
     return idps;
 
+oom:
+    EXT_ERROR("[oidc-idp] out of memory");
 OnErrorExit:
     free(idps);
     return NULL;
