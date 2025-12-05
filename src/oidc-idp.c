@@ -561,7 +561,7 @@ OnErrorExit:
     return 1;
 }
 
-oidcIdpT const *idpParseConfig(oidcCoreHdlT *oidc, json_object *idpsJ)
+oidcIdpT *idpParseConfig(oidcCoreHdlT *oidc, json_object *idpsJ)
 {
     oidcIdpT *idps;
     int err, count;

@@ -122,10 +122,8 @@ int AfbExtensionConfigV1(void **ctx, struct json_object *oidcJ, char const *uid)
                            "verbose", &oidc->verbose);
     // clang-format on
     if (err) {
-        EXT_CRITICAL(
-            "[oidc-parsing-error] ext=%s requires: idp(s),alias,apis "
-            "(AfbExtensionConfigV1)",
-            oidc->uid);
+        EXT_ERROR("[oidc-core] misconfig %s (pos %d)",
+                  rp_jsonc_get_error_string(err), rp_jsonc_get_error_position(err));
         goto OnErrorExit;
     }
 
@@ -139,13 +137,13 @@ int AfbExtensionConfigV1(void **ctx, struct json_object *oidcJ, char const *uid)
         goto OnErrorExit;
 
     // set idps
-    oidc->idps = (oidcIdpT *)idpParseConfig(oidc, idpsJ);
+    oidc->idps = idpParseConfig(oidc, idpsJ);
 
     // set aliases
-    oidc->aliases = (oidcAliasT *)aliasParseConfig(oidc, aliasJ);
+    oidc->aliases = aliasParseConfig(oidc, aliasJ);
 
     // set apis
-    oidc->apis = (oidcApisT *)apisParseConfig(oidc, apisJ);
+    oidc->apis = apisParseConfig(oidc, apisJ);
 
     // stop when error in previous setting
     if (!oidc->idps || !oidc->aliases || !oidc->apis)
