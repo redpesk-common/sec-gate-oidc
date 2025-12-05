@@ -100,10 +100,7 @@ int AfbExtensionConfigV1(void **ctx, struct json_object *oidcJ, char const *uid)
     oidc->uid = AfbExtensionManifest.name;
     json_object_get(oidcJ);
 
-    // init idp plugin global registry
-    err = idpPLuginRegistryInit();
-    if (err)
-        goto OnErrorExit;
+    // register builtin IDPs
     err = registerBuiltinIdps();
     if (err)
         goto OnErrorExit;

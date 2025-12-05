@@ -661,7 +661,3 @@ OnErrorExit:
     return 1;
 }
 
-int idpPLuginRegistryInit(void)
-{
-    return 0;
-}
