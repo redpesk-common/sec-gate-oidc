@@ -178,6 +178,7 @@ typedef int (*oidcPluginInitCbT)(oidcCoreHdlT *oidc,
                                  idpGenericCbT *idpGenericCb);
 
 // idp exported functions
+int idpPluginsParseConfig(oidcCoreHdlT *oidc, json_object *pluginsJ);
 oidcIdpT *idpParseConfig(oidcCoreHdlT *oidc, json_object *idpsJ);
 int idpParseOidcConfig(oidcIdpT *idp,
                        json_object *configJ,

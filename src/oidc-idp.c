@@ -575,6 +575,34 @@ OnErrorExit:
     return 1;
 }
 
+// Parse the configuration object for idp plugins
+int idpPluginsParseConfig(oidcCoreHdlT *oidc, json_object *pluginsJ)
+{
+    int err, count, idx;
+
+    switch (json_object_get_type(pluginsJ)) {
+    case json_type_array:
+        count = (int)json_object_array_length(pluginsJ);
+        for (idx = 0; idx < count; idx++) {
+            err = idpPluginParseOne(oidc, json_object_array_get_idx(pluginsJ, idx));
+            if (err)
+                return -1;
+        }
+        break;
+
+    case json_type_object:
+        err = idpPluginParseOne(oidc, pluginsJ);
+        if (err)
+            return -1;
+        break;
+
+    default:
+        EXT_ERROR("[oidc-idp] Bad idp-plugins config object");
+        return -1;
+    }
+    return 0;
+}
+
 // Parse the configuration object idpJ for idps list
 oidcIdpT *idpParseConfig(oidcCoreHdlT *oidc, json_object *idpsJ)
 {
@@ -585,29 +613,25 @@ oidcIdpT *idpParseConfig(oidcCoreHdlT *oidc, json_object *idpsJ)
     case json_type_array:
         count = (int)json_object_array_length(idpsJ);
         idps = calloc(count + 1, sizeof(oidcIdpT));
-        iif (idps == NULL)
+        if (idps == NULL)
             goto oom;
 
         for (idx = 0; idx < count; idx++) {
             json_object *idpJ = json_object_array_get_idx(idpsJ, idx);
             err = idpParseOne(oidc, idpJ, &idps[idx]);
-            if (err) {
-                EXT_ERROR("[idp-parsing-error] ext=%s", oidc->uid);
+            if (err)
                 goto OnErrorExit;
-            }
         }
         break;
 
     case json_type_object:
         idps = calloc(2, sizeof(oidcIdpT));
-        iif (idps == NULL)
+        if (idps == NULL)
             goto oom;
 
         err = idpParseOne(oidc, idpsJ, &idps[0]);
-        if (err) {
-            EXT_ERROR("[idp-parsing-error] ext=%s check config", oidc->uid);
+        if (err)
             goto OnErrorExit;
-        }
         break;
 
     default:

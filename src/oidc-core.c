@@ -92,6 +92,7 @@ static int globalConfig(oidGlobalsT *globals, json_object *globalsJ)
 int AfbExtensionConfigV1(void **ctx, struct json_object *oidcJ, char const *uid)
 {
     int err;
+    json_object *idpsJ = NULL, *aliasJ = NULL, *apisJ = NULL, *globalsJ = NULL, *pluginsJ = NULL;
     oidcCoreHdlT *oidc = calloc(1, sizeof(oidcCoreHdlT));
     if (oidc == NULL)
         goto OnErrorExit;
@@ -105,13 +106,13 @@ int AfbExtensionConfigV1(void **ctx, struct json_object *oidcJ, char const *uid)
     if (err)
         goto OnErrorExit;
 
-    json_object *idpsJ = NULL, *aliasJ = NULL, *apisJ = NULL, *globalsJ = NULL;
     // clang-format off
     err = rp_jsonc_unpack(oidcJ,
-                           "{s?s,s?s,s?o,s?o,s?o,s?o,s?o,s?i}",
+                           "{s?s,s?s,s?o,s?o,s?o,s?o,s?o,s?o,s?i}",
                            "api", &oidc->api,
                            "info", &oidc->info,
                            "globals", &globalsJ,
+                           "plugins", &pluginsJ,
                            "idp", &idpsJ,
                            "idps", &idpsJ,
                            "alias", &aliasJ,
@@ -132,6 +133,13 @@ int AfbExtensionConfigV1(void **ctx, struct json_object *oidcJ, char const *uid)
     err = globalConfig(&oidc->globals, globalsJ);
     if (err)
         goto OnErrorExit;
+
+    // load the plugins if exist
+    if (pluginsJ != NULL) {
+        err = idpPluginsParseConfig(oidc, pluginsJ);
+        if (err)
+            goto OnErrorExit;
+    }
 
     // set idps
     oidc->idps = idpParseConfig(oidc, idpsJ);
@@ -155,7 +163,7 @@ int AfbExtensionConfigV1(void **ctx, struct json_object *oidcJ, char const *uid)
     return 0;
 
 OnErrorExit:
-    free(oidc);
+    free(oidc); // TODO also free sub components
     *ctx = NULL;
     EXT_CRITICAL("[oidc-core] Failed to initialize at configuration");
     return -1;

@@ -86,6 +86,7 @@ level is acceptable or not.
 * **idps**: one configuration per IDP (authentication authority)
 * **apis**: imported API exposure and access control for REST/WEBsocket
 * **alias**: HTTP access control.
+* **plugins**: Declaration of plugins (since version 2.0.0)
 
 ### Global section
 
@@ -163,7 +164,8 @@ Nevertheless it is possible to add custom local/remote authority
     "profiles": [
         {"uid":"basic", "loa":1, "scope":"user:email"},
         {"uid":"teams", "loa":2, "scope":"read:org", "attrs":"organizations_url"}
-    ]
+    ],
+    "plugin": { ... }
 }
 ```
 
@@ -255,6 +257,8 @@ Nevertheless it is possible to add custom local/remote authority
     information from IDP services. In the case of github 'organizations_url' is the json key
      used to return organizations to a user below.
 
+* **plugin**: a single plugin description as explain below (see *Plugins section*)
+
 ### API section
 
 List of binding APIs that sgate should make visible to external clients
@@ -336,6 +340,23 @@ privileges his browser is redirect to the corresponding login page.
   Priority is an option to implement logical AND access control.
   The highest priority is executed first and all rules should pass for access
   to be granted to requesting client.
+
+### Plugins section
+
+This section contains either a single plugin description or an array
+of such description.
+
+```json
+"plugins": [
+      {
+         "info": "custom params for pam plugin (note: idp->uid:pam-login should match one plugin idp uid)",
+         "ldpath": "/usr/lib/plugins/libidp-sgate-pam-auth.so",
+         "gids": 16
+      }
+   ]
+```
+
+* **ldpath**: A colon (:) separated list of path where the plugin library is to be loaded.
 
 [1] https://docs.redpesk.bzh/docs/en/master/developer-guides/reference-v4/types-and-globals.html (redpesk-documentation)
 
