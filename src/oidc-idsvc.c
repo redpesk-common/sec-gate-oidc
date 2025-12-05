@@ -381,7 +381,7 @@ static void userFederateCB(void *ctx,
     // force federation mode within fedidCheckCB
     oidcSessionSetFedIdLinkRequest(session, FEDID_LINK_REQUESTED);
     err = rp_jsonc_pack(&responseJ, "{ss}", "target",
-                        profile->idp->oidc->globals->fedlinkUrl);
+                        profile->idp->oidc->globals.fedlinkUrl);
     if (err)
         goto OnErrorExit;
 
@@ -444,9 +444,9 @@ static void sessionReset(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     fedidsessionReset(session, profile);
 
     rp_jsonc_pack(&responseJ, "{ss ss* ss*}", "home",
-                  profile->idp->oidc->globals->homeUrl ?: "/", "login",
-                  profile->idp->oidc->globals->loginUrl, "error",
-                  profile->idp->oidc->globals->errorUrl);
+                  profile->idp->oidc->globals.homeUrl ?: "/", "login",
+                  profile->idp->oidc->globals.loginUrl, "error",
+                  profile->idp->oidc->globals.errorUrl);
     afb_create_data_raw(&reply, AFB_PREDEFINED_TYPE_JSON_C, responseJ, 0,
                         (void *)json_object_put, responseJ);
     afb_req_reply(wreq, 0, 1, &reply);
@@ -597,10 +597,10 @@ static void urlQuery(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
         goto OnErrorExit;
 
     err = rp_jsonc_pack(
-        &responseJ, "{ss ss ss ss ss}", "home", oidc->globals->homeUrl, "login",
-        oidc->globals->loginUrl, "federate", oidc->globals->fedlinkUrl,
-        "register", oidc->globals->registerUrl, "error",
-        oidc->globals->errorUrl);
+        &responseJ, "{ss ss ss ss ss}", "home", oidc->globals.homeUrl, "login",
+        oidc->globals.loginUrl, "federate", oidc->globals.fedlinkUrl,
+        "register", oidc->globals.registerUrl, "error",
+        oidc->globals.errorUrl);
     if (err)
         goto OnErrorExit;
 

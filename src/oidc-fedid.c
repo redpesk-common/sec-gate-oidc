@@ -77,9 +77,9 @@ void fedidsessionReset(oidcSession *session, const oidcProfileT *idpProfile)
         json_object *eventJ;
         err = rp_jsonc_pack(&eventJ, "{ss ss ss* ss*}", "status", "loa-reset",
                             "home",
-                            idpProfile->idp->oidc->globals->homeUrl ?: "/",
-                            "login", idpProfile->idp->oidc->globals->loginUrl,
-                            "error", idpProfile->idp->oidc->globals->errorUrl);
+                            idpProfile->idp->oidc->globals.homeUrl ?: "/",
+                            "login", idpProfile->idp->oidc->globals.loginUrl,
+                            "error", idpProfile->idp->oidc->globals.errorUrl);
         if (!err)
             count = idscvPushEvent(session, eventJ);
         if (!count)
@@ -159,11 +159,11 @@ static void fedidCheckCB(void *ctx,
         oidcSessionSetFedUser(session, idpRqtCtx->fedUser);
         oidcSessionSetFedSocial(session, idpRqtCtx->fedSocial);
         if (idpProfile->slave) {
-            targetUrl = idpRqtCtx->idp->oidc->globals->fedlinkUrl;
+            targetUrl = idpRqtCtx->idp->oidc->globals.fedlinkUrl;
             oidcSessionSetFedIdLinkRequest(session, FEDID_LINK_REQUESTED);
         }
         else {
-            targetUrl = idpRqtCtx->idp->oidc->globals->registerUrl;
+            targetUrl = idpRqtCtx->idp->oidc->globals.registerUrl;
         }
         if (hreq) {
             const char *params[] = {"language", setlocale(LC_CTYPE, ""), NULL};
@@ -307,7 +307,7 @@ static void fedidCheckCB(void *ctx,
 OnErrorExit:
     EXT_NOTICE("[fedid-authent-redirect] (hoops!!!) internal error");
     if (hreq)
-        afb_hreq_redirect_to(hreq, idpRqtCtx->idp->oidc->globals->errorUrl,
+        afb_hreq_redirect_to(hreq, idpRqtCtx->idp->oidc->globals.errorUrl,
                              HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
     if (wreq)
         afb_req_v4_reply_hookable(wreq, -1, 0, NULL);

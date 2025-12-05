@@ -45,16 +45,15 @@
 
 AFB_EXTENSION("sec-gate-oidc")
 
-static oidGlobalsT *globalConfig(json_object *globalsJ)
+static int globalConfig(oidGlobalsT *globals, json_object *globalsJ)
 {
     int err;
     json_object *infoJ;
-    oidGlobalsT *globals = (oidGlobalsT *)calloc(1, sizeof(oidGlobalsT));
 
     if (globalsJ) {
+        // clang-format off
         err = rp_jsonc_unpack(
             globalsJ,
-            // clang-format off
             "{s?o s?s s?s s?s s?s s?s s?i s?i s?b !}",
             "info", &infoJ,
             "login", &globals->loginUrl,
@@ -66,8 +65,11 @@ static oidGlobalsT *globalConfig(json_object *globalsJ)
             "timeout", &globals->sTimeout,
             "debug", &globals->debug);
         // clang-format on
-        if (err < 0)
-            goto OnErrorExit;
+        if (err < 0) {
+            EXT_ERROR("[oidc-core] misconfig of globals %s (pos %d)",
+                    rp_jsonc_get_error_string(err), rp_jsonc_get_error_position(err));
+            return err;
+        }
     }
 
     if (!globals->registerUrl)
@@ -83,24 +85,20 @@ static oidGlobalsT *globalConfig(json_object *globalsJ)
     if (!globals->sTimeout)
         globals->sTimeout = EXT_SESSION_TIMEOUT;
 
-    return (globals);
-
-OnErrorExit:
-    EXT_CRITICAL(
-        "[oidc-parsing-error] globals keys: "
-        "info,error,register,federate,home,cache,timeout,debug (globalConfig)");
-    free(globals);
-    return NULL;
+    return 0;
 }
 
 // Pase and load config.json info oidc global context
 int AfbExtensionConfigV1(void **ctx, struct json_object *oidcJ, char const *uid)
 {
+    int err;
     oidcCoreHdlT *oidc = calloc(1, sizeof(oidcCoreHdlT));
+    if (oidc == NULL)
+        goto OnErrorExit;
+
     oidc->magic = MAGIC_OIDC_MAIN;
     oidc->uid = AfbExtensionManifest.name;
     json_object_get(oidcJ);
-    int err;
 
     // init idp plugin global registry
     err = idpPLuginRegistryInit();
@@ -111,8 +109,8 @@ int AfbExtensionConfigV1(void **ctx, struct json_object *oidcJ, char const *uid)
         goto OnErrorExit;
 
     json_object *idpsJ = NULL, *aliasJ = NULL, *apisJ = NULL, *globalsJ = NULL;
+    // clang-format off
     err = rp_jsonc_unpack(oidcJ,
-                          // clang-format off
                            "{s?s,s?s,s?o,s?o,s?o,s?o,s?o,s?i}",
                            "api", &oidc->api,
                            "info", &oidc->info,
@@ -136,8 +134,8 @@ int AfbExtensionConfigV1(void **ctx, struct json_object *oidcJ, char const *uid)
         oidc->api = oidc->uid;
 
     // set the global config
-    oidc->globals = globalConfig(globalsJ);
-    if (!oidc->globals)
+    err = globalConfig(&oidc->globals, globalsJ);
+    if (err)
         goto OnErrorExit;
 
     // set idps
@@ -154,15 +152,17 @@ int AfbExtensionConfigV1(void **ctx, struct json_object *oidcJ, char const *uid)
         goto OnErrorExit;
 
     // TODO what means the below test?
-    if (!oidc->globals->loginUrl &&
+    if (!oidc->globals.loginUrl &&
         (oidc->idps[1].uid || oidc->idps[0].profiles[1].uid))
-        oidc->globals->loginUrl = URL_OIDC_USR_LOGIN;
+        oidc->globals.loginUrl = URL_OIDC_USR_LOGIN;
 
     *ctx = oidc;
     return 0;
 
 OnErrorExit:
+    free(oidc);
     *ctx = NULL;
+    EXT_CRITICAL("[oidc-core] Failed to initialize at configuration");
     return -1;
 }
 
@@ -171,8 +171,8 @@ int AfbExtensionDeclareV1(void *ctx,
                           struct afb_apiset *declare_set,
                           struct afb_apiset *call_set)
 {
+    int err, idx;
     oidcCoreHdlT *oidc = (oidcCoreHdlT *)ctx;
-    int err;
     if (!oidc)
         goto OnErrorExit;
     EXT_NOTICE("Extension %s got to declare", oidc->uid);
@@ -191,13 +191,13 @@ int AfbExtensionDeclareV1(void *ctx,
     if (err)
         goto OnErrorExit;
 
-    for (int idx = 0; oidc->idps[idx].uid; idx++) {
+    for (idx = 0; oidc->idps[idx].uid; idx++) {
         err = idpRegisterApis(oidc, &oidc->idps[idx], declare_set, call_set);
         if (err)
             goto OnErrorExit;
     }
 
-    for (int idx = 0; oidc->apis[idx].uid; idx++) {
+    for (idx = 0; oidc->apis[idx].uid; idx++) {
         err = apisRegisterOne(oidc, &oidc->apis[idx], declare_set, call_set);
         if (err)
             goto OnErrorExit;

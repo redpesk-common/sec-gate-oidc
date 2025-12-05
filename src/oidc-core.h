@@ -72,5 +72,5 @@ typedef struct
     const char *fedapi;
     oidcApisT *apisHash;
     afb_api_v4 *apiv4;
-    oidGlobalsT *globals;
+    oidGlobalsT globals;
 } oidcCoreHdlT;

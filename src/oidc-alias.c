@@ -103,7 +103,7 @@ static void aliasRedirectTimeout(afb_hreq *hreq, oidcAliasT *alias)
     return;
 
 OnErrorExit:
-    afb_hreq_redirect_to(hreq, alias->oidc->globals->loginUrl, HREQ_QUERY_EXCL,
+    afb_hreq_redirect_to(hreq, alias->oidc->globals.loginUrl, HREQ_QUERY_EXCL,
                          HREQ_REDIR_TMPY);
 }
 
@@ -115,9 +115,9 @@ static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias)
 
     oidcSessionSetAlias(oidcSessionOfHttpReq(hreq), alias);
 
-    if (alias->oidc->globals->loginUrl) {
+    if (alias->oidc->globals.loginUrl) {
         const char *params[] = {"language", setlocale(LC_CTYPE, ""), NULL};
-        size_t sz = rp_escape_url_to(NULL, alias->oidc->globals->loginUrl,
+        size_t sz = rp_escape_url_to(NULL, alias->oidc->globals.loginUrl,
                                      params, url, sizeof url);
         if (sz >= sizeof url) {
             EXT_ERROR(
@@ -174,7 +174,7 @@ static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias)
     return;
 
 OnErrorExit:
-    afb_hreq_redirect_to(hreq, alias->oidc->globals->loginUrl, HREQ_QUERY_EXCL,
+    afb_hreq_redirect_to(hreq, alias->oidc->globals.loginUrl, HREQ_QUERY_EXCL,
                          HREQ_REDIR_TMPY);
 }
 
@@ -317,7 +317,7 @@ static int idpParseOneAlias(oidcCoreHdlT *oidc,
     json_object *requirerJ = NULL;
 
     // set tCache default
-    alias->tCache = oidc->globals->tCache;
+    alias->tCache = oidc->globals.tCache;
     alias->oidc = oidc;
 
     int err = rp_jsonc_unpack(aliasJ, "{ss,s?s,s?s,s?s,s?i,s?i,s?i,s?o}", "uid",

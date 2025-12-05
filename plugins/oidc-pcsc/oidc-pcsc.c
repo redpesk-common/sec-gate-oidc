@@ -480,7 +480,7 @@ int pcscLoginCB(afb_hreq *hreq, void *ctx)
     return 1;  // we're done
 
 OnErrorExit:
-    afb_hreq_redirect_to(hreq, idp->oidc->globals->loginUrl, HREQ_QUERY_INCL,
+    afb_hreq_redirect_to(hreq, idp->oidc->globals.loginUrl, HREQ_QUERY_INCL,
                          HREQ_REDIR_TMPY);
     return 1;
 }
