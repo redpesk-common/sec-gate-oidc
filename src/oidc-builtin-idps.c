@@ -39,7 +39,7 @@
 
 // Builtin in output formater. Note that first one is used when cmd does not
 // define a format
-static idpPluginT idpBuiltins[] = {
+static const idpPluginT idpBuiltins[] = {
     {.uid = "oidc",
      .info = "openid connect idp",
      .registerConfig = oidcRegisterConfig,
@@ -52,11 +52,13 @@ static idpPluginT idpBuiltins[] = {
      .info = "ldap internal users",
      .registerConfig = ldapRegsterConfig,
      .registerAlias = ldapRegisterAlias,
-     .registerApis = ldapRegisterApis},
-    {.uid = NULL}  // must be null terminated
+     .registerApis = ldapRegisterApis}
 };
 
 int registerBuiltinIdps(void)
 {
-    return idpRegisterPlugin("built-in", idpBuiltins);
+    int rc = 0, idx = 0;
+    for ( ; idx < (int)(sizeof idpBuiltins / sizeof *idpBuiltins) && rc == 0 ; idx++)
+        rc = idpRegisterPlugin(&idpBuiltins[idx]);
+    return rc;
 }

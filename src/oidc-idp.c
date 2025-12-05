@@ -39,8 +39,8 @@
 typedef struct idpRegistryS
 {
     struct idpRegistryS *next;
-    const char *uid;
-    idpPluginT *plugin;
+    const char *type;
+    const idpPluginT *plugin;
 } idpRegistryT;
 
 // registry holds a linked list of core+pugins idps
@@ -127,15 +127,27 @@ json_object *idpLoaProfilsGet(oidcCoreHdlT *oidc,
     return idpsJ;
 }
 
+// search for a plugin idps/decoders CB list
+static const idpPluginT *idpFindPlugin(const char *type)
+{
+    idpRegistryT *registryIdx = registryHead;
+    while (registryIdx != NULL) {
+        if (strcasecmp(type, registryIdx->type) == 0)
+            return registryIdx->plugin;
+        registryIdx = registryIdx->next;
+    }
+    return NULL;
+}
+
 // add a new plugin idp to the registry
-int idpRegisterPlugin(const char *pluginUid, idpPluginT *pluginCbs)
+int idpRegisterPlugin(const idpPluginT *plugin)
 {
     idpRegistryT *registryIdx, *registryEntry;
 
     // create holding hat for idp/decoder CB
     registryEntry = (idpRegistryT *)calloc(1, sizeof(idpRegistryT));
-    registryEntry->uid = pluginUid;
-    registryEntry->plugin = pluginCbs;
+    registryEntry->type = plugin->uid;
+    registryEntry->plugin = plugin;
 
     // if not 1st idp insert at the end of the chain
     if (!registryHead) {
@@ -434,32 +446,6 @@ int idpParseOidcConfig(oidcIdpT *idp,
 
 OnErrorExit:
     return 1;
-}
-
-// search for a plugin idps/decoders CB list
-static const idpPluginT *idpFindPlugin(const char *type)
-{
-    idpPluginT *idp = NULL;
-    int index;
-
-    // search within plugin list
-    for (idpRegistryT *registryIdx = registryHead; registryIdx;
-         registryIdx = registryIdx->next) {
-        idpPluginT *idps = registryIdx->plugin;
-        for (index = 0; idps[index].uid; index++) {
-            if (!strcasecmp(idps[index].uid, type)) {
-                idp = &idps[index];
-                break;
-            }
-        }
-    }
-    if (!idp)
-        goto OnErrorExit;
-
-    return idp;
-
-OnErrorExit:
-    return NULL;
 }
 
 // build IDP generic callback handle

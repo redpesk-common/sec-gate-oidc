@@ -157,7 +157,7 @@ typedef struct idpGenericCbS
                        oidcDefaultsT *defaults,
                        void *ctx);
     int (*fedidCheck)(idpRqtCtxT *idpRqtCtx);
-    int (*pluginRegister)(const char *pluginUid, idpPluginT *pluginCbs);
+    int (*pluginRegister)(const idpPluginT *pluginCbs);
 } idpGenericCbT;
 
 typedef struct idpPluginS
@@ -193,5 +193,5 @@ json_object *idpLoaProfilsGet(oidcCoreHdlT *oidc,
                               int loa,
                               const char **idps,
                               int noslave);
-int idpRegisterPlugin(const char *pluginUid, idpPluginT *pluginCbs);
+int idpRegisterPlugin(const idpPluginT *pluginCbs);
 void idpRqtCtxFree(idpRqtCtxT *rqtCtx);

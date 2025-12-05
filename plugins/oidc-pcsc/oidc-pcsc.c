@@ -590,14 +590,13 @@ OnErrorExit:
 }
 
 // pcsc sample plugin exposes only one IDP
-idpPluginT idppcscAuth[] = {
-    {.uid = "pcsc",
-     .info = "SmartCard/NFC pscd client",
-     .registerConfig = pcscRegisterConfig,
-     .registerApis = pcscRegisterApis,
-     .registerAlias = pcscRegisterAlias,
-     .resetSession = pcscResetSession},
-    {.uid = NULL}  // must be null terminated
+static const idpPluginT idppcscAuth = {
+    .uid = "pcsc",
+    .info = "SmartCard/NFC pscd client",
+    .registerConfig = pcscRegisterConfig,
+    .registerApis = pcscRegisterApis,
+    .registerAlias = pcscRegisterAlias,
+    .resetSession = pcscResetSession
 };
 
 // Plugin init call at config.json parsing time
@@ -611,6 +610,6 @@ int oidcPluginInit(oidcCoreHdlT *oidc, idpGenericCbT *idpGenericCbs)
         return 0;
     idpCallbacks = idpGenericCbs;
 
-    int status = idpCallbacks->pluginRegister("pcsc-plugin", idppcscAuth);
+    int status = idpCallbacks->pluginRegister(&idppcscAuth);
     return status;
 }

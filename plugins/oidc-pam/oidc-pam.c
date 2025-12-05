@@ -450,14 +450,13 @@ OnErrorExit:
 }
 
 // pam sample plugin exposes only one IDP
-idpPluginT idpPamAuth[] = {
-    {.uid = "pam",
+static const idpPluginT idpPamAuth = {
+     .uid = "pam",
      .info = "use Linux pam login to check user/passwd",
      .ctx = "login",
      .registerConfig = pamRegisterConfig,
      .registerApis = pamRegisterApis,
-     .registerAlias = pamRegisterAlias},
-    {.uid = NULL}  // must be null terminated
+     .registerAlias = pamRegisterAlias
 };
 
 // Plugin init call at config.json parsing time
@@ -481,7 +480,7 @@ int oidcPluginInit(oidcCoreHdlT *oidc, idpGenericCbT *idpGenericCbs)
     }
     close(handle);
 
-    int status = idpCallbacks->pluginRegister("pam-plugin", idpPamAuth);
+    int status = idpCallbacks->pluginRegister(&idpPamAuth);
     return status;
 
 OnErrorExit:
