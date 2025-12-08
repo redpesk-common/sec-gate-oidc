@@ -121,12 +121,6 @@ typedef struct httpPoolS
 const httpCallbacksT *glueGetCbs(void);
 
 // API to build and lauch request (if httpPoolT==NULL then run synchronously)
-int httpBuildQuery(const char *uid,
-                   char *query,
-                   size_t maxlen,
-                   const char *prefix,
-                   const char *url,
-                   httpKeyValT *params);
 int httpSendPost(httpPoolT *pool,
                  const char *url,
                  const httpOptsT *opts,
@@ -150,5 +144,3 @@ httpPoolT *httpCreatePool(void *evtLoop,
 // curl action callback to be called from glue layer
 int httpOnSocketCB(httpPoolT *httpPool, int sock, int action);
 int httpOnTimerCB(httpPoolT *httpPool);
-char *httpEncode64(const char *inputData, size_t inputLen);
-char *httpDecode64(const char *inputData, size_t inputLen, int url);

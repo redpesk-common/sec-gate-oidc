@@ -841,10 +841,11 @@ int oidcRegisterConfig(oidcIdpT *idp, json_object *configJ)
         }
     }
     // prebuilt basic authentication token
-    char *authstr;
+    char *authstr, *auth64;
+    size_t sz64;
     int len = asprintf(&authstr, "%s:%s", idp->credentials->clientId,
                        idp->credentials->secret);
-    char *auth64 = httpEncode64(authstr, len);
+    rp_base64_encode((uint8_t*)authstr, (size_t)len, &auth64, &sz64, 0, 1, 0);
     asprintf((char **)&schema->auth64, "Basic %s", auth64);
     idp->userData = schema;
     free(authstr);
