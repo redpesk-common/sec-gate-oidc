@@ -38,49 +38,6 @@
 #include "oidc-defaults.h"
 #include "oidc-session.h"
 
-int apisCreateSvc(oidcCoreHdlT *oidc,
-                  oidcApisT *apiSvc,
-                  afb_apiset *declare_set,
-                  afb_apiset *call_set,
-                  afb_verb_v4 *apiVerbs)
-{
-    char apiUri[EXT_URL_MAX_LEN];
-    afb_api_v4 *apiv4;
-    afb_apiset *public_set =
-        afb_apiset_subset_find(declare_set, "public") ?: declare_set;
-
-    // register API
-    int status =
-        afb_api_v4_create(&apiv4, public_set, call_set, apiSvc->uid,
-                          Afb_String_Const, apiSvc->info, Afb_String_Const,
-                          0,                      // noconcurrency unset
-                          NULL, NULL,             // pre-initcb + ctx
-                          NULL, Afb_String_Const  // no binding.so path
-        );
-    if (status)
-        goto OnErrorExit;
-
-    // add oidc context to internal api
-    oidc->apiv4 = apiv4;
-    afb_api_v4_set_userdata(apiv4, oidc);
-
-    // add verb to API
-    int err = afb_api_v4_set_verbs_hookable(oidc->apiv4, apiVerbs);
-    if (err)
-        goto OnErrorExit;
-
-    snprintf(apiUri, sizeof(apiUri), "unix:@%s", apiSvc->uid);
-    afb_api_ws_add_server(apiUri, public_set, call_set);
-
-    return 0;
-
-OnErrorExit:
-    return 1;
-    EXT_CRITICAL(
-        "[fail-api-create] ext=%s api=%s fail to register (apisCreateSvc)",
-        oidc->uid, apiSvc->uid);
-}
-
 static void on_protected_api_request(void *closure, struct afb_req_common *req)
 {
     oidcApisT *api = (oidcApisT *)closure;

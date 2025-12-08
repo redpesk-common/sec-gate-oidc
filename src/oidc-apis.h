@@ -42,8 +42,3 @@ int apisRegisterOne(oidcCoreHdlT *oidc,
                     oidcApisT *api,
                     afb_apiset *declare_set,
                     afb_apiset *call_set);
-int apisCreateSvc(oidcCoreHdlT *oidc,
-                  oidcApisT *api,
-                  afb_apiset *declare_set,
-                  afb_apiset *call_set,
-                  afb_verb_v4 *apiVerbs);

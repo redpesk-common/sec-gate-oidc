@@ -29,6 +29,7 @@
 
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
+#include <libafb/afb-apis.h>
 #include <libafb/afb-v4.h>
 
 #include <fedid-types-glue.h>
@@ -666,31 +667,48 @@ static afb_verb_t idsvcVerbs[] = {
     // clang-format on
 };
 
+
+#define IDSVC_INFO "internal oidc idp api"
+
+
 int idsvcDeclare(oidcCoreHdlT *oidc,
                  afb_apiset *declare_set,
                  afb_apiset *call_set)
 {
-    int err;
-
-    oidcApisT apiSvc = {
-        .uid = oidc->api,
-        .info = "internal oidc idp api",
-        .uri = "@oidc",
-        .loa = 0,
-    };
+    int rc;
+    afb_apiset *public_set;
+    char apiwsname[EXT_URL_MAX_LEN];
 
     // register fedid type
-    err = fedUserObjTypesRegister();
-    if (err)
-        goto OnErrorExit;
+    rc = fedUserObjTypesRegister();
+    if (rc) {
+        EXT_ERROR("[oidc-idsvc] unable to register fedid types");
+        return -1;
+    }
 
-    // register verbs
-    err = apisCreateSvc(oidc, &apiSvc, declare_set, call_set, idsvcVerbs);
-    if (err)
-        goto OnErrorExit;
+    // get the public API set
+    public_set = afb_apiset_subset_find(declare_set, "public");
+    if (public_set == NULL)
+        public_set = declare_set;
+
+    // create the API
+    rc = afb_api_v4_create(&oidc->apiv4, public_set, call_set, oidc->api,
+                          Afb_String_Const, IDSVC_INFO, Afb_String_Const,
+                          0,                      // noconcurrency unset
+                          NULL, NULL,             // pre-initcb + ctx
+                          NULL, Afb_String_Const  // no binding.so path
+        );
+    if (rc == 0)
+        rc = afb_api_v4_set_verbs_hookable(oidc->apiv4, idsvcVerbs);
+    if (rc) {
+        EXT_CRITICAL("[oidc-idsvc] creation of api %s failed", oidc->api);
+        return -1;
+    }
+    afb_api_v4_set_userdata(oidc->apiv4, oidc);
+
+    // export (if possible) the api internally
+    snprintf(apiwsname, sizeof(apiwsname), "unix:@%s", oidc->api);
+    afb_api_ws_add_server(apiwsname, public_set, call_set);
 
     return 0;
-
-OnErrorExit:
-    return 1;
 }
