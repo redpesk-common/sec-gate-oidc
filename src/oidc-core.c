@@ -45,6 +45,7 @@
 
 AFB_EXTENSION("sec-gate-oidc")
 
+/* read and setup the global configuration object */
 static int globalConfig(oidGlobalsT *globals, json_object *globalsJ)
 {
     int err;
@@ -72,6 +73,7 @@ static int globalConfig(oidGlobalsT *globals, json_object *globalsJ)
         }
     }
 
+    // setup default values
     if (!globals->registerUrl)
         globals->registerUrl = URL_OIDC_USR_REGISTER;
     if (!globals->fedlinkUrl)
@@ -92,8 +94,12 @@ static int globalConfig(oidGlobalsT *globals, json_object *globalsJ)
 int AfbExtensionConfigV1(void **ctx, struct json_object *oidcJ, char const *uid)
 {
     int err;
+    oidcCoreHdlT *oidc;
     json_object *idpsJ = NULL, *aliasJ = NULL, *apisJ = NULL, *globalsJ = NULL, *pluginsJ = NULL;
-    oidcCoreHdlT *oidc = calloc(1, sizeof(oidcCoreHdlT));
+
+    EXT_INFO("Extension %s got to config", AfbExtensionManifest.name);
+
+    oidc = calloc(1, sizeof(oidcCoreHdlT));
     if (oidc == NULL)
         goto OnErrorExit;
 
@@ -169,37 +175,41 @@ OnErrorExit:
     return -1;
 }
 
-// import APIs with corresponding callback
+// Declares the apis
 int AfbExtensionDeclareV1(void *ctx,
                           struct afb_apiset *declare_set,
                           struct afb_apiset *call_set)
 {
     int err, idx;
     oidcCoreHdlT *oidc = (oidcCoreHdlT *)ctx;
-    if (!oidc)
-        goto OnErrorExit;
-    EXT_NOTICE("Extension %s got to declare", oidc->uid);
 
+    EXT_INFO("Extension %s got to declare", oidc->uid);
+
+    // import/connect to fedid API
     if (oidc->fedapi) {
         err = afb_api_ws_add_client(oidc->fedapi, declare_set, call_set, 1);
-        EXT_ERROR(
-            "[oidc-fedapi-not-found] ext=%s fail to connect to fedidp=%s  "
-            "(AfbExtensionDeclareV1)",
-            oidc->uid, oidc->fedapi);
-        if (err)
+        if (err) {
+            EXT_ERROR(
+                "[oidc-fedapi-not-found] ext=%s fail to connect to fedidp=%s  "
+                "(AfbExtensionDeclareV1)",
+                oidc->uid, oidc->fedapi);
             goto OnErrorExit;
+        }
     }
+
     // declare internal identity service api
     err = idsvcDeclare(oidc, declare_set, call_set);
     if (err)
         goto OnErrorExit;
 
+    // register apis of idps
     for (idx = 0; oidc->idps[idx].uid; idx++) {
         err = idpRegisterApis(oidc, &oidc->idps[idx], declare_set, call_set);
         if (err)
             goto OnErrorExit;
     }
 
+    // register protected apis
     for (idx = 0; oidc->apis[idx].uid; idx++) {
         err = apisRegisterOne(oidc, &oidc->apis[idx], declare_set, call_set);
         if (err)
@@ -216,13 +226,11 @@ OnErrorExit:
     return -1;
 }
 
+// Declare HTTP hooks
 int AfbExtensionHTTPV1(void *ctx, afb_hsrv *hsrv)
 {
     int idx, err;
     oidcCoreHdlT *oidc = (oidcCoreHdlT *)ctx;
-
-    if (!oidc)
-        goto OnErrorExit;
 
     EXT_NOTICE("Extension %s got to http", oidc->uid);
 
