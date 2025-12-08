@@ -206,6 +206,7 @@ static int httpSendQuery(httpPoolT *httpPool,
     httpRqt->easy = curl_easy_init();
     httpRqt->callback = callback;
     httpRqt->userData = ctx;
+
     clock_gettime(CLOCK_MONOTONIC, &httpRqt->startTime);
 
     char header[DFLT_HEADER_MAX_LEN];

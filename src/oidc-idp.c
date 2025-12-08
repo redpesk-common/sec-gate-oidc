@@ -36,6 +36,8 @@
 #include "oidc-idp.h"
 #include "oidc-utils.h"
 
+#define OIDC_PLUGIN_INIT   "oidcPluginInit"
+
 typedef struct idpRegistryS
 {
     struct idpRegistryS *next;
@@ -486,9 +488,9 @@ static int idpPluginParseOne(oidcCoreHdlT *oidc, json_object *pluginJ)
     while (head != NULL) {
         handle = dlopen(head, RTLD_NOW | RTLD_LOCAL);
         if (handle != NULL) {
-            registerPluginCB = dlsym(handle, "oidcPluginInit");
+            registerPluginCB = dlsym(handle, OIDC_PLUGIN_INIT);
             if (registerPluginCB == NULL)
-                EXT_WARNING("[oidc-idp] no symbol oidcPluginInit in %s, skipping", head);
+                EXT_WARNING("[oidc-idp] no symbol "OIDC_PLUGIN_INIT" in %s, skipping", head);
             else {
                 rc = registerPluginCB(oidc, &idpGenericCB);
                 if (rc == 0) {

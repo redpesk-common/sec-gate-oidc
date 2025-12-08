@@ -32,6 +32,7 @@
 #include "oidc-defaults.h"
 
 typedef struct oidcIdpS oidcIdpT;
+typedef struct idpPluginS idpPluginT;
 
 typedef enum {
     IDP_CLIENT_SECRET_UNKNOWN = 0,
@@ -48,7 +49,7 @@ typedef enum {
     IDP_RESPOND_TYPE_ID_TOKEN_TOKEN,
 } oidcRespondTypeT;
 
-typedef struct
+typedef struct oidcWellknownS
 {
     const char *discovery;
     const char *tokenid;
@@ -63,7 +64,7 @@ typedef struct
     int lazy;
 } oidcWellknownT;
 
-typedef struct
+typedef struct oidcCredentialsS
 {
     int timeout;  // connection timeout to authority in seconds
     const char *clientId;
@@ -93,7 +94,7 @@ typedef struct oidcStaticsS
     const char *aliasLogout;
 } oidcStaticsT;
 
-typedef struct oidcIdpS
+struct oidcIdpS
 {
     int magic;
     const char *uid;
@@ -109,9 +110,9 @@ typedef struct oidcIdpS
     const idpPluginT *plugin;
     oidcCoreHdlT *oidc;
     void *userData;
-} oidcIdpT;
+};
 
-typedef struct
+typedef struct oidcDefaultsS
 {
     const oidcCredentialsT *credentials;
     const oidcStaticsT *statics;
@@ -121,7 +122,7 @@ typedef struct
 } oidcDefaultsT;
 
 // request handle store federation attribute during multiple IDP async calls
-typedef struct
+typedef struct idpRqtCtxS
 {
     int ucount;
     const char *uuid;
@@ -160,7 +161,7 @@ typedef struct idpGenericCbS
     int (*pluginRegister)(const idpPluginT *pluginCbs);
 } idpGenericCbT;
 
-typedef struct idpPluginS
+struct idpPluginS
 {
     const char *uid;
     const char *info;
@@ -171,11 +172,14 @@ typedef struct idpPluginS
     int (*registerAlias)(oidcIdpT *idp, afb_hsrv *hsrv);
     void (*resetSession)(const oidcProfileT *idpProfile, void *ctx);
     void *ctx;
-} idpPluginT;
+};
 
 // idp callback definition
 typedef int (*oidcPluginInitCbT)(oidcCoreHdlT *oidc,
                                  idpGenericCbT *idpGenericCb);
+
+
+
 
 // idp exported functions
 int idpPluginsParseConfig(oidcCoreHdlT *oidc, json_object *pluginsJ);
