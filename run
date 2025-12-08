@@ -202,5 +202,6 @@ cat << EOC > $CONF
 EOC
 
 #RUN="gdb -arg"
+#RUN=valgrind
 exec $RUN afb-binder -C $CONF
 
