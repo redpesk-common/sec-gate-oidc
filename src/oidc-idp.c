@@ -460,6 +460,7 @@ static idpGenericCbT idpGenericCB = {
     .pluginRegister = idpRegisterPlugin,
 };
 
+// parse one plugin configuration
 static int idpPluginParseOne(oidcCoreHdlT *oidc, json_object *pluginJ)
 {
     int rc;
@@ -507,6 +508,7 @@ static int idpPluginParseOne(oidcCoreHdlT *oidc, json_object *pluginJ)
     return -1;
 }
 
+// parse one idp configuration
 static int idpParseOne(oidcCoreHdlT *oidc, json_object *idpJ, oidcIdpT *idp)
 {
     int err;
@@ -633,24 +635,23 @@ OnErrorExit:
     return NULL;
 }
 
+// register aliases of IDPs
 int idpRegisterAlias(oidcCoreHdlT *oidc, oidcIdpT *idp, afb_hsrv *hsrv)
 {
     int err;
 
-    if (idp->plugin->registerAlias) {
-        EXT_DEBUG("[idp-register-alias] uid=%s login='%s'", idp->uid,
-                  idp->plugin->uid);
-        err = idp->plugin->registerAlias(idp, hsrv);
-        if (err)
-            goto OnErrorExit;
-    }
-    return 0;
+    // declares an alias?
+    if (idp->plugin->registerAlias == NULL)
+        return 0;
 
-OnErrorExit:
-    EXT_ERROR(
-        "[idp-register-alias] ext=%s idp=%s config should be json/array|object",
-        oidc->uid, idp->uid);
-    return 1;
+    // call idp's alias register callback
+    EXT_DEBUG("[idp-register-alias] idp/plugin uids: %s/%s", idp->uid, idp->plugin->uid);
+    err = idp->plugin->registerAlias(idp, hsrv);
+    if (err)
+        EXT_ERROR(
+            "[idp-register-alias] failed to register idp alias, idp/plugin uids: %s/%s",
+            idp->uid, idp->plugin->uid);
+    return err;
 }
 
 // register IDP login and authentication callback endpoint
@@ -661,20 +662,18 @@ int idpRegisterApis(oidcCoreHdlT *oidc,
 {
     int err;
 
-    // call idp init callback
-    if (idp->plugin->registerApis) {
-        EXT_DEBUG("[idp-register-apis] uid=%s login='%s'", idp->uid,
-                  idp->plugin->uid);
-        err = idp->plugin->registerApis(idp, declare_set, call_set);
-        if (err)
-            goto OnErrorExit;
-    }
-    return 0;
+    // declares an API?
+    if (idp->plugin->registerApis == NULL)
+        return 0;
 
-OnErrorExit:
-    EXT_ERROR(
-        "[idp-register-apis] ext=%s idp=%s config should be json/array|object",
-        oidc->uid, idp->uid);
-    return 1;
+    // call idp's api register callback
+    EXT_DEBUG("[idp-register-apis] idp/plugin uids: %s/%s",
+            idp->uid, idp->plugin->uid);
+    err = idp->plugin->registerApis(idp, declare_set, call_set);
+    if (err)
+        EXT_ERROR(
+            "[idp-register-apis] failed to register idp api, idp/plugin uids: %s/%s",
+            idp->uid, idp->plugin->uid);
+    return err;
 }
 
