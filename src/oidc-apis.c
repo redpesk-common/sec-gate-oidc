@@ -64,36 +64,35 @@ int apisRegisterOne(oidcCoreHdlT *oidc,
 {
     int err, index;
     struct afb_api_item api_item;
-    afb_apiset *public_set =
-        afb_apiset_subset_find(declare_set, "public") ?: declare_set;
+    afb_apiset *public_set;
 
     // if API is not runnning within the binder register client API
     if (api->uri[0] != '@') {
-        // get the public set
-        public_set =
-            afb_apiset_subset_find(declare_set, "public") ?: declare_set;
-        if (api->loa == 0 || declare_set == public_set) {
-            // the api is obviously public
-            err = afb_api_ws_add_client(api->uri, public_set, call_set,
-                                        !api->lazy);
+        // get the public API set
+        public_set = afb_apiset_subset_find(declare_set, "public");
+        if (public_set != NULL && declare_set != public_set) {
+            if (api->loa == 0)
+                declare_set = public_set;
+            else {
+                // expose a public filtered api
+                api_item.itf = &api_frontend_itf;
+                api_item.group = NULL;
+                api_item.closure = api;
+                // use the same api name for the public part
+                err = afb_apiset_add(public_set, api->uid, api_item);
+                if (err)
+                    goto OnErrorExit;
+                // record the declare set
+                api->apiset = declare_set;
+            }
         }
-        else {
-            // add a (private) client to the protected api
-            api->apiset = declare_set;
-            err = afb_api_ws_add_client(api->uri, declare_set, call_set,
-                                        !api->lazy);
-            if (err)
-                goto OnErrorExit;
-            // expose a public filtered api
-            api_item.itf = &api_frontend_itf;
-            api_item.group = NULL;
-            api_item.closure = api;
-            // reuse the same api name for the public part
-            err = afb_apiset_add(public_set, api->uid, api_item);
-        }
+        // add the client api
+        err = afb_api_ws_add_client(api->uri, declare_set, call_set,
+                                    !api->lazy);
         if (err)
             goto OnErrorExit;
     }
+
     // Extract API from URI
     for (index = (int)strlen(api->uri) - 1; index > 0; index--) {
         if (api->uri[index] == '@' || api->uri[index] == '/')
@@ -103,8 +102,7 @@ int apisRegisterOne(oidcCoreHdlT *oidc,
     // If needed create an alias
     if (index) {
         if (strcasecmp(&api->uri[index + 1], api->uid)) {
-            err = afb_api_v4_add_alias_hookable(oidc->apiv4,
-                                                &api->uri[index + 1], api->uid);
+	        err = afb_apiset_add_alias(declare_set, &api->uri[index + 1], api->uid);
             if (err)
                 goto OnErrorExit;
         }
@@ -114,10 +112,8 @@ int apisRegisterOne(oidcCoreHdlT *oidc,
 
 OnErrorExit:
     EXT_ERROR(
-        "[oidc-api-not-found] ext=%s fail to connect to api=%s uri=%s "
-        "(apisRegisterOne)",
-        oidc->uid, api->uid, api->uri);
-    return 1;
+        "[oidc-apis] failed to create API %s, uri=%s ", api->uid, api->uri);
+    return -1;
 }
 
 static int apisParseOne(oidcCoreHdlT *oidc, json_object *apiJ, oidcApisT *api)
