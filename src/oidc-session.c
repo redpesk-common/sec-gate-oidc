@@ -108,10 +108,9 @@ int oidcSessionGetLOA(oidcSessionT *session)
     return session->loa;
 }
 
-int oidcSessionSetLOA(oidcSessionT *session, int LOA)
+void oidcSessionSetLOA(oidcSessionT *session, int LOA)
 {
     session->loa = LOA;
-    return 0;
 }
 
 int oidcSessionGetExpiration(oidcSessionT *session)
@@ -119,10 +118,9 @@ int oidcSessionGetExpiration(oidcSessionT *session)
     return session->expiration;
 }
 
-int oidcSessionSetExpiration(oidcSessionT *session, int expiration)
+void oidcSessionSetExpiration(oidcSessionT *session, int expiration)
 {
     session->expiration = expiration;
-    return 0;
 }
 
 const oidcAliasT *oidcSessionGetAlias(oidcSessionT *session)
@@ -130,10 +128,9 @@ const oidcAliasT *oidcSessionGetAlias(oidcSessionT *session)
     return session->alias;
 }
 
-int oidcSessionSetAlias(oidcSessionT *session, const oidcAliasT *alias)
+void oidcSessionSetAlias(oidcSessionT *session, const oidcAliasT *alias)
 {
     session->alias = alias;
-    return 0;
 }
 
 const oidcProfileT *oidcSessionGetIdpProfile(oidcSessionT *session)
@@ -141,10 +138,9 @@ const oidcProfileT *oidcSessionGetIdpProfile(oidcSessionT *session)
     return session->profile;
 }
 
-int oidcSessionSetIdpProfile(oidcSessionT *session, const oidcProfileT *profile)
+void oidcSessionSetIdpProfile(oidcSessionT *session, const oidcProfileT *profile)
 {
     session->profile = profile;
-    return 0;
 }
 
 fedidSessionT *oidcSessionGetFedId(oidcSessionT *session)
@@ -152,10 +148,9 @@ fedidSessionT *oidcSessionGetFedId(oidcSessionT *session)
     return session->fedid;
 }
 
-int oidcSessionSetFedId(oidcSessionT *session, fedidSessionT *fedid)
+void oidcSessionSetFedId(oidcSessionT *session, fedidSessionT *fedid)
 {
     session->fedid = fedid;
-    return 0;
 }
 
 const fedidLinkT *oidcSessionGetFedIdLink(oidcSessionT *session)
@@ -187,10 +182,9 @@ int oidcSessionGetFedIdLinkRequest(oidcSessionT *session)
     return session->fedidLinkRequest;
 }
 
-int oidcSessionSetFedIdLinkRequest(oidcSessionT *session, int request)
+void oidcSessionSetFedIdLinkRequest(oidcSessionT *session, int request)
 {
     session->fedidLinkRequest = request;
-    return 0;
 }
 
 const fedSocialRawT *oidcSessionGetFedSocial(oidcSessionT *session)
@@ -198,10 +192,9 @@ const fedSocialRawT *oidcSessionGetFedSocial(oidcSessionT *session)
     return session->social;
 }
 
-int oidcSessionSetFedSocial(oidcSessionT *session, fedSocialRawT *fedSocial)
+void oidcSessionSetFedSocial(oidcSessionT *session, fedSocialRawT *fedSocial)
 {
     session->social = fedSocial;
-    return 0;
 }
 
 const fedUserRawT *oidcSessionGetUser(oidcSessionT *session)
@@ -209,10 +202,9 @@ const fedUserRawT *oidcSessionGetUser(oidcSessionT *session)
     return session->user;
 }
 
-int oidcSessionSetFedUser(oidcSessionT *session, fedUserRawT *fedUser)
+void oidcSessionSetFedUser(oidcSessionT *session, fedUserRawT *fedUser)
 {
     session->user = fedUser;
-    return 0;
 }
 
 void *oidcSessionGetOpaqueData(oidcSessionT *session)
@@ -220,10 +212,9 @@ void *oidcSessionGetOpaqueData(oidcSessionT *session)
     return session->data;
 }
 
-int oidcSessionSetOpaqueData(oidcSessionT *session, void *data)
+void oidcSessionSetOpaqueData(oidcSessionT *session, void *data)
 {
     session->data = data;
-    return 0;
 }
 
 int oidcSessionEventSubscribe(afb_req_t wreq)
