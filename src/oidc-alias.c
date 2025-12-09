@@ -58,13 +58,12 @@ int aliasCheckAttrs(oidcSession *session, oidcAliasT *alias)
 };
 
 // create aliasFrom cookie and redirect to idp profile page
-static void aliasRedirectTimeout(afb_hreq *hreq, oidcAliasT *alias)
+static void aliasRedirectTimeout(afb_hreq *hreq, oidcAliasT *alias, oidcSession *session)
 {
     char url[EXT_URL_MAX_LEN];
     char redirectUrl[EXT_HEADER_MAX_LEN];
     const oidcProfileT *profile;
     int err;
-    oidcSession *session = oidcSessionOfHttpReq(hreq);
 
     oidcSessionSetAlias(session, alias);
     profile = oidcSessionGetIdpProfile(session);
@@ -108,12 +107,12 @@ OnErrorExit:
 }
 
 // create aliasFrom cookie and redirect to common login page
-static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias)
+static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias, oidcSession *session)
 {
     int err;
     char url[EXT_URL_MAX_LEN];
 
-    oidcSessionSetAlias(oidcSessionOfHttpReq(hreq), alias);
+    oidcSessionSetAlias(session, alias);
 
     if (alias->oidc->globals.loginUrl) {
         const char *params[] = {"language", setlocale(LC_CTYPE, ""), NULL};
@@ -132,7 +131,7 @@ static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias)
         int status;
         oidcIdpT *idp = &alias->oidc->idps[0];
         const oidcProfileT *profile = &idp->profiles[0];
-        const char *uuid = oidcSessionUUID(oidcSessionOfHttpReq(hreq));
+        const char *uuid = oidcSessionUUID(session);
         char redirectUrl[EXT_HEADER_MAX_LEN];
 
         status = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin,
@@ -167,7 +166,7 @@ static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias)
         }
 
         // keep track of selected idp profile
-        oidcSessionSetIdpProfile(oidcSessionOfHttpReq(hreq), profile);
+        oidcSessionSetIdpProfile(session, profile);
     }
     EXT_DEBUG("[alias-redirect-login] %s (aliasRedirectLogin)", url);
     afb_hreq_redirect_to(hreq, url, HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
@@ -189,74 +188,65 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
     int sessionLoa, tStamp, tNow, err;
     oidcSession *session;
 
-    if (alias->loa) {
-        // get session of the request
-        session = oidcSessionOfHttpReq(hreq);
-
-        // in case session create failed
-        if (session == NULL) {
-            EXT_ERROR(
-                "[fail-hreq-session] fail to initialise hreq session "
-                "(aliasCheckLoaCB)");
-            afb_hreq_reply_error(hreq, EXT_HTTP_CONFLICT);
-            goto OnRedirectExit;
-        }
-
-        // if tCache not expired use jump authent check
-        clock_gettime(CLOCK_MONOTONIC, &tCurrent);
-        tNow =
-            (int)((tCurrent.tv_nsec / 1000000 + tCurrent.tv_sec * 1000) / 100);
-        tStamp = oidcSessionGetExpiration(session);
-        if (tNow > tStamp) {
-            EXT_NOTICE("session uuid=%s (aliasCheckLoaCB)",
-                       oidcSessionUUID(session));
-
-            // if LOA too weak redirect to authentication
-            sessionLoa = oidcSessionGetLOA(session);
-            if (alias->loa > sessionLoa) {
-                json_object *eventJ;
-
-                rp_jsonc_pack(&eventJ, "{ss ss ss si si}", "status",
-                              "loa-mismatch", "uid", alias->uid, "url",
-                              alias->url, "loa-target", alias->loa,
-                              "loa-session", sessionLoa);
-
-                // try to push event to notify the access deny and replay with
-                // redirect to login
-                idscvPushEvent(session, eventJ);
-
-                // if current profile LOA is enough then fire same idp/profile
-                // authen
-                idpProfile = oidcSessionGetIdpProfile(session);
-                if (idpProfile != NULL &&
-                    (idpProfile->loa >= alias->loa ||
-                     idpProfile->loa == abs(alias->loa))) {
-                    aliasRedirectTimeout(hreq, alias);
-                }
-                else {
-                    aliasRedirectLogin(hreq, alias);
-                }
-                goto OnRedirectExit;
-            }
-
-            if (alias->roles) {
-                err = aliasCheckAttrs(session, alias);
-                if (err) {
-                    aliasRedirectLogin(hreq, alias);
-                    goto OnRedirectExit;
-                }
-            }
-            // store a timestamp to cache authentication validation
-            tStamp = (int)(tNow + alias->tCache / 100);
-            oidcSessionSetExpiration(session, tStamp);
-        }
+    // get session of the request
+    session = oidcSessionOfHttpReq(hreq);
+    if (session == NULL) {
+        EXT_NOTICE("[oidc-alias] can't bind to session");
+        afb_hreq_reply_error(hreq, EXT_HTTP_CONFLICT);
+        return 1;
     }
+
+    // if tCache not expired use jump authent check
+    clock_gettime(CLOCK_MONOTONIC, &tCurrent);
+    tNow = (int)((tCurrent.tv_nsec / 1000000 + tCurrent.tv_sec * 1000) / 100);
+    tStamp = oidcSessionGetExpiration(session);
+    if (tNow > tStamp) {
+        EXT_NOTICE("session uuid=%s (aliasCheckLoaCB)",
+                   oidcSessionUUID(session));
+
+        // if LOA too weak redirect to authentication
+        sessionLoa = oidcSessionGetLOA(session);
+        if (alias->loa > sessionLoa) {
+            json_object *eventJ;
+
+            rp_jsonc_pack(&eventJ, "{ss ss ss si si}", "status",
+                          "loa-mismatch", "uid", alias->uid, "url",
+                          alias->url, "loa-target", alias->loa,
+                          "loa-session", sessionLoa);
+
+            // try to push event to notify the access deny and replay with
+            // redirect to login
+            idscvPushEvent(session, eventJ);
+
+            // if current profile LOA is enough then fire same idp/profile
+            // authen
+            idpProfile = oidcSessionGetIdpProfile(session);
+            if (idpProfile != NULL &&
+                (idpProfile->loa >= alias->loa ||
+                 idpProfile->loa == abs(alias->loa))) {
+                aliasRedirectTimeout(hreq, alias, session);
+            }
+            else {
+                aliasRedirectLogin(hreq, alias, session);
+            }
+            return 1;
+        }
+
+        if (alias->roles) {
+            err = aliasCheckAttrs(session, alias);
+            if (err) {
+                aliasRedirectLogin(hreq, alias, session);
+                return 1;
+            }
+        }
+        // store a timestamp to cache authentication validation
+        tStamp = (int)(tNow + alias->tCache / 100);
+        oidcSessionSetExpiration(session, tStamp);
+    }
+
     // change hreq bearer
     afb_req_common_set_token(&hreq->comreq, NULL);
     return 0;  // move forward and continue parsing lower priority alias
-
-OnRedirectExit:
-    return 1;  // we're done stop scanning alias callback
 }
 
 /**
@@ -275,7 +265,7 @@ int aliasRegisterOne(oidcAliasT *alias, afb_hsrv *hsrv)
         rootdir = afb_common_rootdir_get_path();
 
     // insert LOA checking if required
-    if (alias->loa) {
+    if (alias->loa > 0) {
         status = afb_hsrv_add_handler(hsrv, alias->url, aliasCheckLoaCB, alias,
                                       alias->priority);
         if (status != AFB_HSRV_OK)
