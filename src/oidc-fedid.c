@@ -54,7 +54,7 @@ const nsKeyEnumT oidcFedidSchema[] = {
 // clang-format on
 
 // session timeout, reset LOA
-void fedidsessionReset(oidcSession *session, const oidcProfileT *idpProfile)
+void fedidsessionReset(oidcSessionT *session, const oidcProfileT *idpProfile)
 {
     int err;
     int count = -1;
@@ -90,7 +90,7 @@ void fedidsessionReset(oidcSession *session, const oidcProfileT *idpProfile)
 
 static void fedidTimerCB(int signal, void *ctx)
 {
-    oidcSession *session = (oidcSession *)ctx;
+    oidcSessionT *session = (oidcSessionT *)ctx;
     const oidcProfileT *idpProfile;
 
     // signal should be null
@@ -117,7 +117,7 @@ static void fedidCheckCB(void *ctx,
     fedUserRawT *fedUser;
     const oidcProfileT *idpProfile;
     const oidcAliasT *alias;
-    oidcSession *session = NULL;
+    oidcSessionT *session = NULL;
     const char *redirect;
     afb_hreq *hreq = NULL;
     struct afb_req_v4 *wreq = NULL;
@@ -339,7 +339,7 @@ OnErrorExit:
 // check if an attribute equal to value exists in the session
 // return 1 if that is the case
 // return 0 if none matches
-int fedidsessionHasAttribute(oidcSession *session, const char *value)
+int fedidsessionHasAttribute(oidcSessionT *session, const char *value)
 {
     const fedSocialRawT *fedSocial = oidcSessionGetFedSocial(session);
     if (fedSocial != NULL) {

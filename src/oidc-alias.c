@@ -46,7 +46,7 @@
 // check if one of requested role exist within social cookie
 // return 0 if that is the case
 // return 1 if none matches
-int aliasCheckAttrs(oidcSession *session, oidcAliasT *alias)
+int aliasCheckAttrs(oidcSessionT *session, oidcAliasT *alias)
 {
     const char **roles = alias->roles;
     while (*roles) {
@@ -58,7 +58,7 @@ int aliasCheckAttrs(oidcSession *session, oidcAliasT *alias)
 };
 
 // create aliasFrom cookie and redirect to idp profile page
-static void aliasRedirectTimeout(afb_hreq *hreq, oidcAliasT *alias, oidcSession *session)
+static void aliasRedirectTimeout(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT *session)
 {
     char url[EXT_URL_MAX_LEN];
     char redirectUrl[EXT_HEADER_MAX_LEN];
@@ -107,7 +107,7 @@ OnErrorExit:
 }
 
 // create aliasFrom cookie and redirect to common login page
-static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias, oidcSession *session)
+static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT *session)
 {
     int err;
     char url[EXT_URL_MAX_LEN];
@@ -186,7 +186,7 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
     struct timespec tCurrent;
     const oidcProfileT *idpProfile;
     int sessionLoa, tStamp, tNow, err;
-    oidcSession *session;
+    oidcSessionT *session;
 
     // get session of the request
     session = oidcSessionOfHttpReq(hreq);

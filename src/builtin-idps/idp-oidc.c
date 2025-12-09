@@ -600,7 +600,7 @@ static int oidcLogoutCB(afb_hreq *hreq, void *ctx)
     oidcSchemaT *schema = (oidcSchemaT *)idp->userData;
     const oidcProfileT *idpProfile;
     const char *sessionUid;
-    oidcSession *session;
+    oidcSessionT *session;
     sidMapT *sidMap;
     int err;
 

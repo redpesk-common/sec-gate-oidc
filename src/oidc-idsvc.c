@@ -126,7 +126,7 @@ static json_object *idpQueryList(afb_req_t wreq, const char **idps)
 
     // retrieve oidc config from current alias cookie
     const oidcAliasT *alias;
-    oidcSession *session = oidcSessionOfReq(wreq);
+    oidcSessionT *session = oidcSessionOfReq(wreq);
     alias = oidcSessionGetAlias(session);
 
     // build IDP list with corresponding scope for requested LOA
@@ -203,7 +203,7 @@ static void idpQueryUser(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     afb_data_t query, reply;
 
     // get current social data for further account linking
-    oidcSession *session = oidcSessionOfReq(wreq);
+    oidcSessionT *session = oidcSessionOfReq(wreq);
     fedlink = oidcSessionGetFedIdLink(session);
 
     // if not a slave IDP then use email/pseudo to get IDP list
@@ -264,7 +264,7 @@ static void userRegisterCB(void *ctx,
     const oidcProfileT *profile;
     const oidcAliasT *alias;
     json_object *aliasJ;
-    oidcSession *session = oidcSessionOfReq(wreq);
+    oidcSessionT *session = oidcSessionOfReq(wreq);
 
     // return creation status to HTML5
     if (status < 0)
@@ -307,7 +307,7 @@ static void userRegister(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     status = AFB_ERRNO_BAD_API_STATE;
 
     // retrieve current wreq LOA from session (to be fixed by Jose)
-    oidcSession *session = oidcSessionOfReq(wreq);
+    oidcSessionT *session = oidcSessionOfReq(wreq);
     profile = oidcSessionGetIdpProfile(session);
     if (!profile)
         goto OnErrorExit2;
@@ -349,7 +349,7 @@ static void userFederateCB(void *ctx,
     const oidcProfileT *profile;
     oidcAliasT *alias;
     json_object *responseJ;
-    oidcSession *session;
+    oidcSessionT *session;
     int err;
 
     // subcall failed
@@ -434,7 +434,7 @@ OnErrorExit:
 static void sessionReset(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 {
     json_object *responseJ;
-    oidcSession *session = oidcSessionOfReq(wreq);
+    oidcSessionT *session = oidcSessionOfReq(wreq);
     const oidcProfileT *profile;
     afb_data_t reply;
 
@@ -470,7 +470,7 @@ static void sessionGet(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     json_object *profileJ;
 
     // retrieve current wreq LOA from session (to be fixed by Jose)
-    oidcSession *session = oidcSessionOfReq(wreq);
+    oidcSessionT *session = oidcSessionOfReq(wreq);
     profile = oidcSessionGetIdpProfile(session);
     if (!profile)
         goto OnErrorExit;
@@ -511,7 +511,7 @@ static void subscribeEvent(afb_req_t wreq,
     if (err < 0)
         goto OnErrorExit;
 
-    oidcSession *session = oidcSessionOfReq(wreq);
+    oidcSessionT *session = oidcSessionOfReq(wreq);
     EXT_DEBUG("[session-evt-sub] client subscribed session uuid=%s",
               oidcSessionUUID(session));
 
@@ -529,7 +529,7 @@ OnErrorExit:
 }
 
 // Push a json object event to html5 application
-int idscvPushEvent(oidcSession *session, json_object *eventJ)
+int idscvPushEvent(oidcSessionT *session, json_object *eventJ)
 {
     return oidcSessionEventPush(session, eventJ);
 }
@@ -551,7 +551,7 @@ static void idpQueryConf(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
         goto OnErrorExit;
 
     // retrieve current wreq LOA from session (to be fixed by Jose)
-    oidcSession *session = oidcSessionOfReq(wreq);
+    oidcSessionT *session = oidcSessionOfReq(wreq);
     alias = oidcSessionGetAlias(session);
 
     // build IDP list with corresponding scope for requested LOA

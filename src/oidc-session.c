@@ -38,98 +38,98 @@ static void *oidcFedSocialCookie = &oidcFedSocialCookie;
 static void *oidcFedUserCookie = &oidcFedUserCookie;
 static void *oidcUsrDataCookie = &oidcUsrDataCookie;
 
-oidcSession *oidcSessionOfHttpReq(afb_hreq *hreq)
+oidcSessionT *oidcSessionOfHttpReq(afb_hreq *hreq)
 {
     return hreq->comreq.session;
 }
 
-oidcSession *oidcSessionOfReq(afb_req_v4 *wreq)
+oidcSessionT *oidcSessionOfReq(afb_req_v4 *wreq)
 {
-    oidcSession *session = afb_req_v4_get_common(wreq)->session;
+    oidcSessionT *session = afb_req_v4_get_common(wreq)->session;
 }
 
-oidcSession *oidcSessionOfUUID(const char *uuid)
+oidcSessionT *oidcSessionOfUUID(const char *uuid)
 {
     return afb_session_search(uuid);
 }
 
-const char *oidcSessionUUID(oidcSession *session)
+const char *oidcSessionUUID(oidcSessionT *session)
 {
     return afb_session_uuid(session);
 }
 
-int oidcSessionGetLOA(oidcSession *session)
+int oidcSessionGetLOA(oidcSessionT *session)
 {
     return afb_session_get_loa(session, oidcSessionCookie);
 }
 
-int oidcSessionSetLOA(oidcSession *session, int LOA)
+int oidcSessionSetLOA(oidcSessionT *session, int LOA)
 {
     return afb_session_set_loa(session, oidcSessionCookie, LOA);
 }
 
-int oidcSessionGetExpiration(oidcSession *session)
+int oidcSessionGetExpiration(oidcSessionT *session)
 {
     return afb_session_get_loa(session, oidcAliasCookie);
 }
 
-int oidcSessionSetExpiration(oidcSession *session, int expiration)
+int oidcSessionSetExpiration(oidcSessionT *session, int expiration)
 {
     return afb_session_set_loa(session, oidcAliasCookie, expiration);
 }
 
-const oidcAliasT *oidcSessionGetAlias(oidcSession *session)
+const oidcAliasT *oidcSessionGetAlias(oidcSessionT *session)
 {
     void *ptr = NULL;
     int rc = afb_session_cookie_get(session, oidcAliasCookie, &ptr);
     return (oidcAliasT *)(rc ? NULL : ptr);
 }
 
-int oidcSessionSetAlias(oidcSession *session, const oidcAliasT *alias)
+int oidcSessionSetAlias(oidcSessionT *session, const oidcAliasT *alias)
 {
     return afb_session_cookie_set(session, oidcAliasCookie, (void *)alias, NULL,
                                   NULL);
 }
 
-const oidcProfileT *oidcSessionGetIdpProfile(oidcSession *session)
+const oidcProfileT *oidcSessionGetIdpProfile(oidcSessionT *session)
 {
     void *ptr = NULL;
     int rc = afb_session_cookie_get(session, oidcIdpProfilCookie, &ptr);
     return (const oidcProfileT *)(rc ? NULL : ptr);
 }
 
-int oidcSessionSetIdpProfile(oidcSession *session, const oidcProfileT *profile)
+int oidcSessionSetIdpProfile(oidcSessionT *session, const oidcProfileT *profile)
 {
     return afb_session_cookie_set(session, oidcIdpProfilCookie, (void *)profile,
                                   NULL, NULL);
 }
 
-fedidSessionT *oidcSessionGetFedId(oidcSession *session)
+fedidSessionT *oidcSessionGetFedId(oidcSessionT *session)
 {
     void *ptr = NULL;
     int rc = afb_session_cookie_get(session, oidcSessionCookie, &ptr);
     return (fedidSessionT *)(rc ? NULL : ptr);
 }
 
-int oidcSessionSetFedId(oidcSession *session, fedidSessionT *fedid)
+int oidcSessionSetFedId(oidcSessionT *session, fedidSessionT *fedid)
 {
     return afb_session_cookie_set(session, oidcSessionCookie, fedid, NULL,
                                   NULL);
 }
 
-const fedidLinkT *oidcSessionGetFedIdLink(oidcSession *session)
+const fedidLinkT *oidcSessionGetFedIdLink(oidcSessionT *session)
 {
     void *ptr = NULL;
     int rc = afb_session_cookie_get(session, oidcFedLinkCookie, &ptr);
     return (const fedidLinkT *)(rc ? NULL : ptr);
 }
 
-void oidcSessionDropFedIdLink(oidcSession *session)
+void oidcSessionDropFedIdLink(oidcSessionT *session)
 {
     afb_session_cookie_delete(session, oidcFedLinkCookie);
 }
 
-int oidcSessionSetFedIdLink(oidcSession *session,
+int oidcSessionSetFedIdLink(oidcSessionT *session,
                             const char *pseudo,
                             const char *email)
 {
@@ -146,12 +146,12 @@ int oidcSessionSetFedIdLink(oidcSession *session,
                                   fedlink);
 }
 
-int oidcSessionSetFedIdLinkRequest(oidcSession *session, int request)
+int oidcSessionSetFedIdLinkRequest(oidcSessionT *session, int request)
 {
     return afb_session_set_loa(session, oidcFedSocialCookie, request);
 }
 
-int oidcSessionGetFedIdLinkRequest(oidcSession *session)
+int oidcSessionGetFedIdLinkRequest(oidcSessionT *session)
 {
     return afb_session_get_loa(session, oidcFedSocialCookie);
 }
@@ -159,7 +159,7 @@ int oidcSessionGetFedIdLinkRequest(oidcSession *session)
 int oidcSessionEventSubscribe(afb_req_t wreq)
 {
     afb_event_t event = NULL;
-    oidcSession *session = oidcSessionOfReq(wreq);
+    oidcSessionT *session = oidcSessionOfReq(wreq);
     afb_session_cookie_get(session, idsvcEvtCookie, (void **)&event);
     if (event == NULL) {
         int rc = afb_api_new_event(afb_req_get_api(wreq), "session", &event);
@@ -173,7 +173,7 @@ int oidcSessionEventSubscribe(afb_req_t wreq)
     afb_req_subscribe(wreq, event);
 }
 
-int oidcSessionEventPush(oidcSession *session, json_object *eventJ)
+int oidcSessionEventPush(oidcSessionT *session, json_object *eventJ)
 {
     int rc, count;
     afb_event_t event = NULL;
@@ -199,40 +199,40 @@ int oidcSessionEventPush(oidcSession *session, json_object *eventJ)
     return count;
 }
 
-const fedSocialRawT *oidcSessionGetFedSocial(oidcSession *session)
+const fedSocialRawT *oidcSessionGetFedSocial(oidcSessionT *session)
 {
     void *ptr = NULL;
     int rc = afb_session_cookie_get(session, oidcFedSocialCookie, &ptr);
     return (const fedSocialRawT *)(rc ? NULL : ptr);
 }
 
-int oidcSessionSetFedSocial(oidcSession *session, fedSocialRawT *fedSocial)
+int oidcSessionSetFedSocial(oidcSessionT *session, fedSocialRawT *fedSocial)
 {
     return afb_session_cookie_set(session, oidcFedSocialCookie, fedSocial,
                                   (void *)fedSocialUnRef, fedSocial);
 }
 
-const fedUserRawT *oidcSessionGetUser(oidcSession *session)
+const fedUserRawT *oidcSessionGetUser(oidcSessionT *session)
 {
     void *ptr = NULL;
     int rc = afb_session_cookie_get(session, oidcFedUserCookie, &ptr);
     return (const fedUserRawT *)(rc ? NULL : ptr);
 }
 
-int oidcSessionSetFedUser(oidcSession *session, fedUserRawT *fedUser)
+int oidcSessionSetFedUser(oidcSessionT *session, fedUserRawT *fedUser)
 {
     return afb_session_cookie_set(session, oidcFedUserCookie, fedUser,
                                   (void *)fedUserUnRef, fedUser);
 }
 
-void *oidcSessionGetOpaqueData(oidcSession *session)
+void *oidcSessionGetOpaqueData(oidcSessionT *session)
 {
     void *ptr = NULL;
     int rc = afb_session_cookie_get(session, oidcUsrDataCookie, &ptr);
     return (void *)(rc ? NULL : ptr);
 }
 
-int oidcSessionSetOpaqueData(oidcSession *session, void *data)
+int oidcSessionSetOpaqueData(oidcSessionT *session, void *data)
 {
     return afb_session_cookie_set(session, oidcUsrDataCookie, data, NULL, NULL);
 }

@@ -197,7 +197,7 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
         goto OnErrorExit;
 
     // search for a scope fiting wreqing loa
-    oidcSession *session = oidcSessionOfReq(wreq);
+    oidcSessionT *session = oidcSessionOfReq(wreq);
     if (!state || strcmp(state, oidcSessionUUID(session)))
         goto OnErrorExit;
 
