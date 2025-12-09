@@ -29,6 +29,7 @@
 
 #include <rp-utils/rp-escape.h>
 #include <rp-utils/rp-jsonc.h>
+#include <rp-utils/rp-enum-map.h>
 
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
@@ -39,7 +40,7 @@
 #include "oidc-fedid.h"
 #include "oidc-idp.h"
 #include "oidc-session.h"
-#include "oidc-utils.h"
+//#include "oidc-utils.h"
 #include "pcsc-config.h"
 
 // import pcsc-little API
@@ -118,13 +119,14 @@ static void pcscResetSession(const oidcProfileT *idpProfile, void *ctx)
 
 static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
 {
-    extern const nsKeyEnumT oidcFedidSchema[];
+    extern const rp_enum_map_t oidcFedidSchema[];
     pcscRqtCtxT *pcscRqtCtx = (pcscRqtCtxT *)ctx;
     idpRqtCtxT *idpRqtCtx = pcscRqtCtx->idpRqtCtx;
     pcscOptsT *pcscOpts = pcscRqtCtx->opts;
     const oidcProfileT *idpProfile;
     int status = 0;
     int err;
+    char *copy, *save;
 
     assert(pcscRqtCtx->session);
 
@@ -170,11 +172,15 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
             char *data = NULL;
 
             // map scope to pcsc commands
-            str2TokenT scopeTkn;
-            for (char *scope = utilStr2Token(&scopeTkn, ',', pcscRqtCtx->scope);
-                 scope; scope = utilStr2Token(&scopeTkn, 0, 0)) {
+            copy = strdup(pcscRqtCtx->scope);
+            if (copy == NULL)
+                goto OnErrorExit;
+            save = NULL;
+            for (char *scope = strtok_r(copy, ",", &save);
+                 scope; scope = strtok_r(NULL, ",", &save)) {
                 pcscCmdT *cmd = pcscCmdByUid(pcscOpts->config, scope);
                 if (!cmd) {
+                    free(copy);
                     EXT_ERROR("[pcsc-cmd-uid] command=%s not found", scope);
                     goto OnErrorExit;
                 }
@@ -187,6 +193,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
                             "[pcsc-cmd-uuid] command=%s fail getting uuid "
                             "error=%s",
                             cmd->uid, pcscErrorMsg(handle));
+                        free(copy);
                         goto OnErrorExit;
                     }
                     idpRqtCtx->fedSocial->idp = strdup(idpRqtCtx->idp->uid);
@@ -202,9 +209,10 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
                             "[pcsc-cmd-exec] command=%s execution fail "
                             "error=%s",
                             cmd->uid, pcscErrorMsg(handle));
+                        free(copy);
                         goto OnErrorExit;
                     }
-                    switch (utilLabel2Value(oidcFedidSchema, cmd->uid)) {
+                    switch (rp_enum_map_value_def(oidcFedidSchema, cmd->uid, OIDC_SCHEMA_UNKNOWN)) {
                     case OIDC_SCHEMA_PSEUDO:
                         idpRqtCtx->fedUser->pseudo = strdup(data);
                         break;
@@ -225,6 +233,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
                             "[pcsc-cmd-schema] command=%s no schema mapping "
                             "[pseudo,name,email,company,avatar]",
                             cmd->uid);
+                        free(copy);
                         goto OnErrorExit;
                     }
                     break;
@@ -234,25 +243,30 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
                         "[pcsc-cmd-action] command=%s action=%d not supported "
                         "for authentication",
                         cmd->uid, cmd->action);
+                        free(copy);
                     goto OnErrorExit;
                 }
             }
+            free(copy);
 
             // map security atributes to pcsc read commands
             if (pcscRqtCtx->label) {
-                str2TokenT tokenLabel;
                 int index = 0;
                 idpRqtCtx->fedSocial->attrs =
                     calloc(pcscOpts->labelMax + 1, sizeof(char *));
-                for (char *label =
-                         utilStr2Token(&tokenLabel, ',', pcscRqtCtx->label);
-                     label; label = utilStr2Token(&tokenLabel, 0, 0)) {
+                copy = strdup(pcscRqtCtx->label);
+                if (copy == NULL)
+                    goto OnErrorExit;
+                save = NULL;
+                for (char *label = strtok_r(copy, ",", &save);
+                     label; label = strtok_r(NULL, ",", &save)) {
                     pcscCmdT *cmd = pcscCmdByUid(pcscOpts->config, label);
                     if (!cmd || cmd->action != PCSC_ACTION_READ) {
                         EXT_ERROR(
                             "[pcsc-cmd-label] label=%s does does match any "
                             "read command",
                             label);
+                        free(copy);
                         goto OnErrorExit;
                     }
 
@@ -263,12 +277,17 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
                             "[pcsc-cmd-label] command=%s execution fail "
                             "error=%s",
                             cmd->uid, pcscErrorMsg(handle));
+                        free(copy);
                         goto OnErrorExit;
                     }
-                    // parse ttrs string to extract multi-attributes if any
-                    str2TokenT tokenAttr;
-                    for (char *attr = utilStr2Token(&tokenAttr, ',', data);
-                         attr; attr = utilStr2Token(&tokenAttr, 0, 0)) {
+                    // parse attrs string to extract multi-attributes if any
+                    char *copy2, *save2;
+                    copy2 = strdup(data); /* !!! TODO check origin of data !!! */
+                    if (copy2 == NULL)
+                        goto OnErrorExit;
+                    save2 = NULL;
+                    for (char *attr = strtok_r(copy2, ",", &save2);
+                         attr; attr = strtok_r(NULL, ",", &save2)) {
                         idpRqtCtx->fedSocial->attrs[index++] = strdup(attr);
                         if (index == pcscOpts->labelMax) {
                             EXT_ERROR(
@@ -276,9 +295,12 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
                                 "maxlabel=%d too small labels=%s",
                                 cmd->uid, pcscOpts->labelMax,
                                 pcscRqtCtx->scope);
+                            /* !!! TODO and continue to loop ???? */
                         }
                     }
+                    free(copy2);
                 }
+                free(copy);
             }
             // try do federate user
             idpRqtCtx->userData = (void *)handle;

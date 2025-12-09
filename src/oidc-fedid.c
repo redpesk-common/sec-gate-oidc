@@ -27,6 +27,7 @@
 
 #include <rp-utils/rp-escape.h>
 #include <rp-utils/rp-jsonc.h>
+#include <rp-utils/rp-enum-map.h>
 
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
@@ -40,10 +41,10 @@
 #include "oidc-fedid.h"
 #include "oidc-idsvc.h"
 #include "oidc-session.h"
-#include "oidc-utils.h"
+//#include "oidc-utils.h"
 
 // clang-format off
-const nsKeyEnumT oidcFedidSchema[] = {
+const rp_enum_map_t oidcFedidSchema[] = {
     {"pseudo", OIDC_SCHEMA_PSEUDO},
     {"name", OIDC_SCHEMA_NAME},
     {"email", OIDC_SCHEMA_EMAIL},

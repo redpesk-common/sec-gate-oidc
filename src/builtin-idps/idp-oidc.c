@@ -36,6 +36,7 @@
 #include <rp-utils/rp-base64.h>
 #include <rp-utils/rp-escape.h>
 #include <rp-utils/rp-jsonc.h>
+#include <rp-utils/rp-enum-map.h>
 
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
@@ -48,11 +49,11 @@
 #include "oidc-fedid.h"
 #include "oidc-idp.h"
 #include "oidc-session.h"
-#include "oidc-utils.h"
+//#include "oidc-utils.h"
 
 // import idp authentication enum/label
-extern const nsKeyEnumT idpAuthMethods[];
-extern const nsKeyEnumT idpRespondTypes[];
+extern const rp_enum_map_t idpAuthMethods[];
+extern const rp_enum_map_t idpRespondTypes[];
 
 // idp session id hash table map sid with uuid
 typedef struct
@@ -727,7 +728,7 @@ static httpRqtActionT oidcDiscoveryCB(httpRqtT *httpRqt)
     // search for IDP supported authentication method
     if (wellknown->authLabel) {
         wellknown->authMethod =
-            utilLabel2Value(idpAuthMethods, wellknown->authLabel);
+            rp_enum_map_value_def(idpAuthMethods, wellknown->authLabel, 0);
     }
     else {
         if (authMethodJ) {
@@ -735,7 +736,7 @@ static httpRqtActionT oidcDiscoveryCB(httpRqtT *httpRqt)
                  idx++) {
                 const char *method = json_object_get_string(
                     json_object_array_get_idx(authMethodJ, idx));
-                wellknown->authMethod = utilLabel2Value(idpAuthMethods, method);
+                wellknown->authMethod = rp_enum_map_value_def(idpAuthMethods, method, 0);
                 if (wellknown->authMethod) {
                     wellknown->authLabel = method;
                     break;
@@ -747,14 +748,14 @@ static httpRqtActionT oidcDiscoveryCB(httpRqtT *httpRqt)
         wellknown->authMethod = IDP_CLIENT_SECRET_DEFAULT;
     if (!wellknown->authLabel)
         wellknown->authLabel =
-            utillValue2Label(idpAuthMethods, IDP_RESPOND_TYPE_DEFAULT);
+            rp_enum_map_label_def(idpAuthMethods, IDP_RESPOND_TYPE_DEFAULT, NULL);
     if (!wellknown->authLabel)
         goto OnErrorExit;
 
     // if response type not defined use from from idp remote wellknown
     if (wellknown->respondLabel) {
         wellknown->respondType =
-            utilLabel2Value(idpRespondTypes, wellknown->respondLabel);
+            rp_enum_map_value_def(idpRespondTypes, wellknown->respondLabel, 0);
         if (!wellknown->respondType)
             goto OnErrorExit;
     }
@@ -765,7 +766,7 @@ static httpRqtActionT oidcDiscoveryCB(httpRqtT *httpRqt)
                 const char *redpond = json_object_get_string(
                     json_object_array_get_idx(respondTypeJ, idx));
                 wellknown->respondType =
-                    utilLabel2Value(idpRespondTypes, redpond);
+                    rp_enum_map_value_def(idpRespondTypes, redpond, 0);
                 if (wellknown->respondType) {
                     wellknown->respondLabel = redpond;
                     break;
@@ -779,7 +780,7 @@ static httpRqtActionT oidcDiscoveryCB(httpRqtT *httpRqt)
         wellknown->respondType = IDP_RESPOND_TYPE_DEFAULT;
     if (!wellknown->respondLabel)
         wellknown->respondLabel =
-            utillValue2Label(idpRespondTypes, IDP_RESPOND_TYPE_DEFAULT);
+            rp_enum_map_label_def(idpRespondTypes, IDP_RESPOND_TYPE_DEFAULT, NULL);
     if (!wellknown->respondLabel)
         goto OnErrorExit;
 

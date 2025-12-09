@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <rp-utils/rp-jsonc.h>
+#include <rp-utils/rp-enum-map.h>
 
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
@@ -34,7 +35,7 @@
 #include "oidc-core.h"
 #include "oidc-fedid.h"
 #include "oidc-idp.h"
-#include "oidc-utils.h"
+//#include "oidc-utils.h"
 
 #define OIDC_PLUGIN_INIT   "oidcPluginInit"
 
@@ -48,7 +49,7 @@ typedef struct idpRegistryS
 // registry holds a linked list of core+pugins idps
 static idpRegistryT *registryHead = NULL;
 
-const nsKeyEnumT idpAuthMethods[] = {
+const rp_enum_map_t idpAuthMethods[] = {
     {"secret-unknown", IDP_CLIENT_SECRET_UNKNOWN},
     {"client_secret_post", IDP_CLIENT_SECRET_POST},
     {"client_secret_basic", IDP_CLIENT_SECRET_BASIC},
@@ -57,7 +58,7 @@ const nsKeyEnumT idpAuthMethods[] = {
     {NULL}  // terminator
 };
 
-const nsKeyEnumT idpRespondTypes[] = {
+const rp_enum_map_t idpRespondTypes[] = {
     {"respond-type-unknown", IDP_RESPOND_TYPE_UNKNOWN},
     {"code", IDP_RESPOND_TYPE_CODE},
     // {"id_token", IDP_RESPOND_TYPE_ID_TOKEN}, // hybrid mode
