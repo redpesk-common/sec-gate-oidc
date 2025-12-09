@@ -473,8 +473,9 @@ static int ldapLoginCB(afb_hreq *hreq, void *ctx)
     const char *login = afb_hreq_get_argument(hreq, "login");
     const char *passwd = afb_hreq_get_argument(hreq, "passwd");
     const char *scope = afb_hreq_get_argument(hreq, "scope");
+    oidcSessionT *session = oidcSessionOfHttpReq(hreq);
 
-    alias = oidcSessionGetAlias(oidcSessionOfHttpReq(hreq));
+    alias = oidcSessionGetAlias(session);
     if (alias)
         aliasLoa = alias->loa;
     else
@@ -508,11 +509,11 @@ static int ldapLoginCB(afb_hreq *hreq, void *ctx)
 
         // store working profile to retreive attached loa and role filter if
         // login succeded
-        oidcSessionSetIdpProfile(oidcSessionOfHttpReq(hreq), profile);
+        oidcSessionSetIdpProfile(session, profile);
 
         const char *params[] = {
             "state",
-            oidcSessionUUID(oidcSessionOfHttpReq(hreq)),
+            oidcSessionUUID(session),
             "scope",
             profile->scope,
             "redirect_uri",
@@ -536,11 +537,11 @@ static int ldapLoginCB(afb_hreq *hreq, void *ctx)
         // by us then wreq authentication token
         const char *state = afb_hreq_get_argument(hreq, "state");
         if (!state ||
-            strcmp(state, oidcSessionUUID(oidcSessionOfHttpReq(hreq))))
+            strcmp(state, oidcSessionUUID(session)))
             goto OnErrorExit;
 
         EXT_DEBUG("[ldap-auth-code] login=%s (ldapLoginCB)", login);
-        profile = oidcSessionGetIdpProfile(oidcSessionOfHttpReq(hreq));
+        profile = oidcSessionGetIdpProfile(session);
         if (!profile)
             goto OnErrorExit;
 

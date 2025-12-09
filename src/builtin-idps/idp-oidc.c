@@ -401,7 +401,8 @@ OnErrorExit:
 static int oidcAccessToken(afb_hreq *hreq,
                            oidcIdpT *idp,
                            const char *redirectUrl,
-                           const char *code)
+                           const char *code,
+                           oidcSessionT *session)
 {
     assert(idp->magic == MAGIC_OIDC_IDP);
     oidcCoreHdlT *oidc = idp->oidc;
@@ -411,8 +412,8 @@ static int oidcAccessToken(afb_hreq *hreq,
     idpRqtCtxT *rqtCtx = calloc(1, sizeof(idpRqtCtxT));
     rqtCtx->hreq = hreq;
     rqtCtx->idp = idp;
-    rqtCtx->uuid = oidcSessionUUID(oidcSessionOfHttpReq(hreq));
-    rqtCtx->profile = oidcSessionGetIdpProfile(oidcSessionOfHttpReq(hreq));
+    rqtCtx->uuid = oidcSessionUUID(session);
+    rqtCtx->profile = oidcSessionGetIdpProfile(session);
     if (rqtCtx->profile == NULL)
         goto OnErrorExit;
 
@@ -502,8 +503,9 @@ static int oidcLoginCB(afb_hreq *hreq, void *ctx)
 
     // check if wreq as a code
     const char *code = afb_hreq_get_argument(hreq, "code");
-    const char *session = oidcSessionUUID(oidcSessionOfHttpReq(hreq));
-    alias = oidcSessionGetAlias(oidcSessionOfHttpReq(hreq));
+    oidcSessionT *session = oidcSessionOfHttpReq(hreq);
+    const char *uuid = oidcSessionUUID(session);
+    alias = oidcSessionGetAlias(session);
     if (alias)
         aliasLoa = alias->loa;
     else
@@ -537,7 +539,7 @@ static int oidcLoginCB(afb_hreq *hreq, void *ctx)
 
         // store working profile to retreive attached loa and role filter if
         // login succeeded
-        oidcSessionSetIdpProfile(oidcSessionOfHttpReq(hreq), profile);
+        oidcSessionSetIdpProfile(session, profile);
 
         const char *params[] = {
             "client_id",
@@ -545,9 +547,9 @@ static int oidcLoginCB(afb_hreq *hreq, void *ctx)
             "response_type",
             idp->wellknown->respondLabel,
             "state",
-            session,
+            uuid,
             "nonce",
-            session,
+            uuid,
             "scope",
             profile->scope,
             "redirect_uri",
@@ -570,18 +572,18 @@ static int oidcLoginCB(afb_hreq *hreq, void *ctx)
         // use state to retreive original wreq session uuid and restore original
         // session before wreqing token
         const char *oidcState = afb_hreq_get_argument(hreq, "state");
-        if (strcmp(oidcState, session)) {
+        if (strcmp(oidcState, uuid)) {
             EXT_DEBUG(
-                "[oidc-auth-code] missmatch session/state state=%s session=%s "
+                "[oidc-auth-code] missmatch uuid/state state=%s uuid=%s "
                 "(oidcRegisterAlias)",
-                oidcState, session);
+                oidcState, uuid);
             goto OnErrorExit;
         }
 
         EXT_DEBUG("[oidc-auth-code] state=%s code=%s (oidcRegisterAlias)",
                   oidcState, code);
         // wreq authentication token from tempry code
-        err = oidcAccessToken(hreq, idp, redirectUrl, code);
+        err = oidcAccessToken(hreq, idp, redirectUrl, code, session);
         if (err)
             goto OnErrorExit;
     }

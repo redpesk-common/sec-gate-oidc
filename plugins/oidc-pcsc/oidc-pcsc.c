@@ -436,7 +436,8 @@ int pcscLoginCB(afb_hreq *hreq, void *ctx)
     // Initial redirect redirect user on web page to enter login
     char url[EXT_URL_MAX_LEN];
 
-    alias = oidcSessionGetAlias(oidcSessionOfHttpReq(hreq));
+    oidcSessionT *session = oidcSessionOfHttpReq(hreq);
+    alias = oidcSessionGetAlias(session);
     if (alias)
         aliasLoa = alias->loa;
     else
@@ -459,10 +460,10 @@ int pcscLoginCB(afb_hreq *hreq, void *ctx)
     // if loa working and no profile fit exit without trying authentication
     if (!profile)
         goto OnErrorExit;
-    oidcSessionSetIdpProfile(oidcSessionOfHttpReq(hreq), profile);
+    oidcSessionSetIdpProfile(session, profile);
 
     const char *params[] = {
-        "state",    oidcSessionUUID(oidcSessionOfHttpReq(hreq)),
+        "state",    oidcSessionUUID(session),
         "scope",    profile->scope,
         "language", setlocale(LC_CTYPE, ""),
         NULL  // terminator
