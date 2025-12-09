@@ -29,158 +29,222 @@
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
 
-static void *oidcSessionCookie = &oidcSessionCookie;
-static void *oidcAliasCookie = &oidcAliasCookie;
-static void *oidcIdpProfilCookie = &oidcIdpProfilCookie;
-static void *oidcFedLinkCookie = &oidcFedLinkCookie;
-static void *idsvcEvtCookie = &idsvcEvtCookie;
-static void *oidcFedSocialCookie = &oidcFedSocialCookie;
-static void *oidcFedUserCookie = &oidcFedUserCookie;
-static void *oidcUsrDataCookie = &oidcUsrDataCookie;
+struct oidcSessionS
+{
+    int loa;
+    int expiration;
+    const char *uuid;
+    const oidcAliasT *alias;
+    const oidcProfileT *profile;
+    const fedUserRawT *user;
+    const fedSocialRawT *social;
+    fedidSessionT *fedid;
+    int fedidLinkRequest;
+    fedidLinkT fedlink;
+    afb_event_t event;
+    void *data;
+};
+
+// free memory used by the session
+static void destroySession(oidcSessionT *session)
+{
+    free(session);
+}
+
+// callback for creating session object
+static int createSession(void *closure, void **value, void (**freecb)(void*), void **freeclo)
+{
+    oidcSessionT *session = calloc(1, sizeof *session);
+    if (session == NULL)
+        return -1;
+    session->uuid = afb_session_uuid(closure);
+    *value = session;
+    *freeclo = session;
+    *freecb = (void*)destroySession;
+    return 0;
+}
+
+// get the session object of the afb session
+oidcSessionT *oidcSessionOfAfbSession(struct afb_session *ases)
+{
+    oidcSessionT *session = NULL;
+    if (ases == NULL)
+        EXT_CRITICAL("[oidc-session] AFB session is NULL");
+    else {
+        int rc = afb_session_cookie_getinit(ases, oidcSessionOfAfbSession, (void*)&session, createSession, ases);
+        if (rc < 0) {
+            EXT_CRITICAL("[oidc-session] iCreation of session failed");
+            return NULL;
+        }
+    }
+    return session;
+}
 
 oidcSessionT *oidcSessionOfHttpReq(afb_hreq *hreq)
 {
-    return hreq->comreq.session;
+    struct afb_session *ases = hreq->comreq.session;
+    return oidcSessionOfAfbSession(ases);
 }
 
 oidcSessionT *oidcSessionOfReq(afb_req_v4 *wreq)
 {
-    oidcSessionT *session = afb_req_v4_get_common(wreq)->session;
+    struct afb_session *ases = afb_req_v4_get_common(wreq)->session;
+    return oidcSessionOfAfbSession(ases);
 }
 
 oidcSessionT *oidcSessionOfUUID(const char *uuid)
 {
-    return afb_session_search(uuid);
+    struct afb_session *ases = afb_session_search(uuid);
+    return ases == NULL ? NULL : oidcSessionOfAfbSession(ases);
 }
 
 const char *oidcSessionUUID(oidcSessionT *session)
 {
-    return afb_session_uuid(session);
+    return session->uuid;
 }
 
 int oidcSessionGetLOA(oidcSessionT *session)
 {
-    return afb_session_get_loa(session, oidcSessionCookie);
+    return session->loa;
 }
 
 int oidcSessionSetLOA(oidcSessionT *session, int LOA)
 {
-    return afb_session_set_loa(session, oidcSessionCookie, LOA);
+    session->loa = LOA;
+    return 0;
 }
 
 int oidcSessionGetExpiration(oidcSessionT *session)
 {
-    return afb_session_get_loa(session, oidcAliasCookie);
+    return session->expiration;
 }
 
 int oidcSessionSetExpiration(oidcSessionT *session, int expiration)
 {
-    return afb_session_set_loa(session, oidcAliasCookie, expiration);
+    session->expiration = expiration;
+    return 0;
 }
 
 const oidcAliasT *oidcSessionGetAlias(oidcSessionT *session)
 {
-    void *ptr = NULL;
-    int rc = afb_session_cookie_get(session, oidcAliasCookie, &ptr);
-    return (oidcAliasT *)(rc ? NULL : ptr);
+    return session->alias;
 }
 
 int oidcSessionSetAlias(oidcSessionT *session, const oidcAliasT *alias)
 {
-    return afb_session_cookie_set(session, oidcAliasCookie, (void *)alias, NULL,
-                                  NULL);
+    session->alias = alias;
+    return 0;
 }
 
 const oidcProfileT *oidcSessionGetIdpProfile(oidcSessionT *session)
 {
-    void *ptr = NULL;
-    int rc = afb_session_cookie_get(session, oidcIdpProfilCookie, &ptr);
-    return (const oidcProfileT *)(rc ? NULL : ptr);
+    return session->profile;
 }
 
 int oidcSessionSetIdpProfile(oidcSessionT *session, const oidcProfileT *profile)
 {
-    return afb_session_cookie_set(session, oidcIdpProfilCookie, (void *)profile,
-                                  NULL, NULL);
+    session->profile = profile;
+    return 0;
 }
 
 fedidSessionT *oidcSessionGetFedId(oidcSessionT *session)
 {
-    void *ptr = NULL;
-    int rc = afb_session_cookie_get(session, oidcSessionCookie, &ptr);
-    return (fedidSessionT *)(rc ? NULL : ptr);
+    return session->fedid;
 }
 
 int oidcSessionSetFedId(oidcSessionT *session, fedidSessionT *fedid)
 {
-    return afb_session_cookie_set(session, oidcSessionCookie, fedid, NULL,
-                                  NULL);
+    session->fedid = fedid;
+    return 0;
 }
 
 const fedidLinkT *oidcSessionGetFedIdLink(oidcSessionT *session)
 {
-    void *ptr = NULL;
-    int rc = afb_session_cookie_get(session, oidcFedLinkCookie, &ptr);
-    return (const fedidLinkT *)(rc ? NULL : ptr);
+    return session->fedlink.pseudo == NULL ? NULL : &session->fedlink;
 }
 
 void oidcSessionDropFedIdLink(oidcSessionT *session)
 {
-    afb_session_cookie_delete(session, oidcFedLinkCookie);
+    free(session->fedlink.pseudo);
+    free(session->fedlink.email);
+    session->fedlink.pseudo = NULL;
+    session->fedlink.email = NULL;
 }
 
-int oidcSessionSetFedIdLink(oidcSessionT *session,
-                            const char *pseudo,
-                            const char *email)
+int oidcSessionSetFedIdLink(oidcSessionT *session, const char *pseudo, const char *email)
 {
-    size_t sz_pseudo = 1 + strlen(pseudo);
-    size_t sz_email = 1 + strlen(email);
-    fedidLinkT *fedlink = malloc(sz_pseudo + sz_email + sizeof *fedlink);
-    if (fedlink == NULL)
-        return -1;
-    fedlink->pseudo = (char *)(fedlink + 1);
-    memcpy(fedlink->pseudo, pseudo, sz_pseudo);
-    fedlink->email = fedlink->pseudo + sz_pseudo;
-    memcpy(fedlink->email, email, sz_email);
-    return afb_session_cookie_set(session, oidcFedLinkCookie, fedlink, free,
-                                  fedlink);
-}
-
-int oidcSessionSetFedIdLinkRequest(oidcSessionT *session, int request)
-{
-    return afb_session_set_loa(session, oidcFedSocialCookie, request);
+    oidcSessionDropFedIdLink(session);
+    session->fedlink.pseudo = strdup(pseudo);
+    session->fedlink.email = strdup(email);
+    if (session->fedlink.pseudo != NULL && session->fedlink.email != NULL)
+        return 0;
+    oidcSessionDropFedIdLink(session);
+    return -1;
 }
 
 int oidcSessionGetFedIdLinkRequest(oidcSessionT *session)
 {
-    return afb_session_get_loa(session, oidcFedSocialCookie);
+    return session->fedidLinkRequest;
+}
+
+int oidcSessionSetFedIdLinkRequest(oidcSessionT *session, int request)
+{
+    session->fedidLinkRequest = request;
+    return 0;
+}
+
+const fedSocialRawT *oidcSessionGetFedSocial(oidcSessionT *session)
+{
+    return session->social;
+}
+
+int oidcSessionSetFedSocial(oidcSessionT *session, fedSocialRawT *fedSocial)
+{
+    session->social = fedSocial;
+    return 0;
+}
+
+const fedUserRawT *oidcSessionGetUser(oidcSessionT *session)
+{
+    return session->user;
+}
+
+int oidcSessionSetFedUser(oidcSessionT *session, fedUserRawT *fedUser)
+{
+    session->user = fedUser;
+    return 0;
+}
+
+void *oidcSessionGetOpaqueData(oidcSessionT *session)
+{
+    return session->data;
+}
+
+int oidcSessionSetOpaqueData(oidcSessionT *session, void *data)
+{
+    session->data = data;
+    return 0;
 }
 
 int oidcSessionEventSubscribe(afb_req_t wreq)
 {
-    afb_event_t event = NULL;
     oidcSessionT *session = oidcSessionOfReq(wreq);
-    afb_session_cookie_get(session, idsvcEvtCookie, (void **)&event);
-    if (event == NULL) {
-        int rc = afb_api_new_event(afb_req_get_api(wreq), "session", &event);
+    if (session->event == NULL) {
+        int rc = afb_api_new_event(afb_req_get_api(wreq), "session", &session->event);
         if (rc < 0) {
             EXT_INFO("failed to create session event");
             return rc;
         }
-        afb_session_cookie_set(session, idsvcEvtCookie, event,
-                               (void *)afb_event_unref, event);
     }
-    afb_req_subscribe(wreq, event);
+    afb_req_subscribe(wreq, session->event);
 }
 
 int oidcSessionEventPush(oidcSessionT *session, json_object *eventJ)
 {
     int rc, count;
-    afb_event_t event = NULL;
     afb_data_t data;
 
-    afb_session_cookie_get(session, idsvcEvtCookie, (void **)&event);
-    if (event == NULL) {
+    if (session->event == NULL) {
         json_object_put(eventJ);
         return 0;
     }
@@ -190,49 +254,14 @@ int oidcSessionEventPush(oidcSessionT *session, json_object *eventJ)
     if (rc < 0)
         return rc;
 
-    count = afb_event_push(event, 1, &data);
+    count = afb_event_push(session->event, 1, &data);
 
-    // no one listening clear event and cookie
-    if (count <= 0)
-        afb_session_cookie_set(session, idsvcEvtCookie, NULL, NULL, NULL);
+    // no listener, clear event and cookie
+    if (count <= 0) {
+        afb_event_unref(session->event);
+        session->event = NULL;
+    }
 
     return count;
 }
 
-const fedSocialRawT *oidcSessionGetFedSocial(oidcSessionT *session)
-{
-    void *ptr = NULL;
-    int rc = afb_session_cookie_get(session, oidcFedSocialCookie, &ptr);
-    return (const fedSocialRawT *)(rc ? NULL : ptr);
-}
-
-int oidcSessionSetFedSocial(oidcSessionT *session, fedSocialRawT *fedSocial)
-{
-    return afb_session_cookie_set(session, oidcFedSocialCookie, fedSocial,
-                                  (void *)fedSocialUnRef, fedSocial);
-}
-
-const fedUserRawT *oidcSessionGetUser(oidcSessionT *session)
-{
-    void *ptr = NULL;
-    int rc = afb_session_cookie_get(session, oidcFedUserCookie, &ptr);
-    return (const fedUserRawT *)(rc ? NULL : ptr);
-}
-
-int oidcSessionSetFedUser(oidcSessionT *session, fedUserRawT *fedUser)
-{
-    return afb_session_cookie_set(session, oidcFedUserCookie, fedUser,
-                                  (void *)fedUserUnRef, fedUser);
-}
-
-void *oidcSessionGetOpaqueData(oidcSessionT *session)
-{
-    void *ptr = NULL;
-    int rc = afb_session_cookie_get(session, oidcUsrDataCookie, &ptr);
-    return (void *)(rc ? NULL : ptr);
-}
-
-int oidcSessionSetOpaqueData(oidcSessionT *session, void *data)
-{
-    return afb_session_cookie_set(session, oidcUsrDataCookie, data, NULL, NULL);
-}

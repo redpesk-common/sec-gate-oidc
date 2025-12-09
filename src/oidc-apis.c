@@ -41,7 +41,8 @@
 static void on_protected_api_request(void *closure, struct afb_req_common *req)
 {
     oidcApisT *api = (oidcApisT *)closure;
-    int session_loa = oidcSessionGetLOA(req->session);
+    oidcSessionT *session = oidcSessionOfAfbSession(req->session);
+    int session_loa = oidcSessionGetLOA(session);
 
     if (session_loa < api->loa) {
         // insufficient LOA

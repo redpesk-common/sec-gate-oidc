@@ -43,8 +43,9 @@ typedef struct
 #define FEDID_LINK_REQUESTED -1
 #define FEDID_LINK_RESET     0
 
-typedef struct afb_session oidcSessionT;
+typedef struct oidcSessionS oidcSessionT;
 
+oidcSessionT *oidcSessionOfAfbSession(struct afb_session *ases);
 oidcSessionT *oidcSessionOfHttpReq(afb_hreq *hreq);
 oidcSessionT *oidcSessionOfReq(afb_req_v4 *wreq);
 oidcSessionT *oidcSessionOfUUID(const char *uuid);
