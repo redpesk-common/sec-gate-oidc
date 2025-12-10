@@ -23,26 +23,6 @@
 
 #pragma once
 
-#include "oidc-idp.h"
+#include "oidc-idp-plugin.h"
 
-#define IDP_CLIENT_SECRET_DEFAULT IDP_CLIENT_SECRET_POST
-// #define IDP_RESPOND_TYPE_DEFAULT IDP_RESPOND_TYPE_CODE
-#define IDP_RESPOND_TYPE_DEFAULT IDP_RESPOND_TYPE_CODE
-
-typedef struct
-{
-    const char *fedid;
-    const char *pseudo;
-    const char *avatar;
-    const char *name;
-    const char *company;
-    const char *email;
-    const char *attrs;
-    const char *idpsid;
-    char *auth64;
-    json_object *jwksJ;
-} oidcSchemaT;
-
-// oidc.c
-int oidcRegisterAlias(oidcIdpT *idp, afb_hsrv *hsrv);
-int oidcRegisterConfig(oidcIdpT *idp, json_object *idpJ);
+extern const idpPluginT oidcPluginDesc;

@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015-2021 IoT.bzh Company
- * Author "Fulup Ar Foll"
+ * Author <dev-team@iot.bzh>
  *
  * $RP_BEGIN_LICENSE$
  * Commercial License Usage
@@ -28,37 +28,18 @@
 
 #define _GNU_SOURCE
 
-#include <libafb/afb-core.h>
-#include <libafb/afb-http.h>
-#include <libafb/afb-v4.h>
-
 #include "builtin-idps/idp-github.h"
 #include "builtin-idps/idp-ldap.h"
 #include "builtin-idps/idp-oidc.h"
 #include "oidc-idp.h"
 
-// Builtin in output formater. Note that first one is used when cmd does not
-// define a format
-static const idpPluginT idpBuiltins[] = {
-    {.uid = "oidc",
-     .info = "openid connect idp",
-     .registerConfig = oidcRegisterConfig,
-     .registerAlias = oidcRegisterAlias},
-    {.uid = "github",
-     .info = "github public oauth2 idp",
-     .registerConfig = githubRegisterConfig,
-     .registerAlias = githubRegisterAlias},
-    {.uid = "ldap",
-     .info = "ldap internal users",
-     .registerConfig = ldapRegsterConfig,
-     .registerAlias = ldapRegisterAlias,
-     .registerApis = ldapRegisterApis}
-};
-
 int registerBuiltinIdps(void)
 {
-    int rc = 0, idx = 0;
-    for ( ; idx < (int)(sizeof idpBuiltins / sizeof *idpBuiltins) && rc == 0 ; idx++)
-        rc = idpRegisterPlugin(&idpBuiltins[idx]);
+    int rc = idpRegisterPlugin(&oidcPluginDesc);
+    if (rc == 0)
+        rc = idpRegisterPlugin(&githubPluginDesc);
+    if (rc == 0)
+        rc = idpRegisterPlugin(&ldapPluginDesc);
     return rc;
 }
+

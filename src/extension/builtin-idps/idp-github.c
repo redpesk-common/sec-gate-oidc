@@ -429,7 +429,7 @@ OnErrorExit:
     return 1;
 }
 
-int githubRegisterAlias(oidcIdpT *idp, afb_hsrv *hsrv)
+static int githubRegisterAlias(oidcIdpT *idp, afb_hsrv *hsrv)
 {
     int err;
     EXT_DEBUG("[github-register-alias] uid=%s login='%s'", idp->uid,
@@ -452,7 +452,7 @@ OnErrorExit:
 
 // github is openid compliant. Provide default and delegate parsing to default
 // ParseOidcConfigCB
-int githubRegisterConfig(oidcIdpT *idp, json_object *configJ)
+static int githubRegisterConfig(oidcIdpT *idp, json_object *configJ)
 {
     oidcDefaultsT defaults = {
         .credentials = NULL,
@@ -474,3 +474,15 @@ int githubRegisterConfig(oidcIdpT *idp, json_object *configJ)
 OnErrorExit:
     return 1;
 }
+
+//----------------------------------------------------------------
+// Description
+//----------------------------------------------------------------
+const idpPluginT githubPluginDesc = {
+    .uid = "github",
+    .info = "github public oauth2 idp",
+    .registerConfig = githubRegisterConfig,
+    .registerAlias = githubRegisterAlias
+};
+
+

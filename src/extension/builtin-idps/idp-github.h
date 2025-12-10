@@ -23,8 +23,6 @@
 
 #pragma once
 
-#include "oidc-idp.h"
+#include "oidc-idp-plugin.h"
 
-// github.c
-int githubRegisterAlias(oidcIdpT *idp, afb_hsrv *hsrv);
-int githubRegisterConfig(oidcIdpT *idp, json_object *idpJ);
+extern const idpPluginT githubPluginDesc;

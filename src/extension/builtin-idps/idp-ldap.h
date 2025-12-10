@@ -23,11 +23,6 @@
 
 #pragma once
 
-#include "oidc-idp.h"
+#include "oidc-idp-plugin.h"
 
-// ldap.c
-int ldapRegisterAlias(oidcIdpT *idp, afb_hsrv *hsrv);
-int ldapRegsterConfig(oidcIdpT *idp, json_object *idpJ);
-int ldapRegisterApis(oidcIdpT *idp,
-                     struct afb_apiset *declare_set,
-                     struct afb_apiset *call_set);
+extern const idpPluginT ldapPluginDesc;

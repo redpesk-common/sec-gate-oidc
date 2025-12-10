@@ -51,6 +51,24 @@
 #include "oidc-session.h"
 //#include "oidc-utils.h"
 
+#define IDP_CLIENT_SECRET_DEFAULT IDP_CLIENT_SECRET_POST
+// #define IDP_RESPOND_TYPE_DEFAULT IDP_RESPOND_TYPE_CODE
+#define IDP_RESPOND_TYPE_DEFAULT IDP_RESPOND_TYPE_CODE
+
+typedef struct
+{
+    const char *fedid;
+    const char *pseudo;
+    const char *avatar;
+    const char *name;
+    const char *company;
+    const char *email;
+    const char *attrs;
+    const char *idpsid;
+    char *auth64;
+    json_object *jwksJ;
+} oidcSchemaT;
+
 // import idp authentication enum/label
 extern const rp_enum_map_t idpAuthMethods[];
 extern const rp_enum_map_t idpRespondTypes[];
@@ -641,7 +659,7 @@ OnErrorExit:
     return 1;
 }
 
-int oidcRegisterAlias(oidcIdpT *idp, afb_hsrv *hsrv)
+static int oidcRegisterAlias(oidcIdpT *idp, afb_hsrv *hsrv)
 {
     int err;
     EXT_DEBUG("[oidc-register-alias] uid=%s login='%s'", idp->uid,
@@ -807,7 +825,7 @@ OnErrorExit:
 
 // oidc is openid compliant. Provide default and delegate parsing to default
 // ParseOidcConfigCB
-int oidcRegisterConfig(oidcIdpT *idp, json_object *configJ)
+static int oidcRegisterConfig(oidcIdpT *idp, json_object *configJ)
 {
     oidcDefaultsT defaults = {
         .credentials = NULL,
@@ -875,3 +893,15 @@ OnErrorExit:
                  idp->uid);
     return 1;
 }
+
+//----------------------------------------------------------------
+// Description
+//----------------------------------------------------------------
+const idpPluginT oidcPluginDesc = {
+    .uid = "oidc",
+    .info = "openid connect idp",
+    .registerConfig = oidcRegisterConfig,
+    .registerAlias = oidcRegisterAlias
+};
+
+

@@ -559,7 +559,7 @@ OnErrorExit:
     return 1;
 }
 
-int ldapRegisterApis(oidcIdpT *idp,
+static int ldapRegisterApis(oidcIdpT *idp,
                      struct afb_apiset *declare_set,
                      struct afb_apiset *call_set)
 {
@@ -577,7 +577,7 @@ OnErrorExit:
     return 1;
 }
 
-int ldapRegisterAlias(oidcIdpT *idp, afb_hsrv *hsrv)
+static int ldapRegisterAlias(oidcIdpT *idp, afb_hsrv *hsrv)
 {
     int err;
     EXT_DEBUG("[ldap-register-alias] uid=%s login='%s'", idp->uid,
@@ -599,7 +599,7 @@ OnErrorExit:
 }
 
 // ldap is a fake openid authority as it get everyting locally
-int ldapRegsterConfig(oidcIdpT *idp, json_object *idpJ)
+static int ldapRegsterConfig(oidcIdpT *idp, json_object *idpJ)
 {
     int err;
     const char *people, *groups;
@@ -646,3 +646,15 @@ int ldapRegsterConfig(oidcIdpT *idp, json_object *idpJ)
 OnErrorExit:
     return 1;
 }
+
+//----------------------------------------------------------------
+// Description
+//----------------------------------------------------------------
+const idpPluginT ldapPluginDesc = {
+    .uid = "ldap",
+    .info = "ldap internal users",
+    .registerConfig = ldapRegsterConfig,
+    .registerAlias = ldapRegisterAlias,
+    .registerApis = ldapRegisterApis
+};
+
