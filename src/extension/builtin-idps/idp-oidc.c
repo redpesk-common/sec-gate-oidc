@@ -130,11 +130,10 @@ static const oidcStaticsT dfltstatics = {
 // duplicate key value if not null
 static char *json_object_dup_key_value(json_object *objJ, const char *key)
 {
-    char *value;
-    value = (char *)json_object_get_string(json_object_object_get(objJ, key));
-    if (value)
-        value = strdup(value);
-    return value;
+    json_object *valJ;
+    if (!json_object_object_get_ex(objJ, key, &valJ) || valJ == NULL)
+        return NULL;
+    return strdup(json_object_get_string(valJ));
 }
 
 // signature to be check with GNUTLS to be added by JOSE)
