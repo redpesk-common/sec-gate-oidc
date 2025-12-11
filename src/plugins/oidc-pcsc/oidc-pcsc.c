@@ -487,7 +487,9 @@ int pcscLoginCB(afb_hreq *hreq, void *ctx)
     const char *params[] = {
         "state",    oidcSessionUUID(session),
         "scope",    profile->scope,
+#if FORCELANG
         "language", setlocale(LC_CTYPE, ""),
+#endif
         NULL  // terminator
     };
 

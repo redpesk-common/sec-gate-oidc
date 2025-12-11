@@ -167,7 +167,11 @@ static void fedidCheckCB(void *ctx,
             targetUrl = idpRqtCtx->idp->oidc->globals.registerUrl;
         }
         if (hreq) {
-            const char *params[] = {"language", setlocale(LC_CTYPE, ""), NULL};
+            const char *params[] = {
+#if FORCELANG
+                "language", setlocale(LC_CTYPE, ""),
+#endif
+                NULL};
             size_t sz =
                 rp_escape_url_to(NULL, targetUrl, params, url, sizeof url);
             if (sz >= sizeof url) {

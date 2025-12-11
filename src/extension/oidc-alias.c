@@ -84,8 +84,10 @@ static void aliasRedirectTimeout(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT
                             profile->scope,
                             "redirect_uri",
                             redirectUrl,
+#if FORCELANG
                             "language",
                             setlocale(LC_CTYPE, ""),
+#endif
                             NULL};
 
     size_t sz = rp_escape_url_to(NULL, profile->idp->statics->aliasLogin,
@@ -115,7 +117,11 @@ static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT *
     oidcSessionSetAlias(session, alias);
 
     if (alias->oidc->globals.loginUrl) {
-        const char *params[] = {"language", setlocale(LC_CTYPE, ""), NULL};
+        const char *params[] = {
+#if FORCELANG
+            "language", setlocale(LC_CTYPE, ""),
+#endif
+            NULL};
         size_t sz = rp_escape_url_to(NULL, alias->oidc->globals.loginUrl,
                                      params, url, sizeof url);
         if (sz >= sizeof url) {
@@ -151,8 +157,10 @@ static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT *
                                 profile->scope,
                                 "redirect_uri",
                                 redirectUrl,
+#if FORCELANG
                                 "language",
                                 setlocale(LC_CTYPE, ""),
+#endif
                                 NULL};
 
         // build wreq and send it

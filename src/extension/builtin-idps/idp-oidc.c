@@ -573,8 +573,10 @@ static int oidcLoginCB(afb_hreq *hreq, void *ctx)
             profile->scope,
             "redirect_uri",
             redirectUrl,
+#if FORCELANG
             "language",
             setlocale(LC_CTYPE, ""),
+#endif
             NULL  // terminator
         };
 
