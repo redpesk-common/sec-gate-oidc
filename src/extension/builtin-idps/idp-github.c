@@ -99,7 +99,7 @@ static httpRqtActionT githubAttrsGetByTokenCB(httpRqtT *httpRqt)
         goto OnErrorExit;
 
     // unwrap user profile
-    json_object *orgsJ = json_tokener_parse(httpRqt->body);
+    json_object *orgsJ = json_tokener_parse(httpRqt->body.buffer);
     if (!orgsJ || !json_object_is_type(orgsJ, json_type_array))
         goto OnErrorExit;
     size_t count = json_object_array_length(orgsJ);
@@ -165,7 +165,7 @@ static httpRqtActionT githubUserGetByTokenCB(httpRqtT *httpRqt)
         goto OnErrorExit;
 
     // unwrap user profile
-    json_object *profileJ = json_tokener_parse(httpRqt->body);
+    json_object *profileJ = json_tokener_parse(httpRqt->body.buffer);
     if (!profileJ)
         goto OnErrorExit;
 
@@ -242,7 +242,6 @@ OnErrorExit:
 // call when github return a valid access_token
 static httpRqtActionT githubAccessTokenCB(httpRqtT *httpRqt)
 {
-    assert(httpRqt->magic == MAGIC_HTTP_RQT);
     idpRqtCtxT *rqtCtx = (idpRqtCtxT *)httpRqt->userData;
 
     // github returns
@@ -251,7 +250,7 @@ static httpRqtActionT githubAccessTokenCB(httpRqtT *httpRqt)
         goto OnErrorExit;
 
     // we should have a valid token or something when wrong
-    json_object *responseJ = json_tokener_parse(httpRqt->body);
+    json_object *responseJ = json_tokener_parse(httpRqt->body.buffer);
     if (!responseJ)
         goto OnErrorExit;
 
@@ -317,8 +316,8 @@ static int githubAccessToken(afb_hreq *hreq,
         goto OnErrorExit;
 
     EXT_DEBUG("[github-access-token] curl -X post %s\n", url);
-    err = httpSendPost(oidc->httpPool, url, &dfltOpts, NULL /*token */,
-                       (void *)1 /*post */, 0 /*no data */, githubAccessTokenCB,
+    err = httpSendPost(oidc->httpPool, url, &dfltOpts, NULL /*headers*/,
+                       NULL /*data*/, 0 /*length*/, githubAccessTokenCB,
                        rqtCtx);
     if (err)
         goto OnErrorExit;

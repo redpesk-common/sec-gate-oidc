@@ -18,8 +18,6 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-#define MAGIC_HTTP_RQT      951357
-#define MAGIC_HTTP_POOL     583498
 #define DFLT_HEADER_MAX_LEN 1024
 #define HTTP_DFLT_AGENT     "sec-gate-oidc/1.0"
 
@@ -62,40 +60,37 @@ typedef struct
     const httpFreeCtxCbT freeCtx;
 } httpOptsT;
 
-typedef struct httpRqtS httpRqtT;
-typedef httpRqtActionT (*httpRqtCbT)(httpRqtT *httpRqt);
+// buffers
+typedef struct httpBufferS
+{
+    size_t  length;
+    char   *buffer;
+} httpBufferT;
 
 // http request handle
 typedef struct httpRqtS
 {
-    int magic;
-    int verbose;
-    char *body;
-    char *headers;
-    char *ctype;
-    long length;
-    long hdrLen;
-    long bodyLen;
-    long status;
-    char error[CURL_ERROR_SIZE];
-    void *easy;
+    int status;
+    char *contentType;
+    httpBufferT headers;
+    httpBufferT body;
     struct timespec startTime;
     struct timespec stopTime;
     uint64_t msTime;
     void *userData;
-    httpRqtCbT callback;
-    httpFreeCtxCbT freeCtx;
 } httpRqtT;
+
+typedef struct httpRqtHndlS httpRqtHndlT;
+typedef httpRqtActionT (*httpRqtCbT)(httpRqtT *httpRqt);
 
 // mainloop glue API interface
 typedef void *(*evtMainLoopCbT)();
-typedef int (*multiTimerCbT)(httpPoolT *httpPool, long timeout);
-typedef int (*multiSocketCbT)(httpPoolT *httpPool,
-                              CURL *easy,
+typedef int (*multiTimerCbT)(httpRqtHndlT *httpRqtHndl, long timeout, void **timedata);
+typedef int (*multiSocketCbT)(httpRqtHndlT *httpRqtHndl,
                               int sock,
                               int action,
-                              void *sockp);
-typedef int (*evtRunLoopCbT)(httpPoolT *httpPool, long seconds);
+                              void **sockdata);
+typedef int (*evtRunLoopCbT)(httpRqtHndlT *httpRqtHndl, long seconds);
 
 // glue callbacks handle
 typedef struct
@@ -105,17 +100,6 @@ typedef struct
     multiTimerCbT multiTimer;
     multiSocketCbT multiSocket;
 } httpCallbacksT;
-
-// multi-pool handle
-typedef struct httpPoolS
-{
-    int magic;
-    int verbose;
-    CURLM *multi;
-    void *evtLoop;
-    void *evtTimer;
-    const httpCallbacksT *callback;
-} httpPoolT;
 
 // glue proto to get mainloop callbacks
 const httpCallbacksT *glueGetCbs(void);
@@ -142,5 +126,5 @@ httpPoolT *httpCreatePool(void *evtLoop,
                           int verbose);
 
 // curl action callback to be called from glue layer
-int httpOnSocketCB(httpPoolT *httpPool, int sock, int action);
-int httpOnTimerCB(httpPoolT *httpPool);
+int httpOnSocketCB(httpRqtHndlT *httpRqtHndl, int sock, int action);
+int httpOnTimerCB(httpRqtHndlT *httpRqtHndl);

@@ -24,48 +24,41 @@
 #include <libafb/core/afb-sched.h>
 #include <libafb/sys/ev-mgr.h>
 
-#define FLAGS_SET(v, flags) ((~(v) & (flags)) == 0)
-
 //  (void *efd, int sock, uint32_t revents, void *ctx)
 static void glueOnSocketCB(struct ev_fd *efd,
                            int sock,
                            uint32_t revents,
                            void *ctx)
 {
-    httpPoolT *httpPool = (httpPoolT *)ctx;
-    int action;
+    httpRqtHndlT *httpRqtHndl = (httpRqtHndlT *)ctx;
+    int action = 0;
 
     // translate libafb event into curl event
-    if (FLAGS_SET(revents, EV_FD_IN | EV_FD_OUT))
-        action = CURL_POLL_INOUT;
-    else if (revents & EV_FD_IN)
-        action = CURL_POLL_IN;
-    else if (revents & EV_FD_OUT)
-        action = CURL_POLL_OUT;
-    else
-        action = 0;
+    if (revents & EV_FD_IN)
+        action |= CURL_CSELECT_IN;
+    if (revents & EV_FD_OUT)
+        action |= CURL_CSELECT_OUT;
+    if (revents & EV_FD_ERR)
+        action |= CURL_CSELECT_ERR;
 
-    int err = httpOnSocketCB(httpPool, sock, action);
-    if (err)
-        ev_fd_unref(efd);
+    httpOnSocketCB(httpRqtHndl, sock, action);
 }
 
 // create libafb efd event and attach http processing callback to sock fd
-static int glueSetSocketCB(httpPoolT *httpPool,
-                           CURL *easy,
+static int glueSetSocketCB(httpRqtHndlT *httpRqtHndl,
                            int sock,
-                           int action,
-                           void *sockp)
+                           int what,
+                           void **psockdata)
 {
-    struct ev_fd *efd = (struct ev_fd *)sockp;  // on 1st call efd is null
-    assert(httpPool->magic == MAGIC_HTTP_POOL);
+    struct ev_fd **pefd = (struct ev_fd **)psockdata;
+    struct ev_fd *efd = *pefd;  // on 1st call efd is null
     uint32_t events = 0;
-    int err;
 
     // map CURL events with system events
-    switch (action) {
+    switch (what) {
+    default:
     case CURL_POLL_REMOVE:
-        goto OnErrorExit;
+        break;
     case CURL_POLL_IN:
         events = EV_FD_IN;
         break;
@@ -75,68 +68,52 @@ static int glueSetSocketCB(httpPoolT *httpPool,
     case CURL_POLL_INOUT:
         events = EV_FD_IN | EV_FD_OUT;
         break;
-    default:
-        goto OnErrorExit;
     }
 
-    // if efd exit set event else create a new efd
-    if (!efd) {
-        // create a new efd
-        err = afb_ev_mgr_add_fd(&efd, sock, events, glueOnSocketCB, httpPool, 0,
-                                1);
-        if (err < 0)
-            goto OnErrorExit;
-
-        // add new created efd to sock context on 2nd call it will comeback as
-        // sockCtx
-        err = curl_multi_assign(httpPool->multi, sock, efd);
-        if (err != CURLM_OK)
-            goto OnErrorExit;
-    }
-    else {
-        ev_fd_set_events(efd, ev_fd_events(efd) | events);
+    // end or error
+    if (events == 0) {
+        if (efd != NULL) {
+            ev_fd_unref(efd);
+            *pefd = NULL;
+        }
+        return -(what != CURL_POLL_REMOVE);
     }
 
+    // set the efd or create it
+    if (efd != NULL)
+        ev_fd_set_events(efd, events);
+    else if (afb_ev_mgr_add_fd(pefd, sock, events, glueOnSocketCB, httpRqtHndl, 0, 1) < 0)
+        return -1;
     return 0;
-
-OnErrorExit:
-    return -1;
 }
 
 // map libafb ontimer with multi version
-static void glueOnTimerCB(int signal, void *ctx)
+static void glueOnTimerCB(struct ev_timer *tim, void *ctx, unsigned decount)
 {
     // signal should be null
     if (signal)
         return;
 
-    httpPoolT *httpPool = (httpPoolT *)ctx;
-    (void)httpOnTimerCB(httpPool);
+    httpRqtHndlT *httpRqtHndl = (httpRqtHndlT *)ctx;
+    httpOnTimerCB(httpRqtHndl);
 }
 
 // arm a one shot timer in ms
-static int glueSetTimerCB(httpPoolT *httpPool, long timeout)
+static int glueSetTimerCB(httpRqtHndlT *httpRqtHndl, long timeout, void **ptimedata)
 {
     int err;
+    struct ev_timer **ptim = (struct ev_timer **)ptimedata;
+    struct ev_timer *tim = *ptim;  // on 1st call efd is null
 
+    if (tim) {
+        ev_timer_unref(tim);
+        *ptim = NULL;
+    }
     if (timeout >= 0) {
-        // ms delay for OnTimerCB (timeout is dynamic and depends on
-        // CURLOPT_LOW_SPEED_TIME)
-#if LIBAFB_BEFORE_VERSION(4, 0, 4)
-        err = afb_sched_post_job(NULL /*group */, timeout, 0 /*exec-timeout */,
-                                 glueOnTimerCB, httpPool);
-#else
-        err =
-            afb_sched_post_job(NULL /*group */, timeout, 0 /*exec-timeout */,
-                               glueOnTimerCB, httpPool, Afb_Sched_Mode_Normal);
-#endif
-        if (err <= 0)
-            goto OnErrorExit;
+        if (afb_ev_mgr_add_timer(ptim, 0, (time_t)timeout / 1000, (unsigned)timeout % 1000, 1, 0, 0, glueOnTimerCB, httpRqtHndl, 0) < 0)
+            return -1;
     }
     return 0;
-
-OnErrorExit:
-    return -1;
 }
 
 static const httpCallbacksT libafbCbs = {

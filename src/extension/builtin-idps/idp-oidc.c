@@ -247,7 +247,7 @@ static httpRqtActionT oidcUserGetByTokenCB(httpRqtT *httpRqt)
         goto OnErrorExit;
 
     // unwrap user profile
-    json_object *profileJ = json_tokener_parse(httpRqt->body);
+    json_object *profileJ = json_tokener_parse(httpRqt->body.buffer);
     if (!profileJ)
         goto OnErrorExit;
 
@@ -261,7 +261,7 @@ OnErrorExit:
     EXT_CRITICAL(
         "[oidc-fail-user-profile] Fail to get user profile from oidc "
         "status=%ld body='%s'",
-        httpRqt->status, httpRqt->body);
+        httpRqt->status, httpRqt->body.buffer);
     afb_hreq_reply_error(rqtCtx->hreq, EXT_HTTP_UNAUTHORIZED);
     idpRqtCtxFree(rqtCtx);
     return HTTP_HANDLE_FREE;
@@ -284,9 +284,7 @@ static int oidcUserGetByToken(idpRqtCtxT *rqtCtx)
     // https://docs.oidc.com/en/rest/reference/orgs#list-organizations-for-the-authenticated-user
     EXT_DEBUG("[oidc-profile-get] curl -H 'Authorization: %s' %s\n",
               rqtCtx->token, idp->wellknown->userinfo);
-    // int err = httpSendGet (idp->oidc->httpPool, idp->wellknown->userinfo,
-    // &dfltOpts, authToken, oidcUserGetByTokenCB, rqtCtx);
-    int err = httpSendGet(NULL, idp->wellknown->userinfo, &dfltOpts, authToken,
+    int err = httpSendGet(idp->oidc->httpPool, idp->wellknown->userinfo, &dfltOpts, authToken,
                           oidcUserGetByTokenCB, rqtCtx);
     if (err)
         goto OnErrorExit;
@@ -352,7 +350,6 @@ OnErrorExit:
 static httpRqtActionT oidcAccessTokenCB(httpRqtT *httpRqt)
 {
     char *tokenVal, *tokenType, *tokenId = NULL;
-    assert(httpRqt->magic == MAGIC_HTTP_RQT);
     idpRqtCtxT *rqtCtx = (idpRqtCtxT *)httpRqt->userData;
     oidcSchemaT *schema = (oidcSchemaT *)rqtCtx->idp->userData;
     json_object *responseJ = NULL;
@@ -365,7 +362,7 @@ static httpRqtActionT oidcAccessTokenCB(httpRqtT *httpRqt)
         goto OnErrorExit;
 
     // we should have a valid token or something when wrong
-    responseJ = json_tokener_parse(httpRqt->body);
+    responseJ = json_tokener_parse(httpRqt->body.buffer);
     if (!responseJ)
         goto OnErrorExit;
 
@@ -411,7 +408,7 @@ OnErrorExit:
     EXT_CRITICAL(
         "[fail-access-token] Fail to process response from oidc status=%ld "
         "body='%s' (oidcAccessTokenCB)",
-        httpRqt->status, httpRqt->body);
+        httpRqt->status, httpRqt->body.buffer);
     afb_hreq_reply_error(rqtCtx->hreq, EXT_HTTP_UNAUTHORIZED);
     return HTTP_HANDLE_FREE;
 }
@@ -453,11 +450,8 @@ static int oidcAccessToken(afb_hreq *hreq,
             "[oidc-access-token] curl -H 'Authorization: %s' -X post -d '%s' "
             "%s\n",
             schema->auth64, (char *)rqtCtx->userData, idp->wellknown->tokenid);
-        // err = httpSendPost (oidc->httpPool, idp->wellknown->tokenid,
-        // &dfltOpts, headers, rqtCtx->userData, dataLen , oidcAccessTokenCB,
-        // rqtCtx);
         err =
-            httpSendPost(NULL, idp->wellknown->tokenid, &dfltOpts, headers,
+            httpSendPost(oidc->httpPool, idp->wellknown->tokenid, &dfltOpts, headers,
                          rqtCtx->userData, dataLen, oidcAccessTokenCB, rqtCtx);
         break;
     }
@@ -482,11 +476,8 @@ static int oidcAccessToken(afb_hreq *hreq,
 
         EXT_DEBUG("[oidc-access-token] curl -X post -d '%s' %s\n",
                   (char *)rqtCtx->userData, idp->wellknown->tokenid);
-        // err = httpSendPost (oidc->httpPool, idp->wellknown->tokenid,
-        // &dfltOpts, headers, rqtCtx->userData, dataLen , oidcAccessTokenCB,
-        // rqtCtx);
         err =
-            httpSendPost(NULL, idp->wellknown->tokenid, &dfltOpts, headers,
+            httpSendPost(oidc->httpPool, idp->wellknown->tokenid, &dfltOpts, headers,
                          rqtCtx->userData, dataLen, oidcAccessTokenCB, rqtCtx);
         break;
 
@@ -690,7 +681,6 @@ OnErrorExit:
 // request IDP wellknown endpoint and retreive config
 static httpRqtActionT oidcDiscoJwksCB(httpRqtT *httpRqt)
 {
-    assert(httpRqt->magic == MAGIC_HTTP_RQT);
     oidcSchemaT *schema = (oidcSchemaT *)httpRqt->userData;
     int err;
 
@@ -698,7 +688,7 @@ static httpRqtActionT oidcDiscoJwksCB(httpRqtT *httpRqt)
         goto OnErrorExit;
 
     // we should have a valid json object
-    json_object *responseJ = json_tokener_parse(httpRqt->body);
+    json_object *responseJ = json_tokener_parse(httpRqt->body.buffer);
     if (!responseJ)
         goto OnErrorExit;
 
@@ -712,14 +702,13 @@ OnErrorExit:
     EXT_CRITICAL(
         "[fail-wellknown-discovery] Fail to process response from oidc "
         "status=%ld body='%s' (oidcDiscoveryCB)",
-        httpRqt->status, httpRqt->body);
+        httpRqt->status, httpRqt->body.buffer);
     return HTTP_HANDLE_FREE;
 }
 
 // request IDP wellknown endpoint and retreive config
 static httpRqtActionT oidcDiscoveryCB(httpRqtT *httpRqt)
 {
-    assert(httpRqt->magic == MAGIC_HTTP_RQT);
     oidcIdpT *idp = (oidcIdpT *)httpRqt->userData;
     oidcSchemaT *schema = (oidcSchemaT *)idp->userData;
     oidcWellknownT *wellknown = (oidcWellknownT *)idp->wellknown;
@@ -729,7 +718,7 @@ static httpRqtActionT oidcDiscoveryCB(httpRqtT *httpRqt)
         goto OnErrorExit;
 
     // we should have a valid json object
-    json_object *responseJ = json_tokener_parse(httpRqt->body);
+    json_object *responseJ = json_tokener_parse(httpRqt->body.buffer);
     if (!responseJ)
         goto OnErrorExit;
 
@@ -806,9 +795,7 @@ static httpRqtActionT oidcDiscoveryCB(httpRqtT *httpRqt)
     // if jwks is define request URI to get jwt keys
     if (idp->wellknown->jwks && schema->jwksJ &&
         json_object_get_boolean(schema->jwksJ)) {
-        // int err = httpSendGet (idp->oidc->httpPool, idp->wellknown->jwks,
-        // NULL, NULL, oidcDiscoJwksCB, schema);
-        int err = httpSendGet(NULL, idp->wellknown->jwks, NULL, NULL,
+        int err = httpSendGet(idp->oidc->httpPool, idp->wellknown->jwks, NULL, NULL,
                               oidcDiscoJwksCB, schema);
         if (err)
             goto OnErrorExit;
@@ -820,7 +807,7 @@ OnErrorExit:
     EXT_CRITICAL(
         "[fail-wellknown-discovery] Fail to process response from oidc "
         "status=%ld body='%s' (oidcDiscoveryCB)",
-        httpRqt->status, httpRqt->body);
+        httpRqt->status, httpRqt->body.buffer);
     return HTTP_HANDLE_FREE;
 }
 

@@ -125,7 +125,7 @@ static httpRqtActionT ldapAccessAttrsCB(httpRqtT *httpRqt)
     // token not json
     static const char token[] = "DN: ";
     idpRqtCtx->fedSocial->attrs = calloc(ldapOpts->gidsMax + 1, sizeof(char *));
-    char *savptr, *ptr = strtok_r(httpRqt->body, token, &savptr);
+    char *savptr, *ptr = strtok_r(httpRqt->body.buffer, token, &savptr);
     int idx;
     for (idx = 0; ptr != NULL; idx++) {
         static char cnString[] = "cn=";
@@ -238,19 +238,19 @@ static httpRqtActionT ldapAccessProfileCB(httpRqtT *httpRqt)
         goto OnErrorExit;
 
     // nothing were replied
-    if (httpRqt->bodyLen == 0 || httpRqt->body == NULL)
+    if (httpRqt->body.length == 0 || httpRqt->body.buffer == NULL)
         goto OnErrorExit;
 
     // search for "DN:"
     static char dnString[] = "DN:";
     start = sizeof(dnString);
-    value = strcasestr(&httpRqt->body[0], dnString);
+    value = strcasestr(httpRqt->body.buffer, dnString);
     if (!value)
         goto OnErrorExit;
     for (int idx = 0; value[idx]; idx++) {
         if (value[idx] == '\n') {
             value[idx] = '\0';
-            idpRqtCtx->fedSocial->fedkey = strdup(&httpRqt->body[start]);
+            idpRqtCtx->fedSocial->fedkey = strdup(&httpRqt->body.buffer[start]);
             start = idx + 1;
             break;
         }
@@ -258,7 +258,7 @@ static httpRqtActionT ldapAccessProfileCB(httpRqtT *httpRqt)
 
     // search for "pseudo:"
     static char uidString[] = "uid:";
-    value = strcasestr(&httpRqt->body[start], uidString);
+    value = strcasestr(&httpRqt->body.buffer[start], uidString);
     if (value) {
         for (int idx = sizeof(uidString); value[idx]; idx++) {
             if (value[idx] == '\n') {
@@ -270,7 +270,7 @@ static httpRqtActionT ldapAccessProfileCB(httpRqtT *httpRqt)
     }
     // search for "fullname:"
     static char gecosString[] = "gecos:";
-    value = strcasestr(&httpRqt->body[start], gecosString);
+    value = strcasestr(&httpRqt->body.buffer[start], gecosString);
     if (value) {
         for (int idx = sizeof(gecosString); value[idx]; idx++) {
             if (value[idx] == '\n') {
@@ -282,7 +282,7 @@ static httpRqtActionT ldapAccessProfileCB(httpRqtT *httpRqt)
     }
     // search for "email:"
     static char mailString[] = "mail:";
-    value = strcasestr(&httpRqt->body[start], mailString);
+    value = strcasestr(&httpRqt->body.buffer[start], mailString);
     if (value) {
         for (int idx = +sizeof(mailString); value[idx]; idx++) {
             if (value[idx] == '\n') {
