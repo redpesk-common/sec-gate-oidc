@@ -1,10 +1,13 @@
 #!/bin/bash
 
-PREF=/home/jobol/.locenv/secgate
-ROOT=$PREF/redpesk/sec-gate-oidc
-PORT=7777
-HTTPS=false
-CONF=$PREF/config
+: ${PREF:=/home/jobol/.locenv/secgate}
+: ${ROOT:=$PREF/redpesk/sec-gate-oidc}
+: ${PORT:=7777}
+: ${HTTPS:=false}
+: ${CONF:=$PREF/config}
+: ${RUN:=}
+#RUN="gdb -arg"
+#RUN=valgrind
 
 cat << EOC > $CONF
 {
@@ -91,6 +94,28 @@ cat << EOC > $CONF
               "scope": "login"
             }
           ]
+        },
+        {
+            "uid": "github",
+            "info": "Github Social Authentication",
+            "credentials": {
+                "clientid": "03e364709b579e82db5c",
+                "secret": "8a4ea45f8bf0b68d0e328a145ff4ec315c559243"
+            },
+            "wellknown": {
+                "tokenid": "https://github.com/login/oauth/access_token",
+                "authorize": "https://github.com/login/oauth/authorize",
+                "userinfo": "https://api.github.com/user"
+            },
+            "statics": {
+                "login": "/sgate/github/login",
+                "logo": "/sgate/github/logo-64px.png",
+                "timeout": 600
+            },
+            "profiles": [
+                {"uid":"basic", "loa":1, "scope":"user:email"},
+                {"uid":"teams", "loa":2, "scope":"read: org", "attrs":"organizations_url"}
+            ]
         }
       ],
       "apis": [
@@ -201,7 +226,5 @@ cat << EOC > $CONF
 }
 EOC
 
-#RUN="gdb -arg"
-#RUN=valgrind
 exec $RUN afb-binder -C $CONF
 
