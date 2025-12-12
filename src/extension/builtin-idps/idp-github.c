@@ -132,7 +132,7 @@ static void githubGetAttrsByToken(idpRqtCtxT *rqtCtx, const char *orgApiUrl)
     oidcIdpT *idp = rqtCtx->idp;
     rqtCtx->ucount++;
 
-    snprintf(tokenVal, sizeof(tokenVal), "token %s", rqtCtx->token);
+    snprintf(tokenVal, sizeof(tokenVal), "Bearer %s", rqtCtx->token);
     httpKeyValT authToken[] = {
         {.tag = "Authorization", .value = tokenVal}, {NULL}  // terminator
     };
@@ -219,7 +219,7 @@ static void githubUserGetByToken(idpRqtCtxT *rqtCtx)
     char tokenVal[EXT_TOKEN_MAX_LEN];
     oidcIdpT *idp = rqtCtx->idp;
 
-    snprintf(tokenVal, sizeof(tokenVal), "token %s", rqtCtx->token);
+    snprintf(tokenVal, sizeof(tokenVal), "Bearer %s", rqtCtx->token);
     httpKeyValT authToken[] = {
         {.tag = "Authorization", .value = tokenVal}, {NULL}  // terminator
     };
