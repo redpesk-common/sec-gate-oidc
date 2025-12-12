@@ -17,6 +17,7 @@ cat << EOC > $CONF
   "tracereq": "common",
   "traceapi": "common",
   "traceevt": "common",
+  "traceses": "common",
   "trap-faults": "no",
   "apitimeout": 86400,
   "port": $PORT,
@@ -39,6 +40,7 @@ cat << EOC > $CONF
     "sec-gate-oidc": {
       "api": "sgate",
       "info": "oidc secure gate local authentication sample config",
+      "verbose": 2,
       "globals": {
         "login": "/sgate/common/login.html",
         "register": "/sgate/common/register.html",
@@ -140,7 +142,7 @@ cat << EOC > $CONF
         },
         {
           "uid": "test3",
-          "uri": "tcp:localhost:1235/test3",
+          "uri": "tcp:127.0.0.1:1235/test3",
           "loa": 2,
           "require": [
             "user",
