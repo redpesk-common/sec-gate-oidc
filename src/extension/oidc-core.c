@@ -240,14 +240,14 @@ int AfbExtensionHTTPV1(void *ctx, afb_hsrv *hsrv)
     if (!oidc->httpPool)
         goto OnErrorExit;
 
-    // register IDP
+    // register IDP aliases
     for (idx = 0; oidc->idps[idx].uid; idx++) {
         err = idpRegisterAlias(oidc, &oidc->idps[idx], hsrv);
         if (err)
             goto OnErrorExit;
     }
 
-    // register aliases
+    // register other aliases
     for (idx = 0; oidc->aliases[idx].uid; idx++) {
         err = aliasRegisterOne(&oidc->aliases[idx], hsrv);
         if (err)

@@ -38,6 +38,7 @@
 #include "oidc-defaults.h"
 #include "oidc-session.h"
 
+// process a filtered request
 static void on_protected_api_request(void *closure, struct afb_req_common *req)
 {
     oidcApisT *api = (oidcApisT *)closure;
@@ -88,8 +89,8 @@ int apisRegisterOne(oidcCoreHdlT *oidc,
             }
         }
         // add the client api
-        err = afb_api_ws_add_client(api->uri, declare_set, call_set,
-                                    !api->lazy);
+        err =
+            afb_api_ws_add_client(api->uri, declare_set, call_set, !api->lazy);
         if (err)
             goto OnErrorExit;
     }
@@ -103,7 +104,8 @@ int apisRegisterOne(oidcCoreHdlT *oidc,
     // If needed create an alias
     if (index) {
         if (strcasecmp(&api->uri[index + 1], api->uid)) {
-	        err = afb_apiset_add_alias(declare_set, &api->uri[index + 1], api->uid);
+            err = afb_apiset_add_alias(declare_set, &api->uri[index + 1],
+                                       api->uid);
             if (err)
                 goto OnErrorExit;
         }
@@ -112,99 +114,106 @@ int apisRegisterOne(oidcCoreHdlT *oidc,
     return 0;
 
 OnErrorExit:
-    EXT_ERROR(
-        "[oidc-apis] failed to create API %s, uri=%s ", api->uid, api->uri);
+    EXT_ERROR("[oidc-apis] failed to create API %s, uri=%s ", api->uid,
+              api->uri);
     return -1;
 }
 
+// parse one API configuration
 static int apisParseOne(oidcCoreHdlT *oidc, json_object *apiJ, oidcApisT *api)
 {
-    json_object *requirerJ = NULL;
+    int rc, idx, count;
+    const char **roles;
+    json_object *requireJ = NULL;
 
-    int err =
-        rp_jsonc_unpack(apiJ, "{ss,s?s,s?s,s?i,s?i,s?o}", "uid", &api->uid,
-                        "info", &api->info, "uri", &api->uri, "loa", &api->loa,
-                        "lazy", &api->lazy, "require", &requirerJ);
-    if (err) {
-        EXT_CRITICAL(
-            "[idp-api-error] idpmake=%s parsing fail profile expect: "
-            "uid,uri,loa,role (apisParseOne)",
-            oidc->uid);
-        goto OnErrorExit;
+    // scan object values
+    rc = rp_jsonc_unpack(apiJ, "{ss,s?s,s?s,s?i,s?i,s?o}", "uid", &api->uid,
+                         "info", &api->info, "uri", &api->uri, "loa", &api->loa,
+                         "lazy", &api->lazy, "require", &requireJ);
+    if (rc) {
+        EXT_CRITICAL("[oidc-apis] bad API conf: %s",
+                     json_object_to_json_string(apiJ));
+        return -1;
     }
+
     // provide some defaults value based on uid
     if (!api->uri)
         asprintf((char **)&api->uri, "unix:@%s", api->uid);
 
-    if (requirerJ) {
-        const char **roles;
-        switch (json_object_get_type(requirerJ)) {
-            int count;
-
+    // inspect require values, building roles array
+    if (requireJ) {
+        switch (json_object_get_type(requireJ)) {
         case json_type_array:
-            count = (int)json_object_array_length(requirerJ);
+            count = (int)json_object_array_length(requireJ);
             roles = calloc(count + 1, sizeof(char *));
+            if (roles == NULL) {
+            oom:
+                EXT_CRITICAL("[oidc-apis] out of memory");
+                return -1;
+            }
 
-            for (int idx = 0; idx < count; idx++) {
-                json_object *roleJ = json_object_array_get_idx(requirerJ, idx);
+            for (idx = 0; idx < count; idx++) {
+                json_object *roleJ = json_object_array_get_idx(requireJ, idx);
                 roles[idx] = json_object_get_string(roleJ);
             }
             break;
 
         case json_type_string:
             roles = calloc(2, sizeof(char *));
-            roles[0] = json_object_get_string(requirerJ);
+            if (roles == NULL)
+                goto oom;
+            roles[0] = json_object_get_string(requireJ);
             break;
 
         default:
-            EXT_CRITICAL(
-                "[idp-apis-error] idp=%s role should be json_array|json_string "
-                "(apisParseOne)",
-                oidc->uid);
-            goto OnErrorExit;
+            EXT_CRITICAL("[oidc-apis] bad 'require' value %s",
+                         json_object_to_json_string(requireJ));
+            return -1;
         }
         api->roles = roles;
-        api->oidc = oidc;
     }
+    api->oidc = oidc;
     return 0;
-
-OnErrorExit:
-    return 1;
 }
 
+// parse API configuration object
 oidcApisT *apisParseConfig(oidcCoreHdlT *oidc, json_object *apisJ)
 {
-    oidcApisT *apis;
-    int err;
+    oidcApisT *apis = NULL;
+    int rc = 0, count, idx;
 
     switch (json_object_get_type(apisJ)) {
-        int count;
-
     case json_type_array:
         count = (int)json_object_array_length(apisJ);
         apis = calloc(count + 1, sizeof(oidcApisT));
-
-        for (int idx = 0; idx < count; idx++) {
-            json_object *apiJ = json_object_array_get_idx(apisJ, idx);
-            err = apisParseOne(oidc, apiJ, &apis[idx]);
-            if (err)
-                goto OnErrorExit;
+        if (apis != NULL) {
+            for (idx = 0; rc == 0 && idx < count; idx++) {
+                json_object *apiJ = json_object_array_get_idx(apisJ, idx);
+                rc = apisParseOne(oidc, apiJ, &apis[idx]);
+            }
         }
         break;
 
     case json_type_object:
         apis = calloc(2, sizeof(oidcApisT));
-        err = apisParseOne(oidc, apisJ, &apis[0]);
-        if (err)
-            goto OnErrorExit;
+        if (apis != NULL)
+            rc = apisParseOne(oidc, apisJ, &apis[0]);
         break;
 
     default:
-        EXT_CRITICAL(
-            "[idp-apis-error] idp=%s apis should be json_array|json_object "
-            "(apisParseConfig)",
-            oidc->uid);
-        goto OnErrorExit;
+        rc = -1;
+        break;
+    }
+    if (apis == NULL) {
+        if (rc < 0)
+            EXT_CRITICAL("[oidc-apis] bad APIs conf: %s",
+                         json_object_to_json_string(apisJ));
+        else
+            EXT_CRITICAL("[oidc-apis] out of memory");
+    }
+    else if (rc < 0) {
+        free(apis);  // TODO: also free the roles
+        apis = NULL;
     }
     return apis;
 

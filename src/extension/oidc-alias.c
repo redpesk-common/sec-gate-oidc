@@ -63,47 +63,44 @@ static void aliasRedirectTimeout(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT
     char url[EXT_URL_MAX_LEN];
     char redirectUrl[EXT_HEADER_MAX_LEN];
     const oidcProfileT *profile;
-    int err;
+    int rc;
 
     oidcSessionSetAlias(session, alias);
     profile = oidcSessionGetIdpProfile(session);
 
     // add afb-binder endpoint to login redirect alias
-    err = afb_hreq_make_here_url(hreq, profile->idp->statics->aliasLogin,
+    rc = afb_hreq_make_here_url(hreq, profile->idp->statics->aliasLogin,
                                  redirectUrl, sizeof(redirectUrl));
-    if (err < 0)
-        goto OnErrorExit;
-
-    const char *params[] = {"client_id",
-                            profile->idp->credentials->clientId,
-                            "response_type",
-                            profile->idp->wellknown->respondLabel,
-                            "state",
-                            oidcSessionUUID(session),
-                            "scope",
-                            profile->scope,
-                            "redirect_uri",
-                            redirectUrl,
+    if (rc < 0)
+        EXT_ERROR("[oidc-alias] failed to make here url");
+    else {
+        const char *params[] = {"client_id",
+                                profile->idp->credentials->clientId,
+                                "response_type",
+                                profile->idp->wellknown->respondLabel,
+                                "state",
+                                oidcSessionUUID(session),
+                                "scope",
+                                profile->scope,
+                                "redirect_uri",
+                                redirectUrl,
 #if FORCELANG
-                            "language",
-                            setlocale(LC_CTYPE, ""),
+                                "language",
+                                setlocale(LC_CTYPE, ""),
 #endif
-                            NULL};
+                                NULL};
 
-    size_t sz = rp_escape_url_to(NULL, profile->idp->statics->aliasLogin,
-                                 params, url, sizeof url);
-    if (sz >= sizeof url) {
-        EXT_ERROR(
-            "[fail-login-redirect] fail to build redirect url "
-            "(aliasRedirectLogin)");
-        goto OnErrorExit;
+        size_t sz = rp_escape_url_to(NULL, profile->idp->statics->aliasLogin,
+                                     params, url, sizeof url);
+        if (sz < sizeof url) {
+            EXT_DEBUG("[oidc-alias] redirect timeout %s", url);
+            afb_hreq_redirect_to(hreq, url, HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
+            return;
+        }
+
+        EXT_ERROR("[oidc-alias] redirect too long");
     }
-
-    EXT_DEBUG("[alias-redirect-login] %s (aliasRedirectLogin)", url);
-    afb_hreq_redirect_to(hreq, url, HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
-    return;
-
-OnErrorExit:
+    // error reply: redirect to global login
     afb_hreq_redirect_to(hreq, alias->oidc->globals.loginUrl, HREQ_QUERY_EXCL,
                          HREQ_REDIR_TMPY);
 }
@@ -111,7 +108,7 @@ OnErrorExit:
 // create aliasFrom cookie and redirect to common login page
 static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT *session)
 {
-    int err;
+    int rc;
     char url[EXT_URL_MAX_LEN];
 
     oidcSessionSetAlias(session, alias);
@@ -125,25 +122,24 @@ static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT *
         size_t sz = rp_escape_url_to(NULL, alias->oidc->globals.loginUrl,
                                      params, url, sizeof url);
         if (sz >= sizeof url) {
-            EXT_ERROR(
-                "[fail-login-redirect] fail to build redirect url "
-                "(aliasRedirectLogin)");
+            EXT_ERROR("[oidc-alias] redirect too long");
             goto OnErrorExit;
         }
     }
     else {
         // when no global login page defined use idp[0]+profile[0] with openid
         // url form
-        int status;
         oidcIdpT *idp = &alias->oidc->idps[0];
         const oidcProfileT *profile = &idp->profiles[0];
         const char *uuid = oidcSessionUUID(session);
         char redirectUrl[EXT_HEADER_MAX_LEN];
 
-        status = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin,
+        rc = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin,
                                         redirectUrl, sizeof(redirectUrl));
-        if (status < 0)
+        if (rc < 0) {
+            EXT_ERROR("[oidc-alias] failed to make here url");
             goto OnErrorExit;
+        }
 
         const char *params[] = {"client_id",
                                 idp->credentials->clientId,
@@ -167,16 +163,14 @@ static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT *
         size_t sz = rp_escape_url_to(NULL, idp->wellknown->authorize, params,
                                      url, sizeof url);
         if (sz >= sizeof url) {
-            EXT_ERROR(
-                "[fail-login-redirect] fail to build redirect url "
-                "(aliasRedirectLogin)");
+            EXT_ERROR("[oidc-alias] redirect too long");
             goto OnErrorExit;
         }
 
         // keep track of selected idp profile
         oidcSessionSetIdpProfile(session, profile);
     }
-    EXT_DEBUG("[alias-redirect-login] %s (aliasRedirectLogin)", url);
+    EXT_DEBUG("[oidc-alias] redirect login %s", url);
     afb_hreq_redirect_to(hreq, url, HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
     return;
 
@@ -263,7 +257,7 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
 int aliasRegisterOne(oidcAliasT *alias, afb_hsrv *hsrv)
 {
     const char *rootdir;
-    int status;
+    int rc;
 
     // if alias full path does not start with '/' then prefix it with
     // http_root_dir
@@ -274,28 +268,27 @@ int aliasRegisterOne(oidcAliasT *alias, afb_hsrv *hsrv)
 
     // insert LOA checking if required
     if (alias->loa > 0) {
-        status = afb_hsrv_add_handler(hsrv, alias->url, aliasCheckLoaCB, alias,
+        rc = afb_hsrv_add_handler(hsrv, alias->url, aliasCheckLoaCB, alias,
                                       alias->priority);
-        if (status != AFB_HSRV_OK)
-            goto OnErrorExit;
+        if (rc != AFB_HSRV_OK) {
+            EXT_ERROR("[oidc-alias] failed to add alias %s handler %s",
+                        alias->uid, alias->url);
+            return -1;
+        }
     }
 
     // add with lower priority the redirection
-    status = afb_hsrv_add_alias_path(hsrv, alias->url, rootdir, alias->path,
+    rc = afb_hsrv_add_alias_path(hsrv, alias->url, rootdir, alias->path,
                                      alias->priority - 1, 0 /*not relax */);
-    if (status != AFB_HSRV_OK)
-        goto OnErrorExit;
+    if (rc != AFB_HSRV_OK) {
+        EXT_ERROR("[oidc-alias] failed to add alias %s from %s to %s/%s",
+                        alias->uid, alias->url, rootdir, alias->path);
+        return -1;
+    }
 
-    EXT_DEBUG("[alias-register] uid=%s loa=%d url='%s' fullpath='%s/%s'",
+    EXT_DEBUG("[oidc-alias] register uid=%s loa=%d url='%s' fullpath='%s/%s'",
               alias->uid, alias->loa, alias->url, rootdir, alias->path);
     return 0;
-
-OnErrorExit:
-    EXT_ERROR(
-        "[alias-fail-register] fail to register alias uid=%s url=%s "
-        "fullpath=%s/%s",
-        alias->uid, alias->url, rootdir, alias->path);
-    return 1;
 }
 
 /**
@@ -308,27 +301,26 @@ OnErrorExit:
  *
  * @return 0 on success or else not zero for error
  */
-static int idpParseOneAlias(oidcCoreHdlT *oidc,
+static int parseOneAlias(oidcCoreHdlT *oidc,
                             json_object *aliasJ,
                             oidcAliasT *alias)
 {
-    json_object *requirerJ = NULL;
+    const char **roles;
+    int rc, count, idx;
+    json_object *requireJ = NULL;
 
     // set tCache default
     alias->tCache = oidc->globals.tCache;
     alias->oidc = oidc;
 
-    int err = rp_jsonc_unpack(aliasJ, "{ss,s?s,s?s,s?s,s?i,s?i,s?i,s?o}", "uid",
+    rc = rp_jsonc_unpack(aliasJ, "{ss,s?s,s?s,s?s,s?i,s?i,s?i,s?o}", "uid",
                               &alias->uid, "info", &alias->info, "url",
                               &alias->url, "path", &alias->path, "prio",
                               &alias->priority, "loa", &alias->loa, "cache",
-                              &alias->tCache, "require", &requirerJ);
-    if (err) {
-        EXT_CRITICAL(
-            "[idp-alias-error] oidc=%s parsing fail profile expect: "
-            "uid,url,fullpath,prio,loa,role (idpParseOneAlias)",
-            oidc->uid);
-        goto OnErrorExit;
+                              &alias->tCache, "require", &requireJ);
+    if (rc) {
+        EXT_CRITICAL( "[oidc-alias] bad alias conf: %s", json_object_to_json_string(aliasJ));
+        return -1;
     }
 
     // provide some defaults value based on uid
@@ -338,18 +330,19 @@ static int idpParseOneAlias(oidcCoreHdlT *oidc,
         asprintf((char **)&alias->path, "$ROOTDIR/%s", alias->uid);
 
     // handle required roles
-    if (requirerJ) {
-        const char **roles;
-        int count;
-        switch (json_object_get_type(requirerJ)) {
+    if (requireJ) {
+        switch (json_object_get_type(requireJ)) {
         case json_type_array:
-            count = (int)json_object_array_length(requirerJ);
+            count = (int)json_object_array_length(requireJ);
             roles = calloc(count + 1, sizeof(char *));
-            if (roles == NULL)
-                goto OnErrorExit;
+            if (roles == NULL) {
+oom:                
+                EXT_CRITICAL("[oidc-alias] out of memory");
+                return -1;
+            }
 
             for (int idx = 0; idx < count; idx++) {
-                json_object *roleJ = json_object_array_get_idx(requirerJ, idx);
+                json_object *roleJ = json_object_array_get_idx(requireJ, idx);
                 roles[idx] = json_object_get_string(roleJ);
             }
             break;
@@ -357,24 +350,18 @@ static int idpParseOneAlias(oidcCoreHdlT *oidc,
         case json_type_object:
             roles = calloc(2, sizeof(char *));
             if (roles == NULL)
-                goto OnErrorExit;
+                goto oom;
 
-            roles[0] = json_object_get_string(requirerJ);
+            roles[0] = json_object_get_string(requireJ);
             break;
 
         default:
-            EXT_CRITICAL(
-                "[idp-alias-error] oidc=%s role should be "
-                "json_array|json_object (idpParseOneAlias)",
-                oidc->uid);
-            goto OnErrorExit;
+            EXT_CRITICAL( "[oidc-alias] bad require conf: %s", json_object_to_json_string(requireJ));
+            return -1;
         }
         alias->roles = roles;
     }
     return 0;
-
-OnErrorExit:
-    return 1;
 }
 
 /**
@@ -389,43 +376,41 @@ OnErrorExit:
 oidcAliasT *aliasParseConfig(oidcCoreHdlT *oidc, json_object *aliasesJ)
 {
     oidcAliasT *aliases = NULL;
-    int err, count, idx;
+    int rc = 0, count, idx;
 
     switch (json_object_get_type(aliasesJ)) {
     case json_type_array:
         /* extract array of aliases */
         count = (int)json_object_array_length(aliasesJ);
         aliases = calloc(count + 1, sizeof(oidcAliasT));
-        if (aliases == NULL)
-            goto OnErrorExit;
-
-        for (idx = 0; idx < count; idx++) {
-            json_object *aliasJ = json_object_array_get_idx(aliasesJ, idx);
-            err = idpParseOneAlias(oidc, aliasJ, &aliases[idx]);
-            if (err)
-                goto OnErrorExit;
+        if (aliases != NULL) {
+            for (idx = 0; rc >= 0 && idx < count; idx++) {
+                json_object *aliasJ = json_object_array_get_idx(aliasesJ, idx);
+                rc = parseOneAlias(oidc, aliasJ, &aliases[idx]);
+            }
         }
         break;
 
     case json_type_object:
         /* extract single alias */
         aliases = calloc(2, sizeof(oidcAliasT));
-        if (aliases == NULL)
-            goto OnErrorExit;
-        err = idpParseOneAlias(oidc, aliasesJ, &aliases[0]);
-        if (err)
-            goto OnErrorExit;
+        if (aliases != NULL)
+            rc = parseOneAlias(oidc, aliasesJ, &aliases[0]);
         break;
 
     default:
-        EXT_CRITICAL(
-            "[idp-aliases-error] idp=%s alias should be json_array|json_object "
-            "(aliasParseConfig)",
-            oidc->uid);
-        goto OnErrorExit;
+        rc = -1;
+        break;
+    }
+    if (aliases == NULL) {
+        if (rc == 0)
+            EXT_CRITICAL("[oidc-alias] out of memory");
+        else
+            EXT_CRITICAL("[oidc-alias] bad aliases conf: %s", json_object_to_json_string(aliasesJ));
+    }
+    else if (rc < 0) {
+        free(aliases);
+        aliases = NULL;
     }
     return aliases;
-
-OnErrorExit:
-    return NULL;
 }
