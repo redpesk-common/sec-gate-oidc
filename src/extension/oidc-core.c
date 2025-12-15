@@ -160,7 +160,9 @@ int AfbExtensionConfigV1(void **ctx, struct json_object *oidcJ, char const *uid)
     if (!oidc->idps || !oidc->aliases || !oidc->apis)
         goto OnErrorExit;
 
-    // TODO what means the below test?
+    // There is at least one IDP and one profile per IDP
+    // So test if there is only one profile of only one idp
+    // or not when global loginUrl is NULL
     if (!oidc->globals.loginUrl &&
         (oidc->idps[1].uid || oidc->idps[0].profiles[1].uid))
         oidc->globals.loginUrl = URL_OIDC_USR_LOGIN;
