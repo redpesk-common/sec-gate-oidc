@@ -188,6 +188,7 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
     const oidcProfileT *idpProfile;
     int sessionLoa, err;
     oidcSessionT *session;
+    json_object *eventJ;
 
     // get session of the request
     session = oidcSessionOfHttpReq(hreq);
@@ -197,38 +198,31 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
         return 1;
     }
 
+    // Check required LOA
+    sessionLoa = oidcSessionGetLOA(session);
+    if (alias->loa > sessionLoa) {
+
+        // push event to notify the access denied
+        rp_jsonc_pack(&eventJ, "{ss ss ss si si}", "status",
+                      "loa-mismatch", "uid", alias->uid, "url",
+                      alias->url, "loa-target", alias->loa,
+                      "loa-session", sessionLoa);
+        idscvPushEvent(session, eventJ);
+
+        // if current profile LOA is enough then fire same idp/profile
+        // authen
+        idpProfile = oidcSessionGetIdpProfile(session);
+        if (idpProfile != NULL && idpProfile->loa >= alias->loa) {
+            aliasRedirectTimeout(hreq, alias, session);
+        }
+        else {
+            aliasRedirectLogin(hreq, alias, session);
+        }
+        return 1;
+    }
+
     // if tCache not expired use jump authent check
     if (oidcSessionShouldCheck(session)) {
-        EXT_NOTICE("session uuid=%s (aliasCheckLoaCB)",
-                   oidcSessionUUID(session));
-
-        // if LOA too weak redirect to authentication
-        sessionLoa = oidcSessionGetLOA(session);
-        if (alias->loa > sessionLoa) {
-            json_object *eventJ;
-
-            rp_jsonc_pack(&eventJ, "{ss ss ss si si}", "status",
-                          "loa-mismatch", "uid", alias->uid, "url",
-                          alias->url, "loa-target", alias->loa,
-                          "loa-session", sessionLoa);
-
-            // try to push event to notify the access deny and replay with
-            // redirect to login
-            idscvPushEvent(session, eventJ);
-
-            // if current profile LOA is enough then fire same idp/profile
-            // authen
-            idpProfile = oidcSessionGetIdpProfile(session);
-            if (idpProfile != NULL &&
-                (idpProfile->loa >= alias->loa ||
-                 idpProfile->loa == abs(alias->loa))) {
-                aliasRedirectTimeout(hreq, alias, session);
-            }
-            else {
-                aliasRedirectLogin(hreq, alias, session);
-            }
-            return 1;
-        }
 
         // check roles
         if (alias->roles) {
