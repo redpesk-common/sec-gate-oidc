@@ -313,11 +313,11 @@ static int parseOneAlias(oidcCoreHdlT *oidc,
     alias->tCache = oidc->globals.tCache;
     alias->oidc = oidc;
 
-    rc = rp_jsonc_unpack(aliasJ, "{ss,s?s,s?s,s?s,s?i,s?i,s?i,s?o}", "uid",
+    rc = rp_jsonc_unpack(aliasJ, "{ss,s?s,s?s,s?s,s?i,s?i,s?o}", "uid",
                               &alias->uid, "info", &alias->info, "url",
                               &alias->url, "path", &alias->path, "prio",
-                              &alias->priority, "loa", &alias->loa, "cache",
-                              &alias->tCache, "require", &requireJ);
+                              &alias->priority, "loa", &alias->loa,
+                              "require", &requireJ);
     if (rc) {
         EXT_CRITICAL( "[oidc-alias] bad alias conf: %s", json_object_to_json_string(aliasJ));
         return -1;
