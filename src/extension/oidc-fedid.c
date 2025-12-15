@@ -62,7 +62,7 @@ void fedidsessionReset(oidcSessionT *session, const oidcProfileT *idpProfile)
 
     // reset session and alias LOA (this will force authentication)
     oidcSessionSetLOA(session, 0);
-    oidcSessionSetExpiration(session, 0);
+    oidcSessionSetNextCheck(session, 0);
     EXT_DEBUG("[fedid-session-reset] logout/timeout session uuid=%s ?",
               oidcSessionUUID(session));
 

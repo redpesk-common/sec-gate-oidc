@@ -52,11 +52,14 @@ oidcSessionT *oidcSessionOfUUID(const char *uuid);
 
 const char *oidcSessionUUID(oidcSessionT *session);
 
+int oidcSessionIsValid(oidcSessionT *session);
+void oidcSessionValidate(oidcSessionT *session, long seconds);
+
+int oidcSessionShouldCheck(oidcSessionT *session);
+void oidcSessionSetNextCheck(oidcSessionT *session, long millisec);
+
 int oidcSessionGetLOA(oidcSessionT *session);
 void oidcSessionSetLOA(oidcSessionT *session, int LOA);
-
-int oidcSessionGetExpiration(oidcSessionT *session);
-void oidcSessionSetExpiration(oidcSessionT *session, int expiration);
 
 const oidcAliasT *oidcSessionGetAlias(oidcSessionT *session);
 void oidcSessionSetAlias(oidcSessionT *session, const oidcAliasT *alias);

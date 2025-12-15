@@ -31,8 +31,8 @@
 
 struct oidcSessionS
 {
+    int nowset;
     int loa;
-    int expiration;
     const char *uuid;
     const oidcAliasT *alias;
     const oidcProfileT *profile;
@@ -43,6 +43,9 @@ struct oidcSessionS
     fedidLinkT fedlink;
     afb_event_t event;
     void *data;
+    struct timespec now;
+    struct timespec nextCheck;
+    struct timespec endValid;
 };
 
 // free memory used by the session
@@ -76,6 +79,7 @@ oidcSessionT *oidcSessionOfAfbSession(struct afb_session *ases)
             EXT_CRITICAL("[oidc-session] iCreation of session failed");
             return NULL;
         }
+        session->nowset = 0;
     }
     return session;
 }
@@ -103,6 +107,59 @@ const char *oidcSessionUUID(oidcSessionT *session)
     return session->uuid;
 }
 
+static void ensureNowIsSet(oidcSessionT *session)
+{
+    if (!session->nowset) {
+        clock_gettime(CLOCK_MONOTONIC, &session->now);
+        session->nowset = 1;
+    }
+}
+
+static int timeLesser(const struct timespec *a, const struct timespec *b)
+{
+    return a->tv_sec < b->tv_sec
+        || (a->tv_sec == b->tv_sec && a->tv_nsec < b->tv_nsec);
+}
+
+static void timeAdd(struct timespec *dest, const struct timespec *src, long sec, long nsec)
+{
+    dest->tv_sec = src->tv_sec + sec;
+    dest->tv_nsec = src->tv_nsec + nsec;
+    if (dest->tv_nsec >= 1000000000) {
+        dest->tv_nsec -= 1000000000;
+        dest->tv_sec++;
+    }
+    else if (dest->tv_nsec < 0) {
+        dest->tv_nsec += 1000000000;
+        dest->tv_sec--;
+    }
+}
+
+int oidcSessionIsValid(oidcSessionT *session)
+{
+    ensureNowIsSet(session);
+    return timeLesser(&session->now, &session->endValid);
+}
+
+void oidcSessionValidate(oidcSessionT *session, long seconds)
+{
+    ensureNowIsSet(session);
+    timeAdd(&session->endValid, &session->now, seconds, 0);
+}
+
+int oidcSessionShouldCheck(oidcSessionT *session)
+{
+    ensureNowIsSet(session);
+    return timeLesser(&session->nextCheck, &session->now);
+}
+
+void oidcSessionSetNextCheck(oidcSessionT *session, long millisec)
+{
+    ldiv_t d = ldiv(millisec, 1000);
+    ensureNowIsSet(session);
+    timeAdd(&session->nextCheck, &session->now, d.quot, d.rem * 1000000);
+}
+
 int oidcSessionGetLOA(oidcSessionT *session)
 {
     return session->loa;
@@ -111,16 +168,6 @@ int oidcSessionGetLOA(oidcSessionT *session)
 void oidcSessionSetLOA(oidcSessionT *session, int LOA)
 {
     session->loa = LOA;
-}
-
-int oidcSessionGetExpiration(oidcSessionT *session)
-{
-    return session->expiration;
-}
-
-void oidcSessionSetExpiration(oidcSessionT *session, int expiration)
-{
-    session->expiration = expiration;
 }
 
 const oidcAliasT *oidcSessionGetAlias(oidcSessionT *session)

@@ -185,9 +185,8 @@ OnErrorExit:
 static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
 {
     oidcAliasT *alias = (oidcAliasT *)ctx;
-    struct timespec tCurrent;
     const oidcProfileT *idpProfile;
-    int sessionLoa, tStamp, tNow, err;
+    int sessionLoa, err;
     oidcSessionT *session;
 
     // get session of the request
@@ -199,10 +198,7 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
     }
 
     // if tCache not expired use jump authent check
-    clock_gettime(CLOCK_MONOTONIC, &tCurrent);
-    tNow = (int)((tCurrent.tv_nsec / 1000000 + tCurrent.tv_sec * 1000) / 100);
-    tStamp = oidcSessionGetExpiration(session);
-    if (tNow > tStamp) {
+    if (oidcSessionShouldCheck(session)) {
         EXT_NOTICE("session uuid=%s (aliasCheckLoaCB)",
                    oidcSessionUUID(session));
 
@@ -242,8 +238,7 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
             }
         }
         // store a timestamp to cache authentication validation
-        tStamp = (int)(tNow + alias->tCache / 100);
-        oidcSessionSetExpiration(session, tStamp);
+        oidcSessionSetNextCheck(session, alias->tCache);
     }
 
     // change hreq bearer
