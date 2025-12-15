@@ -57,54 +57,6 @@ int aliasCheckAttrs(oidcSessionT *session, oidcAliasT *alias)
     return 1;
 };
 
-// create aliasFrom cookie and redirect to idp profile page
-static void aliasRedirectTimeout(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT *session)
-{
-    char url[EXT_URL_MAX_LEN];
-    char redirectUrl[EXT_HEADER_MAX_LEN];
-    const oidcProfileT *profile;
-    int rc;
-
-    oidcSessionSetAlias(session, alias);
-    profile = oidcSessionGetIdpProfile(session);
-
-    // add afb-binder endpoint to login redirect alias
-    rc = afb_hreq_make_here_url(hreq, profile->idp->statics->aliasLogin,
-                                 redirectUrl, sizeof(redirectUrl));
-    if (rc < 0)
-        EXT_ERROR("[oidc-alias] failed to make here url");
-    else {
-        const char *params[] = {"client_id",
-                                profile->idp->credentials->clientId,
-                                "response_type",
-                                profile->idp->wellknown->respondLabel,
-                                "state",
-                                oidcSessionUUID(session),
-                                "scope",
-                                profile->scope,
-                                "redirect_uri",
-                                redirectUrl,
-#if FORCELANG
-                                "language",
-                                setlocale(LC_CTYPE, ""),
-#endif
-                                NULL};
-
-        size_t sz = rp_escape_url_to(NULL, profile->idp->statics->aliasLogin,
-                                     params, url, sizeof url);
-        if (sz < sizeof url) {
-            EXT_DEBUG("[oidc-alias] redirect timeout %s", url);
-            afb_hreq_redirect_to(hreq, url, HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
-            return;
-        }
-
-        EXT_ERROR("[oidc-alias] redirect too long");
-    }
-    // error reply: redirect to global login
-    afb_hreq_redirect_to(hreq, alias->oidc->globals.loginUrl, HREQ_QUERY_EXCL,
-                         HREQ_REDIR_TMPY);
-}
-
 // create aliasFrom cookie and redirect to common login page
 static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT *session)
 {
@@ -175,6 +127,54 @@ static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT *
     return;
 
 OnErrorExit:
+    afb_hreq_redirect_to(hreq, alias->oidc->globals.loginUrl, HREQ_QUERY_EXCL,
+                         HREQ_REDIR_TMPY);
+}
+
+// create aliasFrom cookie and redirect to idp profile page
+static void aliasRedirectTimeout(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT *session)
+{
+    char url[EXT_URL_MAX_LEN];
+    char redirectUrl[EXT_HEADER_MAX_LEN];
+    const oidcProfileT *profile;
+    int rc;
+
+    oidcSessionSetAlias(session, alias);
+    profile = oidcSessionGetIdpProfile(session);
+
+    // add afb-binder endpoint to login redirect alias
+    rc = afb_hreq_make_here_url(hreq, profile->idp->statics->aliasLogin,
+                                 redirectUrl, sizeof(redirectUrl));
+    if (rc < 0)
+        EXT_ERROR("[oidc-alias] failed to make here url");
+    else {
+        const char *params[] = {"client_id",
+                                profile->idp->credentials->clientId,
+                                "response_type",
+                                profile->idp->wellknown->respondLabel,
+                                "state",
+                                oidcSessionUUID(session),
+                                "scope",
+                                profile->scope,
+                                "redirect_uri",
+                                redirectUrl,
+#if FORCELANG
+                                "language",
+                                setlocale(LC_CTYPE, ""),
+#endif
+                                NULL};
+
+        size_t sz = rp_escape_url_to(NULL, profile->idp->statics->aliasLogin,
+                                     params, url, sizeof url);
+        if (sz < sizeof url) {
+            EXT_DEBUG("[oidc-alias] redirect timeout %s", url);
+            afb_hreq_redirect_to(hreq, url, HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
+            return;
+        }
+
+        EXT_ERROR("[oidc-alias] redirect too long");
+    }
+    // error reply: redirect to global login
     afb_hreq_redirect_to(hreq, alias->oidc->globals.loginUrl, HREQ_QUERY_EXCL,
                          HREQ_REDIR_TMPY);
 }
