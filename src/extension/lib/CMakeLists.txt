@@ -14,43 +14,23 @@
 # limitations under the License.
 ###########################################################################
 
-add_subdirectory(lib)
-add_subdirectory(builtin-idps)
-
 # Define project Targets
-add_library(sec-gate-oidc SHARED
-	oidc-alias.c
-	oidc-apis.c
-	oidc-builtin-idps.c
-	oidc-core.c
-	oidc-fedid.c
-	oidc-idp.c
-	oidc-idsvc.c
-	oidc-utils.c
+add_library(sgoidc SHARED
+	oidc-session.c
 )
 
-add_dependencies(sec-gate-oidc curl-glue-afb builtin-idps sgoidc)
-target_link_libraries(sec-gate-oidc curl-glue-afb builtin-idps sgoidc)
-
-target_include_directories(sec-gate-oidc BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-
-# Binder exposes a unique public entry point
-set_target_properties(sec-gate-oidc
-	PROPERTIES
-		PREFIX "libafb-"
-		SUFFIX "-ext.so"
+target_include_directories(sgoidc PUBLIC
+   ${CMAKE_CURRENT_SOURCE_DIR}
+   ${CMAKE_CURRENT_SOURCE_DIR}/..  # TODO remove that
 )
-install(TARGETS sec-gate-oidc DESTINATION ${APPDIR}/lib)
+
+add_dependencies(sgoidc curl-glue-afb)
+target_link_libraries(sgoidc curl-glue-afb)
+
+install(TARGETS sgoidc DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(FILES
-		oidc-alias.h
-		oidc-apis.h
-		oidc-core.h
-		oidc-defaults.h
-		oidc-fedid.h
-		oidc-idp.h
-		oidc-idsvc.h
-		oidc-utils.h
+		oidc-session.h
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
