@@ -63,20 +63,13 @@ static int multiSetSockCB(CURL *easy,
 {
     httpRqtHndlT *hndl = (httpRqtHndlT *)userdata;
 
-    if (hndl->verbose > 1) {
-        if (what == CURL_POLL_REMOVE)
-            fprintf(stderr, "[curl-client] sock=%d (multiSetSockCB)\n",
-                    sock);
-        else if (!sockp)
-            fprintf(stderr, "[curl-client] sock=%d (multiSetSockCB)\n",
-                    sock);
-    }
+    if (hndl->verbose > 2)
+            fprintf(stderr, "[curl-client] multiSockCB sock=%d what=%d\n",
+                    sock, what);
     int err =
         hndl->evtCallback->multiSocket(hndl, sock, what, &hndl->sockdata);
-    if (err && what != CURL_POLL_REMOVE)
-        fprintf(stderr,
-                "[curl-client] curl_multi_assign failed "
-                "(evtSetSocketCB)");
+    if (err && hndl->verbose)
+        fprintf(stderr, "[curl-client] multiSocket failed %d", err);
 
     return err;
 }
@@ -86,15 +79,12 @@ static int multiSetTimerCB(CURLM *curl, long timeout, void *ctx)
     httpRqtHndlT *hndl = (httpRqtHndlT *)ctx;
     httpPoolT *httpPool = hndl->httpPool;
 
-    if (hndl->verbose > 1)
-        fprintf(stderr, "-- multiSetTimerCB timeout=%ld\n", timeout);
+    if (hndl->verbose > 2)
+        fprintf(stderr, "[curl-client] multiSetTimerCB timeout=%ld\n", timeout);
 
     int err = hndl->evtCallback->multiTimer(hndl, timeout, &hndl->timedata);
-    if (err)
-        fprintf(stderr,
-                "[curl-client] afb_sched_post_job fail error=%d "
-                "(multiSetTimerCB)",
-                err);
+    if (err && hndl->verbose)
+        fprintf(stderr, "[curl-client] multiTimer failed %d ", err);
 
     return err;
 }
@@ -166,7 +156,7 @@ static void rqtDone(httpRqtHndlT *hndl, CURL *easy, CURLcode status)
                        "[curl-client] status=%d error='%s' url=[%s]",
                        status, curl_easy_strerror(status), url);
         if (hndl->verbose)
-            fprintf(stderr, "\n--- %s\n", message);
+            fprintf(stderr, "%s\n", message);
         hndl->httpRqt.status = -(int)status;
         free(hndl->httpRqt.body.buffer);
         hndl->httpRqt.body.buffer = message;
@@ -176,12 +166,12 @@ static void rqtDone(httpRqtHndlT *hndl, CURL *easy, CURLcode status)
         curl_off_t off;
         long rcode;
         curl_easy_getinfo(easy, CURLINFO_SIZE_DOWNLOAD_T, &off);
-        if ((size_t)off != hndl->httpRqt.body.length)
+        if ((size_t)off != hndl->httpRqt.body.length && hndl->verbose)
             fprintf(stderr, "[curl-client] warning! body length mismatch %lu != %lu.\n",
                     (unsigned long)off, (unsigned long)hndl->httpRqt.body.length);
         curl_easy_getinfo(easy, CURLINFO_RESPONSE_CODE, &rcode);
         hndl->httpRqt.status = (int)rcode;
-        if ((long)hndl->httpRqt.status != rcode)
+        if ((long)hndl->httpRqt.status != rcode && hndl->verbose)
             fprintf(stderr, "[curl-client] error! status truncated %ld != %ld.\n",
                     rcode, hndl->httpRqt.status);
         curl_easy_getinfo(easy, CURLINFO_CONTENT_TYPE, &hndl->httpRqt.contentType);
@@ -207,35 +197,34 @@ static void rqtDone(httpRqtHndlT *hndl, CURL *easy, CURLcode status)
 
 static int multiAction(httpRqtHndlT *hndl, int sock, int action)
 {
-    int running = 0;
+    int count, running = 0;
     CURLM *multi = hndl->multi;
     CURLMcode status;
 
     // send the action
     status = curl_multi_socket_action(multi, sock, action, &running);
-    if (status != CURLM_OK) {
+    if (status != CURLM_OK && hndl->verbose) {
         fprintf(stderr, "[curl-client]: curl_multi_socket_action fail ");
         return -1;
     }
 
     // read action resulting messages
     for (;;) {
-        int count;
         CURLMsg *msg = curl_multi_info_read(multi, &count);
 
         if (msg == NULL)
             return 0;
 
         if (hndl->verbose > 2)
-            fprintf(stderr, "-- multiAction: status=%d \n", msg->msg);
+            fprintf(stderr, "[curl-client] multiAction: status=%d \n", msg->msg);
 
         if (msg->msg == CURLMSG_DONE) {
 
             CURL *easy = msg->easy_handle;
             CURLcode status = msg->data.result;
 
-            if (hndl->verbose > 1)
-                fprintf(stderr, "-- multiAction: done\n");
+            if (hndl->verbose > 2)
+                fprintf(stderr, "[curl-client] multiAction: done\n");
 
             rqtDone(hndl, easy, status);
         }
@@ -246,7 +235,7 @@ static int multiAction(httpRqtHndlT *hndl, int sock, int action)
 int httpOnSocketCB(httpRqtHndlT *hndl, int sock, int action)
 {
     if (hndl->verbose > 2)
-        fprintf(stderr, "httpOnSocketCB: sock=%d action=%d\n", sock, action);
+        fprintf(stderr, "[curl-client] httpOnSocketCB: sock=%d action=%d\n", sock, action);
     return multiAction(hndl, sock, action);
 }
 
@@ -255,7 +244,7 @@ int httpOnSocketCB(httpRqtHndlT *hndl, int sock, int action)
 int httpOnTimerCB(httpRqtHndlT *hndl)
 {
     if (hndl->verbose > 2)
-        fprintf(stderr, "httpOnTimerCB\n");
+        fprintf(stderr, "[curl-client] httpOnTimerCB\n");
     return multiAction(hndl, CURL_SOCKET_TIMEOUT, 0);
 }
 
@@ -284,15 +273,17 @@ static int httpSendQuery(httpPoolT *httpPool,
                          int post)
 {
     httpRqtHndlT *hndl = calloc(1, sizeof(httpRqtHndlT));
-    if (hndl == NULL) {
+    int verbose =  httpPool ? httpPool->verbose : 1;
+    if (hndl == NULL && verbose) {
         fprintf(stderr, "[curl-client] allocation of hndl failed");
         goto OnErrorExit;
     }
 
     INIT
 
+    hndl->verbose = verbose;
     hndl->easy = curl_easy_init();
-    if (hndl->easy == NULL) {
+    if (hndl->easy == NULL && verbose) {
         fprintf(stderr, "[curl-client] allocation of easy CURL failed");
         goto OnErrorExit;
     }
@@ -367,7 +358,6 @@ static int httpSendQuery(httpPoolT *httpPool,
 
     if (httpPool != NULL) {
         hndl->httpPool = httpPool;
-        hndl->verbose = httpPool->verbose;
         hndl->multi = curl_multi_init();
     }
     if (hndl->multi) {
