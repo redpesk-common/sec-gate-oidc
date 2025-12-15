@@ -58,10 +58,14 @@ static int aliasCheckAttrs(oidcSessionT *session, oidcAliasT *alias)
 };
 
 // create aliasFrom cookie and redirect to common login page
-static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT *session)
+static int aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT *session)
 {
     int rc;
     char url[EXT_URL_MAX_LEN];
+    char redirectUrl[EXT_HEADER_MAX_LEN];
+    const char *redirurl;
+    const oidcIdpT *idp;
+    const oidcProfileT *profile;
 
     oidcSessionSetAlias(session, alias);
 
@@ -73,85 +77,87 @@ static void aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT *
             NULL};
         size_t sz = rp_escape_url_to(NULL, alias->oidc->globals.loginUrl,
                                      params, url, sizeof url);
-        if (sz >= sizeof url) {
+        if (sz < sizeof url)
+            redirurl = url;
+        else {
             EXT_ERROR("[oidc-alias] redirect too long");
-            goto OnErrorExit;
+            redirurl = alias->oidc->globals.loginUrl;
         }
     }
     else {
         // when no global login page defined use idp[0]+profile[0] with openid
         // url form
-        oidcIdpT *idp = &alias->oidc->idps[0];
-        const oidcProfileT *profile = &idp->profiles[0];
-        const char *uuid = oidcSessionUUID(session);
-        char redirectUrl[EXT_HEADER_MAX_LEN];
+        idp = &alias->oidc->idps[0];
+        profile = &idp->profiles[0];
 
         rc = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin,
                                         redirectUrl, sizeof(redirectUrl));
         if (rc < 0) {
             EXT_ERROR("[oidc-alias] failed to make here url");
-            goto OnErrorExit;
+            redirurl = URL_OIDC_USR_LOGIN;
         }
-
-        const char *params[] = {"client_id",
-                                idp->credentials->clientId,
-                                "response_type",
-                                idp->wellknown->respondLabel,
-                                "state",
-                                uuid,
-                                "nonce",
-                                uuid,
-                                "scope",
-                                profile->scope,
-                                "redirect_uri",
-                                redirectUrl,
+        else {
+            const char *params[] = {"client_id",
+                                    idp->credentials->clientId,
+                                    "response_type",
+                                    idp->wellknown->respondLabel,
+                                    "state",
+                                    oidcSessionUUID(session),
+                                    "nonce",
+                                    oidcSessionUUID(session),
+                                    "scope",
+                                    profile->scope,
+                                    "redirect_uri",
+                                    redirectUrl,
 #if FORCELANG
-                                "language",
-                                setlocale(LC_CTYPE, ""),
+                                    "language",
+                                    setlocale(LC_CTYPE, ""),
 #endif
-                                NULL};
+                                    NULL};
 
-        // build wreq and send it
-        size_t sz = rp_escape_url_to(NULL, idp->wellknown->authorize, params,
-                                     url, sizeof url);
-        if (sz >= sizeof url) {
-            EXT_ERROR("[oidc-alias] redirect too long");
-            goto OnErrorExit;
+            // build wreq and send it
+            size_t sz = rp_escape_url_to(NULL, idp->wellknown->authorize, params,
+                                         url, sizeof url);
+            if (sz >= sizeof url) {
+                EXT_ERROR("[oidc-alias] redirect too long");
+                redirurl = URL_OIDC_USR_LOGIN;
+            }
+            else {
+                // keep track of selected idp profile
+                oidcSessionSetIdpProfile(session, profile);
+                redirurl = url;
+            }
         }
-
-        // keep track of selected idp profile
-        oidcSessionSetIdpProfile(session, profile);
     }
-    EXT_DEBUG("[oidc-alias] redirect login %s", url);
-    afb_hreq_redirect_to(hreq, url, HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
-    return;
 
-OnErrorExit:
-    afb_hreq_redirect_to(hreq, alias->oidc->globals.loginUrl, HREQ_QUERY_EXCL,
-                         HREQ_REDIR_TMPY);
+    EXT_DEBUG("[oidc-alias] redirect login %s", redirurl);
+    afb_hreq_redirect_to(hreq, redirurl, HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
+    return 1;
 }
 
 // create aliasFrom cookie and redirect to idp profile page
-static void aliasRedirectTimeout(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT *session)
+static int aliasRedirectTimeout(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT *session)
 {
     char url[EXT_URL_MAX_LEN];
     char redirectUrl[EXT_HEADER_MAX_LEN];
     const oidcProfileT *profile;
+    const oidcIdpT *idp;
     int rc;
 
     oidcSessionSetAlias(session, alias);
     profile = oidcSessionGetIdpProfile(session);
+    idp = profile->idp;
 
     // add afb-binder endpoint to login redirect alias
-    rc = afb_hreq_make_here_url(hreq, profile->idp->statics->aliasLogin,
+    rc = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin,
                                  redirectUrl, sizeof(redirectUrl));
     if (rc < 0)
         EXT_ERROR("[oidc-alias] failed to make here url");
     else {
         const char *params[] = {"client_id",
-                                profile->idp->credentials->clientId,
+                                idp->credentials->clientId,
                                 "response_type",
-                                profile->idp->wellknown->respondLabel,
+                                idp->wellknown->respondLabel,
                                 "state",
                                 oidcSessionUUID(session),
                                 "scope",
@@ -164,19 +170,18 @@ static void aliasRedirectTimeout(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT
 #endif
                                 NULL};
 
-        size_t sz = rp_escape_url_to(NULL, profile->idp->statics->aliasLogin,
+        size_t sz = rp_escape_url_to(NULL, idp->statics->aliasLogin,
                                      params, url, sizeof url);
         if (sz < sizeof url) {
             EXT_DEBUG("[oidc-alias] redirect timeout %s", url);
             afb_hreq_redirect_to(hreq, url, HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
-            return;
+            return 1;
         }
 
         EXT_ERROR("[oidc-alias] redirect too long");
     }
-    // error reply: redirect to global login
-    afb_hreq_redirect_to(hreq, alias->oidc->globals.loginUrl, HREQ_QUERY_EXCL,
-                         HREQ_REDIR_TMPY);
+    // error: redirect to global login
+    return aliasRedirectLogin(hreq, alias, session);
 }
 
 /**
@@ -212,13 +217,9 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
         // if current profile LOA is enough then fire same idp/profile
         // authen
         idpProfile = oidcSessionGetIdpProfile(session);
-        if (idpProfile != NULL && idpProfile->loa >= alias->loa) {
-            aliasRedirectTimeout(hreq, alias, session);
-        }
-        else {
-            aliasRedirectLogin(hreq, alias, session);
-        }
-        return 1;
+        if (idpProfile != NULL && idpProfile->loa >= alias->loa)
+            return aliasRedirectTimeout(hreq, alias, session);
+        return aliasRedirectLogin(hreq, alias, session);
     }
 
     // if tCache not expired use jump authent check
@@ -226,10 +227,8 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
 
         // check roles
         if (alias->roles) {
-            if (!aliasCheckAttrs(session, alias)) {
-                aliasRedirectLogin(hreq, alias, session);
-                return 1;
-            }
+            if (!aliasCheckAttrs(session, alias))
+                return aliasRedirectLogin(hreq, alias, session);
         }
         // store a timestamp to cache authentication validation
         oidcSessionSetNextCheck(session, alias->tCache);
