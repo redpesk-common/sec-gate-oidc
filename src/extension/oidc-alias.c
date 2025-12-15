@@ -46,15 +46,15 @@
 // check if one of requested role exist within social cookie
 // return 0 if that is the case
 // return 1 if none matches
-int aliasCheckAttrs(oidcSessionT *session, oidcAliasT *alias)
+static int aliasCheckAttrs(oidcSessionT *session, oidcAliasT *alias)
 {
     const char **roles = alias->roles;
     while (*roles) {
         if (fedidsessionHasAttribute(session, *roles))
-            return 0;
+            return 1;
         roles++;
     }
-    return 1;
+    return 0;
 };
 
 // create aliasFrom cookie and redirect to common login page
@@ -230,9 +230,9 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
             return 1;
         }
 
+        // check roles
         if (alias->roles) {
-            err = aliasCheckAttrs(session, alias);
-            if (err) {
+            if (!aliasCheckAttrs(session, alias)) {
                 aliasRedirectLogin(hreq, alias, session);
                 return 1;
             }
@@ -241,9 +241,9 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
         oidcSessionSetNextCheck(session, alias->tCache);
     }
 
-    // change hreq bearer
+    // change hreq bearer (TODO why?)
     afb_req_common_set_token(&hreq->comreq, NULL);
-    return 0;  // move forward and continue parsing lower priority alias
+    return 0;  // move forward and continue parsing lower priority aliases
 }
 
 /**
