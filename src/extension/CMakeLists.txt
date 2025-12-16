@@ -31,7 +31,7 @@ add_library(sec-gate-oidc SHARED
 add_dependencies(sec-gate-oidc curl-glue-afb builtin-idps sgoidc)
 target_link_libraries(sec-gate-oidc curl-glue-afb builtin-idps sgoidc)
 
-target_include_directories(sec-gate-oidc BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(sec-gate-oidc BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Binder exposes a unique public entry point
 set_target_properties(sec-gate-oidc

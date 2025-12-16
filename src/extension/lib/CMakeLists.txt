@@ -20,7 +20,7 @@ add_library(sgoidc SHARED
 	oidc-utils.c
 )
 
-target_include_directories(sgoidc PUBLIC
+target_include_directories(sgoidc BEFORE PUBLIC
    ${CMAKE_CURRENT_SOURCE_DIR}
    ${CMAKE_CURRENT_SOURCE_DIR}/..  # TODO remove that
 )
