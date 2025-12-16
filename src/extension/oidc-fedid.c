@@ -41,7 +41,6 @@
 #include "oidc-fedid.h"
 #include "oidc-idsvc.h"
 #include "oidc-session.h"
-//#include "oidc-utils.h"
 
 // clang-format off
 const rp_enum_map_t oidcFedidSchema[] = {

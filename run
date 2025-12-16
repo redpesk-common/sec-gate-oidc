@@ -6,8 +6,12 @@
 : ${HTTPS:=false}
 : ${CONF:=$PREF/config}
 : ${RUN:=}
+: ${DB:=$PREF/fedid-local.sqlite}
+
 #RUN="gdb -arg"
 #RUN=valgrind
+
+#rm $DB
 
 cat << EOC > $CONF
 {
@@ -32,7 +36,7 @@ cat << EOC > $CONF
       "uid": "fedid-api",
       "path": "$PREF/redpesk/sec-gate-fedid-binding/lib/sec-gate-fedid-binding.so",
       "config": {
-        "dbpath": "$PREF/fedid-local.sqlite"
+        "dbpath": "$DB"
       }
     }
   ],

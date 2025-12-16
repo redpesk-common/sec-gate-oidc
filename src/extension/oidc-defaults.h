@@ -35,10 +35,10 @@ typedef enum { MAGIC_OIDC_IDP = 12345678, MAGIC_OIDC_CBS = 654852 } oidcMagicT;
 #define EXT_HTTP_CONFLICT     409
 #define EXT_SESSION_TIMEOUT   600  // session timeout in seconds
 
-#define HREQ_REDIR_TMPY 0
-#define HREQ_REDIR_TERM 1
-#define HREQ_QUERY_INCL 1
-#define HREQ_QUERY_EXCL 0
+#define HREQ_REDIR_TMPY 0  // temporary redirection
+#define HREQ_REDIR_PERM 1  // permanent redirection
+#define HREQ_QUERY_INCL 1  // include request parameter in redirection
+#define HREQ_QUERY_EXCL 0  // exclude request parameter of redirection
 
 // local or remote federated identity service api name
 #define API_OIDC_USR_SVC "fedid"
