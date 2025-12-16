@@ -528,12 +528,6 @@ OnErrorExit:
     afb_req_reply(wreq, -1, 1, &reply);
 }
 
-// Push a json object event to html5 application
-int idscvPushEvent(oidcSessionT *session, json_object *eventJ)
-{
-    return oidcSessionEventPush(session, eventJ);
-}
-
 // return the list of autorities matching requested LOA
 static void idpQueryConf(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 {

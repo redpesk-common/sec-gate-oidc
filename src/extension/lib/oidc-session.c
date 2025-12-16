@@ -24,10 +24,12 @@
 #define _GNU_SOURCE
 
 #include "oidc-session.h"
-#include <libafb/afb-v4.h>
+
+#include <rp-utils/rp-jsonc.h>
 
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
+#include <libafb/afb-v4.h>
 
 struct oidcSessionS
 {
@@ -277,29 +279,40 @@ int oidcSessionEventSubscribe(afb_req_t wreq)
     afb_req_subscribe(wreq, session->event);
 }
 
-int oidcSessionEventPush(oidcSessionT *session, json_object *eventJ)
+int oidcSessionEventPush(oidcSessionT *session, const char *desc, ...)
 {
-    int rc, count;
-    afb_data_t data;
+    int rc;
+    va_list args;
+    struct afb_data *data;
+    struct json_object *obj = NULL;
 
-    if (session->event == NULL) {
-        json_object_put(eventJ);
+    // no subscription made
+    if (session->event == NULL)
         return 0;
-    }
 
-    rc = afb_create_data_raw(&data, AFB_PREDEFINED_TYPE_JSON_C, eventJ, 0,
-                             (void *)json_object_put, eventJ);
+    // format the json object
+    va_start(args, desc);
+    rc = rp_jsonc_vpack(&obj, desc, args);
+    va_end(args);
+
+    // create  the data
+    if (rc >= 0)
+        rc = afb_create_data_raw(&data, AFB_PREDEFINED_TYPE_JSON_C, obj, 0,
+                                 (void *)json_object_put, obj);
+
+    // check if event created
     if (rc < 0)
-        return rc;
-
-    count = afb_event_push(session->event, 1, &data);
-
-    // no listener, clear event and cookie
-    if (count <= 0) {
-        afb_event_unref(session->event);
-        session->event = NULL;
+        EXT_ERROR("can't wrap event");
+    else {
+        // send the event
+        rc = afb_event_push(session->event, 1, &data);
+        if (rc <= 0) {
+            // no listener, clear event and cookie
+            afb_event_unref(session->event);
+            session->event = NULL;
+        }
     }
+    return rc;
 
-    return count;
 }
 

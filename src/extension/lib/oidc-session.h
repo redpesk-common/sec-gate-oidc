@@ -79,7 +79,7 @@ void oidcSessionSetFedIdLinkRequest(oidcSessionT *session, int request);
 int oidcSessionGetFedIdLinkRequest(oidcSessionT *session);
 
 int oidcSessionEventSubscribe(afb_req_t wreq);
-int oidcSessionEventPush(oidcSessionT *session, json_object *eventJ);
+int oidcSessionEventPush(oidcSessionT *session, const char *desc, ...);
 
 const fedSocialRawT *oidcSessionGetFedSocial(oidcSessionT *session);
 void oidcSessionSetFedSocial(oidcSessionT *session, fedSocialRawT *fedSocial);

@@ -206,11 +206,10 @@ static int aliasCheckReq(afb_hreq *hreq, void *ctx)
     if (!oidcSessionIsValid(session) || oidcSessionGetLOA(session) < alias->loa) {
 
         // push event to notify the access denied
-        rp_jsonc_pack(&eventJ, "{ss ss ss si si}", "status",
+        oidcSessionEventPush(session, "{ss ss ss si si}", "status",
                       "loa-mismatch", "uid", alias->uid, "url",
                       alias->url, "loa-target", alias->loa,
                       "loa-session", oidcSessionGetLOA(session));
-        idscvPushEvent(session, eventJ);
 
         // if current profile LOA is enough then fire same idp/profile
         // authen
