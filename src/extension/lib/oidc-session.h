@@ -31,11 +31,6 @@
 
 typedef struct
 {
-    int timerId;
-} fedidSessionT;
-
-typedef struct
-{
     char *pseudo;
     char *email;
 } fedidLinkT;
@@ -67,9 +62,6 @@ void oidcSessionSetAlias(oidcSessionT *session, const oidcAliasT *alias);
 
 const oidcProfileT *oidcSessionGetIdpProfile(oidcSessionT *session);
 void oidcSessionSetIdpProfile(oidcSessionT *session, const oidcProfileT *profile);
-
-fedidSessionT *oidcSessionGetFedId(oidcSessionT *session);
-void oidcSessionSetFedId(oidcSessionT *session, fedidSessionT *fedid);
 
 int oidcSessionSetFedIdLink(oidcSessionT *session,
                             const char *pseudo,

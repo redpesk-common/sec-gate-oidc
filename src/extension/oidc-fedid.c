@@ -85,18 +85,6 @@ void fedidsessionReset(oidcSessionT *session, const oidcProfileT *idpProfile)
     }
 }
 
-static void fedidTimerCB(int signal, void *ctx)
-{
-    oidcSessionT *session = (oidcSessionT *)ctx;
-    const oidcProfileT *idpProfile;
-
-    // signal should be null
-    if (signal)
-        return;
-    idpProfile = oidcSessionGetIdpProfile(session);
-    fedidsessionReset(session, idpProfile);
-}
-
 // if fedkey exists callback receive local store user profile otherwise we
 // should create it
 static void fedidCheckCB(void *ctx,
@@ -247,37 +235,9 @@ static void fedidCheckCB(void *ctx,
             target = alias->url;
         }
 
-        // if idp session as a timeout start a rtimer
-        if (idpProfile->sTimeout) {
-            fedidSessionT *fedSession = oidcSessionGetFedId(session);
-            if (fedSession && fedSession->timerId) {
-                afb_jobs_abort(fedSession->timerId);
-                fedSession->timerId = 0;
-            }
-            else {
-                fedSession = calloc(1, sizeof(fedSession));
-                oidcSessionSetFedId(session, fedSession);
-            }
-
-#if LIBAFB_BEFORE_VERSION(4, 0, 4)
-            fedSession->timerId =
-                afb_sched_post_job(NULL /*group */, idpProfile->sTimeout * 1000,
-                                   0 /*max-exec-time */, fedidTimerCB, session);
-#else
-            fedSession->timerId =
-                afb_sched_post_job(NULL /*group */, idpProfile->sTimeout * 1000,
-                                   0 /*max-exec-time */, fedidTimerCB, session,
-                                   Afb_Sched_Mode_Normal);
-#endif
-            if (fedSession->timerId < 0) {
-                EXT_ERROR(
-                    "[fedid-register-timeout] fail to set idp profile session "
-                    "loa");
-                goto OnErrorExit;
-            }
-        }
         // user successfully loggin set session loa to current idp login profile
         oidcSessionSetLOA(session, idpProfile->loa);
+        oidcSessionAutoValidate(session);
 
         // if idp request get userdata keep track of them (needed by pcscd to
         // kill monitoring thread)

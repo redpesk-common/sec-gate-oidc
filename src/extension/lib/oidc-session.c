@@ -40,7 +40,6 @@ struct oidcSessionS
     const oidcProfileT *profile;
     const fedUserRawT *user;
     const fedSocialRawT *social;
-    fedidSessionT *fedid;
     int fedidLinkRequest;
     fedidLinkT fedlink;
     afb_event_t event;
@@ -152,7 +151,7 @@ void oidcSessionValidate(oidcSessionT *session, long seconds)
 void oidcSessionAutoValidate(oidcSessionT *session)
 {
     long to = EXT_SESSION_TIMEOUT;
-    if (session->profile != NULL)
+    if (session->profile != NULL && session->profile->sTimeout > 0)
         to = session->profile->sTimeout;
     oidcSessionValidate(session, to);
 }
@@ -198,16 +197,6 @@ const oidcProfileT *oidcSessionGetIdpProfile(oidcSessionT *session)
 void oidcSessionSetIdpProfile(oidcSessionT *session, const oidcProfileT *profile)
 {
     session->profile = profile;
-}
-
-fedidSessionT *oidcSessionGetFedId(oidcSessionT *session)
-{
-    return session->fedid;
-}
-
-void oidcSessionSetFedId(oidcSessionT *session, fedidSessionT *fedid)
-{
-    session->fedid = fedid;
 }
 
 const fedidLinkT *oidcSessionGetFedIdLink(oidcSessionT *session)
