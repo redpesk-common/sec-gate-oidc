@@ -526,15 +526,7 @@ static int oidcLoginCB(afb_hreq *hreq, void *ctx)
         const char *scope = afb_hreq_get_argument(hreq, "scope");
 
         // search for a scope fiting wreqing loa
-        for (int idx = 0; idp->profiles[idx].uid; idx++) {
-            if (idp->profiles[idx].loa >= targetLOA) {
-                // if no scope take the 1st profile with valid LOA
-                if (scope && (strcmp(scope, idp->profiles[idx].scope)))
-                    continue;
-                profile = &idp->profiles[idx];
-                break;
-            }
-        }
+        profile = idpGetFirstProfile(idp, targetLOA, scope);
 
         // if loa working and no profile fit exit without trying authentication
         if (!profile)

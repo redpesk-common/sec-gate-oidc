@@ -26,6 +26,8 @@
 #include "oidc-idp-plugin.h"
 
 // idp exported functions
+const oidcProfileT *idpGetFirstProfile(const oidcIdpT *idp, int targetLOA, const char *scope);
+
 int idpPluginsParseConfig(oidcCoreHdlT *oidc, json_object *pluginsJ);
 oidcIdpT *idpParseConfig(oidcCoreHdlT *oidc, json_object *idpsJ);
 int idpParseOidcConfig(oidcIdpT *idp,

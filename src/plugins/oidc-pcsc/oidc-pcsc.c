@@ -407,15 +407,7 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
 
     // search for a matching profile if scope is selected then scope&loa should
     // match
-    for (int idx = 0; idp->profiles[idx].uid; idx++) {
-        profile = &idp->profiles[idx];
-        if (idp->profiles[idx].loa >= targetLOA) {
-            if (scope && strcasecmp(scope, idp->profiles[idx].scope))
-                continue;
-            profile = &idp->profiles[idx];
-            break;
-        }
-    }
+    profile = idpGetFirstProfile(idp, targetLOA, scope);
     if (!profile) {
         EXT_NOTICE("[pcsc-check-scope] scope=%s does not match working loa=%d",
                    scope, targetLOA);
@@ -457,16 +449,7 @@ int pcscLoginCB(afb_hreq *hreq, void *ctx)
     // search a working loa scope
     const char *scope = afb_hreq_get_argument(hreq, "scope");
     // search for a scope fiting wreqing loa
-    for (int idx = 0; idp->profiles[idx].uid; idx++) {
-        profile = &idp->profiles[idx];
-        if (idp->profiles[idx].loa >= targetLOA) {
-            // if no scope take the 1st profile with valid LOA
-            if (scope && (strcmp(scope, idp->profiles[idx].scope)))
-                continue;
-            profile = &idp->profiles[idx];
-            break;
-        }
-    }
+    profile = idpGetFirstProfile(idp, targetLOA, scope);
 
     // if loa working and no profile fit exit without trying authentication
     if (!profile)

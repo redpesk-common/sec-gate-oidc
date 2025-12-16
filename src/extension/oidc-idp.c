@@ -78,6 +78,23 @@ void idpRqtCtxFree(idpRqtCtxT *rqtCtx)
     }
 }
 
+// get the first profile of idp enough for the targeted LOA
+// and the given scope (that might be NULL)
+// Return NULL if no profile matches the LOA
+const oidcProfileT *idpGetFirstProfile(const oidcIdpT *idp, int targetLOA, const char *scope)
+{
+    const oidcProfileT *iter = idp->profiles;
+    const oidcProfileT *result = NULL;
+    while (iter->uid != NULL) {
+        if (iter->loa >= targetLOA
+         && (scope == NULL || (iter->scope != NULL && strcmp(scope, iter->scope) == 0))
+         && (result == NULL || iter->loa < result->loa))
+            result = iter;
+        iter++;
+    }
+    return result;
+}
+
 // return the idp list to display corresponding login page.
 json_object *idpLoaProfilsGet(oidcCoreHdlT *oidc,
                               int loa,
