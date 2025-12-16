@@ -23,19 +23,13 @@
 
 #define _GNU_SOURCE
 
-#include <assert.h>
-#include <stdio.h>
+#include "oidc-apis.h"
 
 #include <rp-utils/rp-jsonc.h>
 
 #include <libafb/afb-core.h>
-#include <libafb/afb-v4.h>
 #include <libafb/apis/afb-api-ws.h>
 
-#include "oidc-alias.h"
-#include "oidc-apis.h"
-#include "oidc-core.h"
-#include "oidc-defaults.h"
 #include "oidc-session.h"
 
 // process a filtered request
@@ -216,7 +210,4 @@ oidcApisT *apisParseConfig(oidcCoreHdlT *oidc, json_object *apisJ)
         apis = NULL;
     }
     return apis;
-
-OnErrorExit:
-    return NULL;
 }

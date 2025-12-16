@@ -24,6 +24,7 @@
 #pragma once
 
 #include "oidc-core.h"
+#include <json-c/json.h>
 
 typedef struct oidcApisS
 {
