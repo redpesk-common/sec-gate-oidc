@@ -41,7 +41,7 @@ static void apisCheckReq(void *closure, struct afb_req_common *req)
     // is authorized?
     if (session != NULL && oidcSessionIsValid(session) && oidcSessionGetLOA(session) >= api->loa) {
         // yes, record session activity
-        oidcSessionValidate(session, api->oidc->globals.sTimeout);
+        oidcSessionAutoValidate(session);
         // forward request to the backend "protected" api
         afb_req_common_process(afb_req_common_addref(req), api->apiset);
     }

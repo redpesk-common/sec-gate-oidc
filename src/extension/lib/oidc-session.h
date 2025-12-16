@@ -54,6 +54,7 @@ const char *oidcSessionUUID(oidcSessionT *session);
 
 int oidcSessionIsValid(oidcSessionT *session);
 void oidcSessionValidate(oidcSessionT *session, long seconds);
+void oidcSessionAutoValidate(oidcSessionT *session);
 
 int oidcSessionShouldCheck(oidcSessionT *session);
 void oidcSessionSetNextCheck(oidcSessionT *session, long millisec);

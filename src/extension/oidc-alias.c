@@ -233,7 +233,7 @@ static int aliasCheckReq(afb_hreq *hreq, void *ctx)
 
     // change hreq bearer (TODO why?)
     afb_req_common_set_token(&hreq->comreq, NULL);
-    oidcSessionValidate(session, alias->oidc->globals.sTimeout);
+    oidcSessionAutoValidate(session);
     return 0;  // move forward and continue parsing lower priority aliases
 }
 

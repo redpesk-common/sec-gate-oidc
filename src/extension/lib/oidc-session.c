@@ -149,6 +149,14 @@ void oidcSessionValidate(oidcSessionT *session, long seconds)
     timeAdd(&session->endValid, &session->now, seconds, 0);
 }
 
+void oidcSessionAutoValidate(oidcSessionT *session)
+{
+    long to = EXT_SESSION_TIMEOUT;
+    if (session->profile != NULL)
+        to = session->profile->sTimeout;
+    oidcSessionValidate(session, to);
+}
+
 int oidcSessionShouldCheck(oidcSessionT *session)
 {
     ensureNowIsSet(session);
