@@ -44,7 +44,6 @@
 
 #include "curl-glue.h"
 #include "idp-oidc.h"
-#include "oidc-alias.h"
 #include "oidc-core.h"
 #include "oidc-fedid.h"
 #include "oidc-idp.h"
@@ -507,18 +506,13 @@ static int oidcLoginCB(afb_hreq *hreq, void *ctx)
     assert(idp->magic == MAGIC_OIDC_IDP);
     char redirectUrl[EXT_HEADER_MAX_LEN];
     const oidcProfileT *profile = NULL;
-    const oidcAliasT *alias = NULL;
-    int err, status, aliasLoa;
+    int err, status, targetLOA;
 
     // check if wreq as a code
     const char *code = afb_hreq_get_argument(hreq, "code");
     oidcSessionT *session = oidcSessionOfHttpReq(hreq);
     const char *uuid = oidcSessionUUID(session);
-    alias = oidcSessionGetAlias(session);
-    if (alias)
-        aliasLoa = alias->loa;
-    else
-        aliasLoa = 0;
+    targetLOA = oidcSessionGetTargetLOA(session);
 
     // add afb-binder endpoint to login redirect alias
     status = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin, redirectUrl,
@@ -533,7 +527,7 @@ static int oidcLoginCB(afb_hreq *hreq, void *ctx)
 
         // search for a scope fiting wreqing loa
         for (int idx = 0; idp->profiles[idx].uid; idx++) {
-            if (idp->profiles[idx].loa >= aliasLoa) {
+            if (idp->profiles[idx].loa >= targetLOA) {
                 // if no scope take the 1st profile with valid LOA
                 if (scope && (strcmp(scope, idp->profiles[idx].scope)))
                     continue;

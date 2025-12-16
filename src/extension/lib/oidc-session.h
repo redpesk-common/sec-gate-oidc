@@ -54,6 +54,7 @@ void oidcSessionAutoValidate(oidcSessionT *session);
 int oidcSessionShouldCheck(oidcSessionT *session);
 void oidcSessionSetNextCheck(oidcSessionT *session, long millisec);
 
+int oidcSessionGetTargetLOA(oidcSessionT *session);
 int oidcSessionGetLOA(oidcSessionT *session);
 void oidcSessionSetLOA(oidcSessionT *session, int LOA);
 

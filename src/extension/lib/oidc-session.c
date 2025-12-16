@@ -169,6 +169,11 @@ void oidcSessionSetNextCheck(oidcSessionT *session, long millisec)
     timeAdd(&session->nextCheck, &session->now, d.quot, d.rem * 1000000);
 }
 
+int oidcSessionGetTargetLOA(oidcSessionT *session)
+{
+    return session->alias ? session->alias->loa : 0;
+}
+
 int oidcSessionGetLOA(oidcSessionT *session)
 {
     return session->loa;

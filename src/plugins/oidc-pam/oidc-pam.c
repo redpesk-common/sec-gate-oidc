@@ -33,7 +33,6 @@
 #include <libafb/afb-http.h>
 #include <libafb/afb-v4.h>
 
-#include "oidc-alias.h"
 #include "oidc-core.h"
 #include "oidc-fedid.h"
 #include "oidc-idp.h"
@@ -182,10 +181,9 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
     struct afb_data *args[nparams];
     const char *login, *passwd = NULL, *scope = NULL;
     const oidcProfileT *profile = NULL;
-    const oidcAliasT *alias = NULL;
     afb_data_t reply;
     const char *state;
-    int aliasLoa;
+    int targetLOA;
     int err;
 
     err = afb_data_convert(params[0], &afb_type_predefined_json_c, &args[0]);
@@ -201,17 +199,13 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
     if (!state || strcmp(state, oidcSessionUUID(session)))
         goto OnErrorExit;
 
-    alias = oidcSessionGetAlias(session);
-    if (alias)
-        aliasLoa = alias->loa;
-    else
-        aliasLoa = 0;
+    targetLOA = oidcSessionGetTargetLOA(session);
 
     // search for a matching profile if scope is selected then scope&loa should
     // match
     for (int idx = 0; idp->profiles[idx].uid; idx++) {
         profile = &idp->profiles[idx];
-        if (idp->profiles[idx].loa >= aliasLoa) {
+        if (idp->profiles[idx].loa >= targetLOA) {
             if (scope && strcasecmp(scope, idp->profiles[idx].scope))
                 continue;
             profile = &idp->profiles[idx];
@@ -220,7 +214,7 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
     }
     if (!profile) {
         EXT_NOTICE("[pam-check-scope] scope=%s does not match working loa=%d",
-                   scope, aliasLoa);
+                   scope, targetLOA);
         goto OnErrorExit;
     }
     // check password
@@ -263,8 +257,7 @@ int pamLoginCB(afb_hreq *hreq, void *ctx)
     assert(idp->magic == MAGIC_OIDC_IDP);
     char redirectUrl[EXT_HEADER_MAX_LEN];
     const oidcProfileT *profile = NULL;
-    const oidcAliasT *alias = NULL;
-    int err, status, aliasLoa;
+    int err, status, targetLOA;
 
     // check if wreq as a code
     const char *login = afb_hreq_get_argument(hreq, "login");
@@ -272,11 +265,7 @@ int pamLoginCB(afb_hreq *hreq, void *ctx)
     const char *scope = afb_hreq_get_argument(hreq, "scope");
     oidcSessionT *session = oidcSessionOfHttpReq(hreq);
 
-    alias = oidcSessionGetAlias(session);
-    if (alias)
-        aliasLoa = alias->loa;
-    else
-        aliasLoa = 0;
+    targetLOA = oidcSessionGetTargetLOA(session);
 
     // add afb-binder endpoint to login redirect alias
     status = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin, redirectUrl,
@@ -291,7 +280,7 @@ int pamLoginCB(afb_hreq *hreq, void *ctx)
         // search for a scope fiting wreqing loa
         for (int idx = 0; idp->profiles[idx].uid; idx++) {
             profile = &idp->profiles[idx];
-            if (idp->profiles[idx].loa >= aliasLoa) {
+            if (idp->profiles[idx].loa >= targetLOA) {
                 // if no scope take the 1st profile with valid LOA
                 if (scope && (strcmp(scope, idp->profiles[idx].scope)))
                     continue;
