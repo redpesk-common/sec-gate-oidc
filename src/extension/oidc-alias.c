@@ -258,7 +258,7 @@ int aliasRegisterOne(oidcAliasT *alias, afb_hsrv *hsrv)
     if (alias->loa > 0) {
         rc = afb_hsrv_add_handler(hsrv, alias->url, aliasCheckLoaCB, alias,
                                       alias->priority);
-        if (rc != AFB_HSRV_OK) {
+        if (rc == 0) {
             EXT_ERROR("[oidc-alias] failed to add alias %s handler %s",
                         alias->uid, alias->url);
             return -1;
@@ -268,7 +268,7 @@ int aliasRegisterOne(oidcAliasT *alias, afb_hsrv *hsrv)
     // add with lower priority the redirection
     rc = afb_hsrv_add_alias_path(hsrv, alias->url, rootdir, alias->path,
                                      alias->priority - 1, 0 /*not relax */);
-    if (rc != AFB_HSRV_OK) {
+    if (rc == 0) {
         EXT_ERROR("[oidc-alias] failed to add alias %s from %s to %s/%s",
                         alias->uid, alias->url, rootdir, alias->path);
         return -1;
