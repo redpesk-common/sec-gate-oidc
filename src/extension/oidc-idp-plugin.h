@@ -136,31 +136,6 @@ typedef struct idpRqtCtxS
     void *userData;
 } idpRqtCtxT;
 
-// generic IDP utility callback
-typedef struct idpGenericCbS
-{
-    const oidcMagicT magic;
-    const oidcCredentialsT *(*parseCredentials)(
-        oidcIdpT *idp,
-        json_object *credentialJ,
-        const oidcCredentialsT *defaults);
-    const oidcStaticsT *(*parsestatic)(oidcIdpT *idp,
-                                       json_object *staticJ,
-                                       const oidcStaticsT *defaults);
-    const oidcWellknownT *(*parseWellknown)(oidcIdpT *idp,
-                                            json_object *wellknownJ,
-                                            const oidcWellknownT *defaults);
-    const httpKeyValT *(*parseHeaders)(oidcIdpT *idp,
-                                       json_object *headersJ,
-                                       const httpKeyValT *defaults);
-    int (*parseConfig)(oidcIdpT *idp,
-                       json_object *configJ,
-                       oidcDefaultsT *defaults,
-                       void *ctx);
-    int (*fedidCheck)(idpRqtCtxT *idpRqtCtx);
-    int (*pluginRegister)(const idpPluginT *pluginCbs);
-} idpGenericCbT;
-
 struct idpPluginS
 {
     const char *uid;
@@ -175,6 +150,5 @@ struct idpPluginS
 };
 
 // idp callback definition
-typedef int (*oidcPluginInitCbT)(oidcCoreHdlT *oidc,
-                                 idpGenericCbT *idpGenericCb);
+typedef int (*oidcPluginInitCbT)(oidcCoreHdlT *oidc);
 

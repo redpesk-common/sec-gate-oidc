@@ -38,9 +38,6 @@
 #include "oidc-idp.h"
 #include "oidc-session.h"
 
-// keep track of oidc-idp.c generic utils callbacks
-static idpGenericCbT *idpCallbacks = NULL;
-
 // provide dummy default values to oidc callbacks
 static const oidcCredentialsT noCredentials = {};
 static const httpKeyValT noHeaders = {};
@@ -224,7 +221,7 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
         idpRqtCtx->fedSocial = fedSocial;
         idpRqtCtx->fedUser = fedUser;
         idpRqtCtx->wreq = wreq;
-        err = idpCallbacks->fedidCheck(idpRqtCtx);
+        err = fedidCheck(idpRqtCtx);
         if (err) {
             afb_req_unref(wreq);
             goto OnErrorExit;
@@ -329,7 +326,7 @@ int pamLoginCB(afb_hreq *hreq, void *ctx)
         idpRqtCtx->fedSocial = fedSocial;
         idpRqtCtx->fedUser = fedUser;
         idpRqtCtx->hreq = hreq;
-        err = idpCallbacks->fedidCheck(idpRqtCtx);
+        err = fedidCheck(idpRqtCtx);
         if (err) {
             goto OnErrorExit;
         }
@@ -388,7 +385,6 @@ OnErrorExit:
 static int pamRegisterConfig(oidcIdpT *idp, json_object *idpJ)
 {
     int err;
-    assert(idpCallbacks);
 
     // only default profile is usefull
     oidcDefaultsT defaults = {
@@ -414,7 +410,7 @@ static int pamRegisterConfig(oidcIdpT *idp, json_object *idpJ)
         }
     }
     // delegate config parsing to common idp utility callbacks
-    err = idpCallbacks->parseConfig(idp, idpJ, &defaults, NULL);
+    err = idpParseOidcConfig(idp, idpJ, &defaults, NULL);
     if (err)
         goto OnErrorExit;
 
@@ -435,16 +431,8 @@ static const idpPluginT idpPamAuth = {
 };
 
 // Plugin init call at config.json parsing time
-int oidcPluginInit(oidcCoreHdlT *oidc, idpGenericCbT *idpGenericCbs)
+int oidcPluginInit(oidcCoreHdlT *oidc)
 {
-    assert(idpGenericCbs->magic ==
-           MAGIC_OIDC_CBS);  // check provided callback magic
-
-    // plugin is already loaded
-    if (idpCallbacks)
-        return 0;
-    idpCallbacks = idpGenericCbs;
-
     // make sure plugin get read access to shadow
     int handle = open("/etc/shadow", O_RDONLY);
     if (handle < 0) {
@@ -455,7 +443,7 @@ int oidcPluginInit(oidcCoreHdlT *oidc, idpGenericCbT *idpGenericCbs)
     }
     close(handle);
 
-    int status = idpCallbacks->pluginRegister(&idpPamAuth);
+    int status = idpRegisterPlugin(&idpPamAuth);
     return status;
 
 OnErrorExit:

@@ -468,18 +468,6 @@ OnErrorExit:
     return 1;
 }
 
-// build IDP generic callback handle
-static idpGenericCbT idpGenericCB = {
-    .magic = MAGIC_OIDC_CBS,
-    .parseCredentials = idpParseCredentials,
-    .parsestatic = idpParsestatic,
-    .parseWellknown = idpParseWellknown,
-    .parseHeaders = idpParseHeaders,
-    .parseConfig = idpParseOidcConfig,
-    .fedidCheck = fedidCheck,
-    .pluginRegister = idpRegisterPlugin,
-};
-
 // parse one plugin configuration
 static int idpPluginParseOne(oidcCoreHdlT *oidc, json_object *pluginJ)
 {
@@ -510,7 +498,7 @@ static int idpPluginParseOne(oidcCoreHdlT *oidc, json_object *pluginJ)
             if (registerPluginCB == NULL)
                 EXT_WARNING("[oidc-idp] no symbol "OIDC_PLUGIN_INIT" in %s, skipping", head);
             else {
-                rc = registerPluginCB(oidc, &idpGenericCB);
+                rc = registerPluginCB(oidc);
                 if (rc == 0) {
                     EXT_INFO("[oidc-idp] using plugin %s", head);
                     free(copy);

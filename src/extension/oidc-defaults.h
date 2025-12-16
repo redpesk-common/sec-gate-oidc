@@ -24,7 +24,7 @@
 #pragma once
 
 // few magic to help debugging
-typedef enum { MAGIC_OIDC_IDP = 12345678, MAGIC_OIDC_CBS = 654852 } oidcMagicT;
+typedef enum { MAGIC_OIDC_IDP = 12345678 } oidcMagicT;
 
 // few defaults
 #define EXT_HIGHEST_PRIO      100

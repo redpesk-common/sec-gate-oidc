@@ -46,9 +46,6 @@
 #include "pcsc-config.h"
 #include "pcsc-glue.h"
 
-// keep track of oidc-idp.c generic utils callbacks
-static idpGenericCbT *idpCallbacks = NULL;
-
 // provide dummy default values to oidc callbacks
 static const oidcCredentialsT noCredentials = {};
 static const httpKeyValT noHeaders = {};
@@ -576,7 +573,7 @@ static int pcscRegisterConfig(oidcIdpT *idp, json_object *idpJ)
     };
 
     // delegate config parsing to common idp utility callbacks
-    err = idpCallbacks->parseConfig(idp, idpJ, &defaults, pcscOpts);
+    err = idpParseOidcConfig(idp, idpJ, &defaults, pcscOpts);
     if (err)
         goto OnErrorExit;
 
@@ -597,16 +594,8 @@ static const idpPluginT idppcscAuth = {
 };
 
 // Plugin init call at config.json parsing time
-int oidcPluginInit(oidcCoreHdlT *oidc, idpGenericCbT *idpGenericCbs)
+int oidcPluginInit(oidcCoreHdlT *oidc)
 {
-    assert(idpGenericCbs->magic ==
-           MAGIC_OIDC_CBS);  // check provided callback magic
-
-    // plugin is already loaded
-    if (idpCallbacks)
-        return 0;
-    idpCallbacks = idpGenericCbs;
-
-    int status = idpCallbacks->pluginRegister(&idppcscAuth);
+    int status = idpRegisterPlugin(&idppcscAuth);
     return status;
 }
