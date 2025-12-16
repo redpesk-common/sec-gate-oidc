@@ -17,6 +17,7 @@
 # Define project Targets
 add_library(sgoidc SHARED
 	oidc-session.c
+	oidc-utils.c
 )
 
 target_include_directories(sgoidc PUBLIC
@@ -31,6 +32,8 @@ install(TARGETS sgoidc DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(FILES
 		oidc-session.h
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+		oidc-utils.h
+        DESTINATION
+		${CMAKE_INSTALL_INCLUDEDIR}
 )
 

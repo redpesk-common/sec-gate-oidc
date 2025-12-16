@@ -26,7 +26,6 @@ add_library(sec-gate-oidc SHARED
 	oidc-fedid.c
 	oidc-idp.c
 	oidc-idsvc.c
-	oidc-utils.c
 )
 
 add_dependencies(sec-gate-oidc curl-glue-afb builtin-idps sgoidc)
@@ -50,7 +49,6 @@ install(FILES
 		oidc-fedid.h
 		oidc-idp.h
 		oidc-idsvc.h
-		oidc-utils.h
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
