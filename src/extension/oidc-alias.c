@@ -187,11 +187,10 @@ static int aliasRedirectTimeout(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT 
 /**
  * check that the client has the required LOA
  */
-static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
+static int aliasCheckReq(afb_hreq *hreq, void *ctx)
 {
     oidcAliasT *alias = (oidcAliasT *)ctx;
     const oidcProfileT *idpProfile;
-    int sessionLoa, err;
     oidcSessionT *session;
     json_object *eventJ;
 
@@ -204,14 +203,13 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
     }
 
     // Check required LOA
-    sessionLoa = oidcSessionGetLOA(session);
-    if (alias->loa > sessionLoa) {
+    if (!oidcSessionIsValid(session) || oidcSessionGetLOA(session) < alias->loa) {
 
         // push event to notify the access denied
         rp_jsonc_pack(&eventJ, "{ss ss ss si si}", "status",
                       "loa-mismatch", "uid", alias->uid, "url",
                       alias->url, "loa-target", alias->loa,
-                      "loa-session", sessionLoa);
+                      "loa-session", oidcSessionGetLOA(session));
         idscvPushEvent(session, eventJ);
 
         // if current profile LOA is enough then fire same idp/profile
@@ -236,6 +234,7 @@ static int aliasCheckLoaCB(afb_hreq *hreq, void *ctx)
 
     // change hreq bearer (TODO why?)
     afb_req_common_set_token(&hreq->comreq, NULL);
+    oidcSessionValidate(session, alias->oidc->globals.sTimeout);
     return 0;  // move forward and continue parsing lower priority aliases
 }
 
@@ -256,7 +255,7 @@ int aliasRegisterOne(oidcAliasT *alias, afb_hsrv *hsrv)
 
     // insert LOA checking if required
     if (alias->loa > 0) {
-        rc = afb_hsrv_add_handler(hsrv, alias->url, aliasCheckLoaCB, alias,
+        rc = afb_hsrv_add_handler(hsrv, alias->url, aliasCheckReq, alias,
                                       alias->priority);
         if (rc == 0) {
             EXT_ERROR("[oidc-alias] failed to add alias %s handler %s",

@@ -33,24 +33,25 @@
 #include "oidc-session.h"
 
 // process a filtered request
-static void on_protected_api_request(void *closure, struct afb_req_common *req)
+static void apisCheckReq(void *closure, struct afb_req_common *req)
 {
     oidcApisT *api = (oidcApisT *)closure;
     oidcSessionT *session = oidcSessionOfAfbSession(req->session);
-    int session_loa = oidcSessionGetLOA(session);
 
-    if (session_loa < api->loa) {
-        // insufficient LOA
-        afb_req_common_reply_hookable(req, AFB_ERRNO_FORBIDDEN, 0, NULL);
-    }
-    else {
+    // is authorized?
+    if (session != NULL && oidcSessionIsValid(session) && oidcSessionGetLOA(session) >= api->loa) {
+        // yes, record session activity
+        oidcSessionValidate(session, api->oidc->globals.sTimeout);
         // forward request to the backend "protected" api
         afb_req_common_process(afb_req_common_addref(req), api->apiset);
     }
+    else {
+        // no, forbiden
+        afb_req_common_reply_hookable(req, AFB_ERRNO_FORBIDDEN, 0, NULL);
+    }
 }
 
-static struct afb_api_itf api_frontend_itf = {.process =
-                                                  on_protected_api_request};
+static struct afb_api_itf api_frontend_itf = {.process = apisCheckReq};
 
 // import API client from uri and map corresponding roles into apis hashtable
 int apisRegisterOne(oidcCoreHdlT *oidc,
@@ -120,6 +121,8 @@ static int apisParseOne(oidcCoreHdlT *oidc, json_object *apiJ, oidcApisT *api)
     const char **roles;
     json_object *requireJ = NULL;
 
+    api->oidc = oidc;
+
     // scan object values
     rc = rp_jsonc_unpack(apiJ, "{ss,s?s,s?s,s?i,s?i,s?o}", "uid", &api->uid,
                          "info", &api->info, "uri", &api->uri, "loa", &api->loa,
@@ -166,7 +169,6 @@ static int apisParseOne(oidcCoreHdlT *oidc, json_object *apiJ, oidcApisT *api)
         }
         api->roles = roles;
     }
-    api->oidc = oidc;
     return 0;
 }
 
