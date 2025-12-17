@@ -44,7 +44,6 @@
 #include "oidc-idsvc.h"
 
 AFB_EXTENSION("sec-gate-oidc")
-
 /* read and setup the global configuration object */
 static int globalConfig(oidGlobalsT *globals, json_object *globalsJ)
 {
@@ -53,26 +52,22 @@ static int globalConfig(oidGlobalsT *globals, json_object *globalsJ)
 
     if (globalsJ) {
         // clang-format off
-        err = rp_jsonc_unpack(
-            globalsJ,
-            "{s?o s?s s?s s?s s?s s?s s?i s?i s?b !}",
-            "info", &infoJ,
-            "login", &globals->loginUrl,
-            "error", &globals->errorUrl,
-            "register", &globals->registerUrl,
-            "fedlink", &globals->fedlinkUrl,
-            "home", &globals->homeUrl,
-            "cache", &globals->tCache,
-            "timeout", &globals->sTimeout,
-            "debug", &globals->debug);
+        err = rp_jsonc_unpack (globalsJ,
+                               "{s?o s?s s?s s?s s?s s?s s?i s?i s?b !}",
+                               "info", &infoJ,
+                               "login", &globals->loginUrl,
+                               "error", &globals->errorUrl,
+                               "register", &globals->registerUrl,
+                               "fedlink", &globals->fedlinkUrl,
+                               "home", &globals->homeUrl, "cache", &globals->tCache, "timeout", &globals->sTimeout, "debug", &globals->debug);
         // clang-format on
         if (err < 0) {
             EXT_ERROR("[oidc-core] misconfig of globals %s (pos %d)",
-                    rp_jsonc_get_error_string(err), rp_jsonc_get_error_position(err));
+                      rp_jsonc_get_error_string(err),
+                      rp_jsonc_get_error_position(err));
             return err;
         }
     }
-
     // setup default values
     if (!globals->registerUrl)
         globals->registerUrl = URL_OIDC_USR_REGISTER;
@@ -95,7 +90,8 @@ int AfbExtensionConfigV1(void **ctx, struct json_object *oidcJ, char const *uid)
 {
     int err;
     oidcCoreHdlT *oidc;
-    json_object *idpsJ = NULL, *aliasJ = NULL, *apisJ = NULL, *globalsJ = NULL, *pluginsJ = NULL;
+    json_object *idpsJ = NULL, *aliasJ = NULL, *apisJ = NULL, *globalsJ = NULL,
+                *pluginsJ = NULL;
 
     EXT_INFO("Extension %s got to config", AfbExtensionManifest.name);
 
@@ -113,24 +109,19 @@ int AfbExtensionConfigV1(void **ctx, struct json_object *oidcJ, char const *uid)
         goto OnErrorExit;
 
     // clang-format off
-    err = rp_jsonc_unpack(oidcJ,
+    err = rp_jsonc_unpack (oidcJ,
                            "{s?s,s?s,s?o,s?o,s?o,s?o,s?o,s?o,s?i}",
                            "api", &oidc->api,
                            "info", &oidc->info,
                            "globals", &globalsJ,
-                           "plugins", &pluginsJ,
-                           "idp", &idpsJ,
-                           "idps", &idpsJ,
-                           "alias", &aliasJ,
-                           "apis", &apisJ,
-                           "verbose", &oidc->verbose);
+                           "plugins", &pluginsJ, "idp", &idpsJ, "idps", &idpsJ, "alias", &aliasJ, "apis", &apisJ, "verbose", &oidc->verbose);
     // clang-format on
     if (err) {
         EXT_ERROR("[oidc-core] misconfig %s (pos %d)",
-                  rp_jsonc_get_error_string(err), rp_jsonc_get_error_position(err));
+                  rp_jsonc_get_error_string(err),
+                  rp_jsonc_get_error_position(err));
         goto OnErrorExit;
     }
-
     // set the api
     if (!oidc->api)
         oidc->api = oidc->uid;
@@ -146,7 +137,6 @@ int AfbExtensionConfigV1(void **ctx, struct json_object *oidcJ, char const *uid)
         if (err)
             goto OnErrorExit;
     }
-
     // set idps
     oidc->idps = idpParseConfig(oidc, idpsJ);
 
@@ -171,7 +161,7 @@ int AfbExtensionConfigV1(void **ctx, struct json_object *oidcJ, char const *uid)
     return 0;
 
 OnErrorExit:
-    free(oidc); // TODO also free sub components
+    free(oidc);  // TODO also free sub components
     *ctx = NULL;
     EXT_CRITICAL("[oidc-core] Failed to initialize at configuration");
     return -1;
@@ -198,7 +188,6 @@ int AfbExtensionDeclareV1(void *ctx,
             goto OnErrorExit;
         }
     }
-
     // declare internal identity service api
     err = idsvcDeclare(oidc, declare_set, call_set);
     if (err)

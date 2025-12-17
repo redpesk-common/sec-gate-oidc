@@ -315,8 +315,8 @@ static int githubAccessToken(afb_hreq *hreq,
         goto OnErrorExit;
 
     EXT_DEBUG("[github-access-token] curl -X post %s\n", url);
-    err = httpSendPost(oidc->httpPool, url, &dfltOpts, NULL /*headers*/,
-                       NULL /*data*/, 0 /*length*/, githubAccessTokenCB,
+    err = httpSendPost(oidc->httpPool, url, &dfltOpts, NULL /*headers */,
+                       NULL /*data */, 0 /*length */, githubAccessTokenCB,
                        rqtCtx);
     if (err)
         goto OnErrorExit;
@@ -466,11 +466,7 @@ OnErrorExit:
 //----------------------------------------------------------------
 // Description
 //----------------------------------------------------------------
-const idpPluginT githubPluginDesc = {
-    .uid = "github",
-    .info = "github public oauth2 idp",
-    .registerConfig = githubRegisterConfig,
-    .registerAlias = githubRegisterAlias
-};
-
-
+const idpPluginT githubPluginDesc = {.uid = "github",
+                                     .info = "github public oauth2 idp",
+                                     .registerConfig = githubRegisterConfig,
+                                     .registerAlias = githubRegisterAlias};

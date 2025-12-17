@@ -42,4 +42,3 @@ typedef enum { MAGIC_OIDC_IDP = 12345678 } oidcMagicT;
 
 // local or remote federated identity service api name
 #define API_OIDC_USR_SVC "fedid"
-

@@ -291,7 +291,6 @@ static httpRqtActionT ldapAccessProfileCB(httpRqtT *httpRqt)
             }
         }
     }
-
     // user is ok, let's map user organisation onto security attributes
     if (ldapOpts->groups)
         ldapAccessAttrs(idpRqtCtx);
@@ -510,8 +509,7 @@ static int ldapLoginCB(afb_hreq *hreq, void *ctx)
         // we have a code check state to assert that the response was generated
         // by us then wreq authentication token
         const char *state = afb_hreq_get_argument(hreq, "state");
-        if (!state ||
-            strcmp(state, oidcSessionUUID(session)))
+        if (!state || strcmp(state, oidcSessionUUID(session)))
             goto OnErrorExit;
 
         EXT_DEBUG("[ldap-auth-code] login=%s (ldapLoginCB)", login);
@@ -534,8 +532,8 @@ OnErrorExit:
 }
 
 static int ldapRegisterApis(oidcIdpT *idp,
-                     struct afb_apiset *declare_set,
-                     struct afb_apiset *call_set)
+                            struct afb_apiset *declare_set,
+                            struct afb_apiset *call_set)
 {
     int err;
 
@@ -624,11 +622,8 @@ OnErrorExit:
 //----------------------------------------------------------------
 // Description
 //----------------------------------------------------------------
-const idpPluginT ldapPluginDesc = {
-    .uid = "ldap",
-    .info = "ldap internal users",
-    .registerConfig = ldapRegsterConfig,
-    .registerAlias = ldapRegisterAlias,
-    .registerApis = ldapRegisterApis
-};
-
+const idpPluginT ldapPluginDesc = {.uid = "ldap",
+                                   .info = "ldap internal users",
+                                   .registerConfig = ldapRegsterConfig,
+                                   .registerAlias = ldapRegisterAlias,
+                                   .registerApis = ldapRegisterApis};

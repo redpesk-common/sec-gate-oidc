@@ -27,9 +27,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <rp-utils/rp-enum-map.h>
 #include <rp-utils/rp-escape.h>
 #include <rp-utils/rp-jsonc.h>
-#include <rp-utils/rp-enum-map.h>
 
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
@@ -39,8 +39,6 @@
 #include "oidc-fedid.h"
 #include "oidc-idp.h"
 #include "oidc-session.h"
-//#include "oidc-utils.h"
-#include "pcsc-config.h"
 
 // import pcsc-little API
 #include "pcsc-config.h"
@@ -172,8 +170,8 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
             if (copy == NULL)
                 goto OnErrorExit;
             save = NULL;
-            for (char *scope = strtok_r(copy, ",", &save);
-                 scope; scope = strtok_r(NULL, ",", &save)) {
+            for (char *scope = strtok_r(copy, ",", &save); scope;
+                 scope = strtok_r(NULL, ",", &save)) {
                 pcscCmdT *cmd = pcscCmdByUid(pcscOpts->config, scope);
                 if (!cmd) {
                     free(copy);
@@ -208,7 +206,8 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
                         free(copy);
                         goto OnErrorExit;
                     }
-                    switch (rp_enum_map_value_def(oidcFedidSchema, cmd->uid, OIDC_SCHEMA_UNKNOWN)) {
+                    switch (rp_enum_map_value_def(oidcFedidSchema, cmd->uid,
+                                                  OIDC_SCHEMA_UNKNOWN)) {
                     case OIDC_SCHEMA_PSEUDO:
                         idpRqtCtx->fedUser->pseudo = strdup(data);
                         break;
@@ -239,7 +238,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
                         "[pcsc-cmd-action] command=%s action=%d not supported "
                         "for authentication",
                         cmd->uid, cmd->action);
-                        free(copy);
+                    free(copy);
                     goto OnErrorExit;
                 }
             }
@@ -254,8 +253,8 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
                 if (copy == NULL)
                     goto OnErrorExit;
                 save = NULL;
-                for (char *label = strtok_r(copy, ",", &save);
-                     label; label = strtok_r(NULL, ",", &save)) {
+                for (char *label = strtok_r(copy, ",", &save); label;
+                     label = strtok_r(NULL, ",", &save)) {
                     pcscCmdT *cmd = pcscCmdByUid(pcscOpts->config, label);
                     if (!cmd || cmd->action != PCSC_ACTION_READ) {
                         EXT_ERROR(
@@ -278,12 +277,13 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
                     }
                     // parse attrs string to extract multi-attributes if any
                     char *copy2, *save2;
-                    copy2 = strdup(data); /* !!! TODO check origin of data !!! */
+                    copy2 =
+                        strdup(data); /* !!! TODO check origin of data !!! */
                     if (copy2 == NULL)
                         goto OnErrorExit;
                     save2 = NULL;
-                    for (char *attr = strtok_r(copy2, ",", &save2);
-                         attr; attr = strtok_r(NULL, ",", &save2)) {
+                    for (char *attr = strtok_r(copy2, ",", &save2); attr;
+                         attr = strtok_r(NULL, ",", &save2)) {
                         idpRqtCtx->fedSocial->attrs[index++] = strdup(attr);
                         if (index == pcscOpts->labelMax) {
                             EXT_ERROR(
@@ -454,8 +454,7 @@ int pcscLoginCB(afb_hreq *hreq, void *ctx)
     oidcSessionSetIdpProfile(session, profile);
 
     const char *params[] = {
-        "state",    oidcSessionUUID(session),
-        "scope",    profile->scope,
+        "state",    oidcSessionUUID(session), "scope", profile->scope,
 #if FORCELANG
         "language", setlocale(LC_CTYPE, ""),
 #endif
@@ -584,14 +583,12 @@ OnErrorExit:
 }
 
 // pcsc sample plugin exposes only one IDP
-static const idpPluginT idppcscAuth = {
-    .uid = "pcsc",
-    .info = "SmartCard/NFC pscd client",
-    .registerConfig = pcscRegisterConfig,
-    .registerApis = pcscRegisterApis,
-    .registerAlias = pcscRegisterAlias,
-    .resetSession = pcscResetSession
-};
+static const idpPluginT idppcscAuth = {.uid = "pcsc",
+                                       .info = "SmartCard/NFC pscd client",
+                                       .registerConfig = pcscRegisterConfig,
+                                       .registerApis = pcscRegisterApis,
+                                       .registerAlias = pcscRegisterAlias,
+                                       .resetSession = pcscResetSession};
 
 // Plugin init call at config.json parsing time
 int oidcPluginInit(oidcCoreHdlT *oidc)

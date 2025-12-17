@@ -304,8 +304,7 @@ int pamLoginCB(afb_hreq *hreq, void *ctx)
         // we have a code check state to assert that the response was generated
         // by us then wreq authentication token
         const char *state = afb_hreq_get_argument(hreq, "state");
-        if (!state ||
-            strcmp(state, oidcSessionUUID(session)))
+        if (!state || strcmp(state, oidcSessionUUID(session)))
             goto OnErrorExit;
 
         EXT_DEBUG("[pam-auth-code] login=%s (pamLoginCB)", login);
@@ -422,13 +421,12 @@ OnErrorExit:
 
 // pam sample plugin exposes only one IDP
 static const idpPluginT idpPamAuth = {
-     .uid = "pam",
-     .info = "use Linux pam login to check user/passwd",
-     .ctx = "login",
-     .registerConfig = pamRegisterConfig,
-     .registerApis = pamRegisterApis,
-     .registerAlias = pamRegisterAlias
-};
+    .uid = "pam",
+    .info = "use Linux pam login to check user/passwd",
+    .ctx = "login",
+    .registerConfig = pamRegisterConfig,
+    .registerApis = pamRegisterApis,
+    .registerAlias = pamRegisterAlias};
 
 // Plugin init call at config.json parsing time
 int oidcPluginInit(oidcCoreHdlT *oidc)

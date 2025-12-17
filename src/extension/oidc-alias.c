@@ -58,7 +58,9 @@ static int aliasCheckAttrs(oidcSessionT *session, oidcAliasT *alias)
 };
 
 // create aliasFrom cookie and redirect to common login page
-static int aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT *session)
+static int aliasRedirectLogin(afb_hreq *hreq,
+                              oidcAliasT *alias,
+                              oidcSessionT *session)
 {
     int rc;
     char url[EXT_URL_MAX_LEN];
@@ -90,8 +92,8 @@ static int aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT *s
         idp = &alias->oidc->idps[0];
         profile = &idp->profiles[0];
 
-        rc = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin,
-                                        redirectUrl, sizeof(redirectUrl));
+        rc = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin, redirectUrl,
+                                    sizeof(redirectUrl));
         if (rc < 0) {
             EXT_ERROR("[oidc-alias] failed to make here url");
             redirurl = URL_OIDC_USR_LOGIN;
@@ -116,8 +118,8 @@ static int aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT *s
                                     NULL};
 
             // build wreq and send it
-            size_t sz = rp_escape_url_to(NULL, idp->wellknown->authorize, params,
-                                         url, sizeof url);
+            size_t sz = rp_escape_url_to(NULL, idp->wellknown->authorize,
+                                         params, url, sizeof url);
             if (sz >= sizeof url) {
                 EXT_ERROR("[oidc-alias] redirect too long");
                 redirurl = URL_OIDC_USR_LOGIN;
@@ -136,7 +138,9 @@ static int aliasRedirectLogin(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT *s
 }
 
 // create aliasFrom cookie and redirect to idp profile page
-static int aliasRedirectTimeout(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT *session)
+static int aliasRedirectTimeout(afb_hreq *hreq,
+                                oidcAliasT *alias,
+                                oidcSessionT *session)
 {
     char url[EXT_URL_MAX_LEN];
     char redirectUrl[EXT_HEADER_MAX_LEN];
@@ -149,8 +153,8 @@ static int aliasRedirectTimeout(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT 
     idp = profile->idp;
 
     // add afb-binder endpoint to login redirect alias
-    rc = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin,
-                                 redirectUrl, sizeof(redirectUrl));
+    rc = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin, redirectUrl,
+                                sizeof(redirectUrl));
     if (rc < 0)
         EXT_ERROR("[oidc-alias] failed to make here url");
     else {
@@ -170,8 +174,8 @@ static int aliasRedirectTimeout(afb_hreq *hreq, oidcAliasT *alias, oidcSessionT 
 #endif
                                 NULL};
 
-        size_t sz = rp_escape_url_to(NULL, idp->statics->aliasLogin,
-                                     params, url, sizeof url);
+        size_t sz = rp_escape_url_to(NULL, idp->statics->aliasLogin, params,
+                                     url, sizeof url);
         if (sz < sizeof url) {
             EXT_DEBUG("[oidc-alias] redirect timeout %s", url);
             afb_hreq_redirect_to(hreq, url, HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
@@ -201,19 +205,18 @@ static int aliasCheckReq(afb_hreq *hreq, void *ctx)
         afb_hreq_reply_error(hreq, EXT_HTTP_CONFLICT);
         return 1;
     }
-
     // Check required LOA
-    if (!oidcSessionIsValid(session) || oidcSessionGetLOA(session) < alias->loa) {
-
+    if (!oidcSessionIsValid(session) ||
+        oidcSessionGetLOA(session) < alias->loa) {
         EXT_INFO("[oidc-alias] Redirecting valid %s, loa %d for %d",
-			oidcSessionIsValid(session) ? "yes" : "no",
-			oidcSessionGetLOA(session), alias->loa);
+                 oidcSessionIsValid(session) ? "yes" : "no",
+                 oidcSessionGetLOA(session), alias->loa);
 
         // push event to notify the access denied
         oidcSessionEventPush(session, "{ss ss ss si si}", "status",
-                      "loa-mismatch", "uid", alias->uid, "url",
-                      alias->url, "loa-target", alias->loa,
-                      "loa-session", oidcSessionGetLOA(session));
+                             "loa-mismatch", "uid", alias->uid, "url",
+                             alias->url, "loa-target", alias->loa,
+                             "loa-session", oidcSessionGetLOA(session));
 
         // if current profile LOA is enough then fire same idp/profile
         // authen
@@ -222,10 +225,8 @@ static int aliasCheckReq(afb_hreq *hreq, void *ctx)
             return aliasRedirectTimeout(hreq, alias, session);
         return aliasRedirectLogin(hreq, alias, session);
     }
-
     // if tCache not expired use jump authent check
     if (oidcSessionShouldCheck(session)) {
-
         // check roles
         if (alias->roles) {
             if (!aliasCheckAttrs(session, alias))
@@ -234,7 +235,6 @@ static int aliasCheckReq(afb_hreq *hreq, void *ctx)
         // store a timestamp to cache authentication validation
         oidcSessionSetNextCheck(session, alias->tCache);
     }
-
     // change hreq bearer (TODO why?)
     afb_req_common_set_token(&hreq->comreq, NULL);
     oidcSessionAutoValidate(session);
@@ -259,20 +259,19 @@ int aliasRegisterOne(oidcAliasT *alias, afb_hsrv *hsrv)
     // insert LOA checking if required
     if (alias->loa > 0) {
         rc = afb_hsrv_add_handler(hsrv, alias->url, aliasCheckReq, alias,
-                                      alias->priority);
+                                  alias->priority);
         if (rc == 0) {
             EXT_ERROR("[oidc-alias] failed to add alias %s handler %s",
-                        alias->uid, alias->url);
+                      alias->uid, alias->url);
             return -1;
         }
     }
-
     // add with lower priority the redirection
     rc = afb_hsrv_add_alias_path(hsrv, alias->url, rootdir, alias->path,
-                                     alias->priority - 1, 0 /*not relax */);
+                                 alias->priority - 1, 0 /*not relax */);
     if (rc == 0) {
         EXT_ERROR("[oidc-alias] failed to add alias %s from %s to %s/%s",
-                        alias->uid, alias->url, rootdir, alias->path);
+                  alias->uid, alias->url, rootdir, alias->path);
         return -1;
     }
 
@@ -292,8 +291,8 @@ int aliasRegisterOne(oidcAliasT *alias, afb_hsrv *hsrv)
  * @return 0 on success or else not zero for error
  */
 static int parseOneAlias(oidcCoreHdlT *oidc,
-                            json_object *aliasJ,
-                            oidcAliasT *alias)
+                         json_object *aliasJ,
+                         oidcAliasT *alias)
 {
     const char **roles;
     int rc, count, idx;
@@ -304,15 +303,14 @@ static int parseOneAlias(oidcCoreHdlT *oidc,
     alias->oidc = oidc;
 
     rc = rp_jsonc_unpack(aliasJ, "{ss,s?s,s?s,s?s,s?i,s?i,s?o}", "uid",
-                              &alias->uid, "info", &alias->info, "url",
-                              &alias->url, "path", &alias->path, "prio",
-                              &alias->priority, "loa", &alias->loa,
-                              "require", &requireJ);
+                         &alias->uid, "info", &alias->info, "url", &alias->url,
+                         "path", &alias->path, "prio", &alias->priority, "loa",
+                         &alias->loa, "require", &requireJ);
     if (rc) {
-        EXT_CRITICAL( "[oidc-alias] bad alias conf: %s", json_object_to_json_string(aliasJ));
+        EXT_CRITICAL("[oidc-alias] bad alias conf: %s",
+                     json_object_to_json_string(aliasJ));
         return -1;
     }
-
     // provide some defaults value based on uid
     if (!alias->url)
         asprintf((char **)&alias->url, "/%s", alias->uid);
@@ -326,7 +324,7 @@ static int parseOneAlias(oidcCoreHdlT *oidc,
             count = (int)json_object_array_length(requireJ);
             roles = calloc(count + 1, sizeof(char *));
             if (roles == NULL) {
-oom:                
+            oom:
                 EXT_CRITICAL("[oidc-alias] out of memory");
                 return -1;
             }
@@ -346,7 +344,8 @@ oom:
             break;
 
         default:
-            EXT_CRITICAL( "[oidc-alias] bad require conf: %s", json_object_to_json_string(requireJ));
+            EXT_CRITICAL("[oidc-alias] bad require conf: %s",
+                         json_object_to_json_string(requireJ));
             return -1;
         }
         alias->roles = roles;
@@ -396,7 +395,8 @@ oidcAliasT *aliasParseConfig(oidcCoreHdlT *oidc, json_object *aliasesJ)
         if (rc == 0)
             EXT_CRITICAL("[oidc-alias] out of memory");
         else
-            EXT_CRITICAL("[oidc-alias] bad aliases conf: %s", json_object_to_json_string(aliasesJ));
+            EXT_CRITICAL("[oidc-alias] bad aliases conf: %s",
+                         json_object_to_json_string(aliasesJ));
     }
     else if (rc < 0) {
         free(aliases);

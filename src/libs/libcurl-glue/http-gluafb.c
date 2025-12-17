@@ -78,11 +78,11 @@ static int glueSetSocketCB(httpRqtHndlT *httpRqtHndl,
         }
         return -(what != CURL_POLL_REMOVE);
     }
-
     // set the efd or create it
     if (efd != NULL)
         ev_fd_set_events(efd, events);
-    else if (afb_ev_mgr_add_fd(pefd, sock, events, glueOnSocketCB, httpRqtHndl, 0, 1) < 0)
+    else if (afb_ev_mgr_add_fd(pefd, sock, events, glueOnSocketCB, httpRqtHndl,
+                               0, 1) < 0)
         return -1;
     return 0;
 }
@@ -99,7 +99,9 @@ static void glueOnTimerCB(struct ev_timer *tim, void *ctx, unsigned decount)
 }
 
 // arm a one shot timer in ms
-static int glueSetTimerCB(httpRqtHndlT *httpRqtHndl, long timeout, void **ptimedata)
+static int glueSetTimerCB(httpRqtHndlT *httpRqtHndl,
+                          long timeout,
+                          void **ptimedata)
 {
     int err;
     struct ev_timer **ptim = (struct ev_timer **)ptimedata;
@@ -110,7 +112,9 @@ static int glueSetTimerCB(httpRqtHndlT *httpRqtHndl, long timeout, void **ptimed
         *ptim = NULL;
     }
     if (timeout >= 0) {
-        if (afb_ev_mgr_add_timer(ptim, 0, (time_t)timeout / 1000, (unsigned)timeout % 1000, 1, 0, 0, glueOnTimerCB, httpRqtHndl, 0) < 0)
+        if (afb_ev_mgr_add_timer(ptim, 0, (time_t)timeout / 1000,
+                                 (unsigned)timeout % 1000, 1, 0, 0,
+                                 glueOnTimerCB, httpRqtHndl, 0) < 0)
             return -1;
     }
     return 0;

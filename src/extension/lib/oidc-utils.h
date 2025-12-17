@@ -34,4 +34,3 @@
 #endif
 
 char *utilsExpandJson(const char *src, json_object *keysJ);
-

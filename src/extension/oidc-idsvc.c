@@ -27,9 +27,9 @@
 
 #include <rp-utils/rp-jsonc.h>
 
+#include <libafb/afb-apis.h>
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
-#include <libafb/afb-apis.h>
 #include <libafb/afb-v4.h>
 
 #include <fedid-types-glue.h>
@@ -357,7 +357,6 @@ static void userFederateCB(void *ctx,
         afb_req_reply(wreq, status, 0, NULL);
         return;
     }
-
     // user isn't recorded
     if (status == 0) {
         EXT_INFO("user not recorded, pseudo=%s, email=%s", fedUser->pseudo,
@@ -365,7 +364,6 @@ static void userFederateCB(void *ctx,
         afb_req_reply(wreq, AFB_USER_ERRNO(0), 0, NULL);
         return;
     }
-
     // get used IDP profile to access oidc wellknown urls
     session = oidcSessionOfReq(wreq);
     profile = oidcSessionGetIdpProfile(session);
@@ -374,7 +372,6 @@ static void userFederateCB(void *ctx,
         afb_req_reply(wreq, AFB_USER_ERRNO(1), 0, NULL);
         return;
     }
-
     // copy current user social and registration data for further federation
     // request
     oidcSessionSetFedIdLink(session, fedUser->pseudo, fedUser->email);
@@ -594,8 +591,7 @@ static void urlQuery(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     err = rp_jsonc_pack(
         &responseJ, "{ss ss ss ss ss}", "home", oidc->globals.homeUrl, "login",
         oidc->globals.loginUrl, "federate", oidc->globals.fedlinkUrl,
-        "register", oidc->globals.registerUrl, "error",
-        oidc->globals.errorUrl);
+        "register", oidc->globals.registerUrl, "error", oidc->globals.errorUrl);
     if (err)
         goto OnErrorExit;
 
@@ -617,53 +613,47 @@ static afb_verb_t idsvcVerbs[] = {
     // clang-format off
     /* VERB'S NAME         FUNCTION TO CALL         SHORT DESCRIPTION */
     {
-        .verb = "ping",
-        .callback = idsvcPing,
-        .info = "ping test"
-    }, {
-        .verb = "url-query-conf",
-        .callback = urlQuery,
-        .info = "wreq wellknown url list/tag"
-    }, {
-        .verb = "idp-query-conf",
-        .callback = idpQueryConf,
-        .info = "wreq idp list/scope for a given LOA level"
-    }, {
-        .verb = "idp-query-user",
-        .callback = idpQueryUser,
-        .info = "return pseudo/email idps list before linking user multiple IDPs"
-    }, {
-        .verb = "session-get",
-        .callback = sessionGet,
-        .info = "retrieve current client session [profile, user, social]"
-    }, {
-        .verb = "session-event",
-        .callback = subscribeEvent,
-        .info = "subscribe to sgate private client session events"
-    }, {
-        .verb = "session-reset",
-        .callback = sessionReset,
-        .info = "reset current session [set loa=0]"
-    }, {
-        .verb = "usr-register",
-        .callback = userRegister,
-        .info = "register federated user profile into local fedid store"
-    }, {
-        .verb = "usr-check",
-        .callback = userCheckAttr,
-        .info = "check user attribute within local store"
-    }, {
-        .verb = "usr-federate",
-        .callback = userFederate,
-        .info = "request federating current user with an other existing IDP"
-    },
-    {NULL}  // terminator
+     .verb = "ping",
+     .callback = idsvcPing,
+     .info = "ping test"}, {
+                            .verb = "url-query-conf",
+                            .callback = urlQuery,
+                            .info = "wreq wellknown url list/tag"}, {
+                                                                     .verb = "idp-query-conf",
+                                                                     .callback = idpQueryConf,
+                                                                     .info = "wreq idp list/scope for a given LOA level"}, {
+                                                                                                                            .verb = "idp-query-user",
+                                                                                                                            .callback = idpQueryUser,
+                                                                                                                            .info =
+                                                                                                                            "return pseudo/email idps list before linking user multiple IDPs"},
+    {
+     .verb = "session-get",
+     .callback = sessionGet,
+     .info = "retrieve current client session [profile, user, social]"}, {
+                                                                          .verb = "session-event",
+                                                                          .callback = subscribeEvent,
+                                                                          .info = "subscribe to sgate private client session events"}, {
+                                                                                                                                        .verb = "session-reset",
+                                                                                                                                        .callback =
+                                                                                                                                        sessionReset,
+                                                                                                                                        .info =
+                                                                                                                                        "reset current session [set loa=0]"},
+    {
+     .verb = "usr-register",
+     .callback = userRegister,
+     .info = "register federated user profile into local fedid store"}, {
+                                                                         .verb = "usr-check",
+                                                                         .callback = userCheckAttr,
+                                                                         .info = "check user attribute within local store"}, {
+                                                                                                                              .verb = "usr-federate",
+                                                                                                                              .callback = userFederate,
+                                                                                                                              .info =
+                                                                                                                              "request federating current user with an other existing IDP"},
+    {NULL}                      // terminator
     // clang-format on
 };
 
-
 #define IDSVC_INFO "internal oidc idp api"
-
 
 int idsvcDeclare(oidcCoreHdlT *oidc,
                  afb_apiset *declare_set,
@@ -679,7 +669,6 @@ int idsvcDeclare(oidcCoreHdlT *oidc,
         EXT_ERROR("[oidc-idsvc] unable to register fedid types");
         return -1;
     }
-
     // get the public API set
     public_set = afb_apiset_subset_find(declare_set, "public");
     if (public_set == NULL)
@@ -687,11 +676,11 @@ int idsvcDeclare(oidcCoreHdlT *oidc,
 
     // create the API
     rc = afb_api_v4_create(&oidc->apiv4, public_set, call_set, oidc->api,
-                          Afb_String_Const, IDSVC_INFO, Afb_String_Const,
-                          0,                      // noconcurrency unset
-                          NULL, NULL,             // pre-initcb + ctx
-                          NULL, Afb_String_Const  // no binding.so path
-        );
+                           Afb_String_Const, IDSVC_INFO, Afb_String_Const,
+                           0,                      // noconcurrency unset
+                           NULL, NULL,             // pre-initcb + ctx
+                           NULL, Afb_String_Const  // no binding.so path
+    );
     if (rc == 0)
         rc = afb_api_v4_set_verbs_hookable(oidc->apiv4, idsvcVerbs);
     if (rc) {

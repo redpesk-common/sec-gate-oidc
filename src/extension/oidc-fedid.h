@@ -40,4 +40,3 @@ typedef enum {
 int fedidCheck(idpRqtCtxT *rqtCtx);
 void fedidsessionReset(oidcSessionT *session, const oidcProfileT *idpProfile);
 int fedidsessionHasAttribute(oidcSessionT *session, const char *value);
-

@@ -39,7 +39,8 @@ static void apisCheckReq(void *closure, struct afb_req_common *req)
     oidcSessionT *session = oidcSessionOfAfbSession(req->session);
 
     // is authorized?
-    if (session != NULL && oidcSessionIsValid(session) && oidcSessionGetLOA(session) >= api->loa) {
+    if (session != NULL && oidcSessionIsValid(session) &&
+        oidcSessionGetLOA(session) >= api->loa) {
         // yes, record session activity
         oidcSessionAutoValidate(session);
         // forward request to the backend "protected" api
@@ -89,7 +90,6 @@ int apisRegisterOne(oidcCoreHdlT *oidc,
         if (err)
             goto OnErrorExit;
     }
-
     // Extract API from URI
     for (index = (int)strlen(api->uri) - 1; index > 0; index--) {
         if (api->uri[index] == '@' || api->uri[index] == '/')
@@ -132,7 +132,6 @@ static int apisParseOne(oidcCoreHdlT *oidc, json_object *apiJ, oidcApisT *api)
                      json_object_to_json_string(apiJ));
         return -1;
     }
-
     // provide some defaults value based on uid
     if (!api->uri)
         asprintf((char **)&api->uri, "unix:@%s", api->uid);

@@ -151,4 +151,3 @@ struct idpPluginS
 
 // idp callback definition
 typedef int (*oidcPluginInitCbT)(oidcCoreHdlT *oidc);
-

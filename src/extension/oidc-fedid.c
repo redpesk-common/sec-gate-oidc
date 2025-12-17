@@ -25,9 +25,9 @@
 #include <locale.h>
 #include <string.h>
 
+#include <rp-utils/rp-enum-map.h>
 #include <rp-utils/rp-escape.h>
 #include <rp-utils/rp-jsonc.h>
-#include <rp-utils/rp-enum-map.h>
 
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
@@ -49,8 +49,9 @@ const rp_enum_map_t oidcFedidSchema[] = {
     {"email", OIDC_SCHEMA_EMAIL},
     {"avatar", OIDC_SCHEMA_AVATAR},
     {"company", OIDC_SCHEMA_COMPANY},
-    {NULL}  // terminator
+    {NULL}                      // terminator
 };
+
 // clang-format on
 
 // session timeout, reset LOA
@@ -74,11 +75,11 @@ void fedidsessionReset(oidcSessionT *session, const oidcProfileT *idpProfile)
             }
         }
 
-        count = oidcSessionEventPush(session, "{ss ss ss* ss*}", "status", "loa-reset",
-                            "home",
-                            idpProfile->idp->oidc->globals.homeUrl ?: "/",
-                            "login", idpProfile->idp->oidc->globals.loginUrl,
-                            "error", idpProfile->idp->oidc->globals.errorUrl);
+        count = oidcSessionEventPush(
+            session, "{ss ss ss* ss*}", "status", "loa-reset", "home",
+            idpProfile->idp->oidc->globals.homeUrl ?: "/", "login",
+            idpProfile->idp->oidc->globals.loginUrl, "error",
+            idpProfile->idp->oidc->globals.errorUrl);
         if (!count)
             EXT_DEBUG("[fedid-session-reset] no client subscribed uuid=%s ?",
                       oidcSessionUUID(session));
@@ -127,7 +128,6 @@ static void fedidCheckCB(void *ctx,
         EXT_DEBUG("[fedid-register-fail] session missing");
         goto OnErrorExit;
     }
-
     // user try to login if loa set then reset session
     int sessionLoa = oidcSessionGetLOA(session);
     if (sessionLoa)
@@ -136,7 +136,7 @@ static void fedidCheckCB(void *ctx,
     idpProfile = oidcSessionGetIdpProfile(session);
 
     if (argc != 1) {  // fedid is not registered and we are not facing a
-                      // secondary authentication
+        // secondary authentication
         const char *targetUrl;
 
         // fedkey not found let's store social authority profile into session

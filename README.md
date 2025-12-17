@@ -9,8 +9,8 @@ For local authentication an optional PAM plugin is provided as sample local auth
 
 Indentation:
 
-* `find src plugins libs idps -name '*.[ch]' | xargs indent -ppi3 -i4 -nut -l160 -ip4 -as -slc -br -ce -di4 -brs`
-* `find src plugins libs idps -name '*.[ch]' | xargs clang-format -i`
+* `find src -name '*.[ch]' | xargs indent -ppi3 -i4 -nut -l160 -ip4 -as -slc -br -ce -di4 -brs`
+* `find src -name '*.[ch]' | xargs clang-format -i`
 
 Dependencies:
 

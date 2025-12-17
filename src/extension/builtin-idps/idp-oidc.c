@@ -34,9 +34,9 @@
 #include <uthash.h>
 
 #include <rp-utils/rp-base64.h>
+#include <rp-utils/rp-enum-map.h>
 #include <rp-utils/rp-escape.h>
 #include <rp-utils/rp-jsonc.h>
-#include <rp-utils/rp-enum-map.h>
 
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
@@ -48,7 +48,6 @@
 #include "oidc-fedid.h"
 #include "oidc-idp.h"
 #include "oidc-session.h"
-//#include "oidc-utils.h"
 
 #define IDP_CLIENT_SECRET_DEFAULT IDP_CLIENT_SECRET_POST
 // #define IDP_RESPOND_TYPE_DEFAULT IDP_RESPOND_TYPE_CODE
@@ -283,8 +282,8 @@ static int oidcUserGetByToken(idpRqtCtxT *rqtCtx)
     // https://docs.oidc.com/en/rest/reference/orgs#list-organizations-for-the-authenticated-user
     EXT_DEBUG("[oidc-profile-get] curl -H 'Authorization: %s' %s\n",
               rqtCtx->token, idp->wellknown->userinfo);
-    int err = httpSendGet(idp->oidc->httpPool, idp->wellknown->userinfo, &dfltOpts, authToken,
-                          oidcUserGetByTokenCB, rqtCtx);
+    int err = httpSendGet(idp->oidc->httpPool, idp->wellknown->userinfo,
+                          &dfltOpts, authToken, oidcUserGetByTokenCB, rqtCtx);
     if (err)
         goto OnErrorExit;
     return 0;
@@ -449,9 +448,9 @@ static int oidcAccessToken(afb_hreq *hreq,
             "[oidc-access-token] curl -H 'Authorization: %s' -X post -d '%s' "
             "%s\n",
             schema->auth64, (char *)rqtCtx->userData, idp->wellknown->tokenid);
-        err =
-            httpSendPost(oidc->httpPool, idp->wellknown->tokenid, &dfltOpts, headers,
-                         rqtCtx->userData, dataLen, oidcAccessTokenCB, rqtCtx);
+        err = httpSendPost(oidc->httpPool, idp->wellknown->tokenid, &dfltOpts,
+                           headers, rqtCtx->userData, dataLen,
+                           oidcAccessTokenCB, rqtCtx);
         break;
     }
 
@@ -475,9 +474,9 @@ static int oidcAccessToken(afb_hreq *hreq,
 
         EXT_DEBUG("[oidc-access-token] curl -X post -d '%s' %s\n",
                   (char *)rqtCtx->userData, idp->wellknown->tokenid);
-        err =
-            httpSendPost(oidc->httpPool, idp->wellknown->tokenid, &dfltOpts, headers,
-                         rqtCtx->userData, dataLen, oidcAccessTokenCB, rqtCtx);
+        err = httpSendPost(oidc->httpPool, idp->wellknown->tokenid, &dfltOpts,
+                           headers, rqtCtx->userData, dataLen,
+                           oidcAccessTokenCB, rqtCtx);
         break;
 
     default:
@@ -730,7 +729,8 @@ static httpRqtActionT oidcDiscoveryCB(httpRqtT *httpRqt)
                  idx++) {
                 const char *method = json_object_get_string(
                     json_object_array_get_idx(authMethodJ, idx));
-                wellknown->authMethod = rp_enum_map_value_def(idpAuthMethods, method, 0);
+                wellknown->authMethod =
+                    rp_enum_map_value_def(idpAuthMethods, method, 0);
                 if (wellknown->authMethod) {
                     wellknown->authLabel = method;
                     break;
@@ -741,8 +741,8 @@ static httpRqtActionT oidcDiscoveryCB(httpRqtT *httpRqt)
     if (!wellknown->authMethod)
         wellknown->authMethod = IDP_CLIENT_SECRET_DEFAULT;
     if (!wellknown->authLabel)
-        wellknown->authLabel =
-            rp_enum_map_label_def(idpAuthMethods, IDP_RESPOND_TYPE_DEFAULT, NULL);
+        wellknown->authLabel = rp_enum_map_label_def(
+            idpAuthMethods, IDP_RESPOND_TYPE_DEFAULT, NULL);
     if (!wellknown->authLabel)
         goto OnErrorExit;
 
@@ -773,16 +773,16 @@ static httpRqtActionT oidcDiscoveryCB(httpRqtT *httpRqt)
     if (!wellknown->respondType)
         wellknown->respondType = IDP_RESPOND_TYPE_DEFAULT;
     if (!wellknown->respondLabel)
-        wellknown->respondLabel =
-            rp_enum_map_label_def(idpRespondTypes, IDP_RESPOND_TYPE_DEFAULT, NULL);
+        wellknown->respondLabel = rp_enum_map_label_def(
+            idpRespondTypes, IDP_RESPOND_TYPE_DEFAULT, NULL);
     if (!wellknown->respondLabel)
         goto OnErrorExit;
 
     // if jwks is define request URI to get jwt keys
     if (idp->wellknown->jwks && schema->jwksJ &&
         json_object_get_boolean(schema->jwksJ)) {
-        int err = httpSendGet(idp->oidc->httpPool, idp->wellknown->jwks, NULL, NULL,
-                              oidcDiscoJwksCB, schema);
+        int err = httpSendGet(idp->oidc->httpPool, idp->wellknown->jwks, NULL,
+                              NULL, oidcDiscoJwksCB, schema);
         if (err)
             goto OnErrorExit;
     }
@@ -840,7 +840,7 @@ static int oidcRegisterConfig(oidcIdpT *idp, json_object *configJ)
     size_t sz64;
     int len = asprintf(&authstr, "%s:%s", idp->credentials->clientId,
                        idp->credentials->secret);
-    rp_base64_encode((uint8_t*)authstr, (size_t)len, &auth64, &sz64, 0, 1, 0);
+    rp_base64_encode((uint8_t *)authstr, (size_t)len, &auth64, &sz64, 0, 1, 0);
     asprintf((char **)&schema->auth64, "Basic %s", auth64);
     idp->userData = schema;
     free(authstr);
@@ -871,11 +871,7 @@ OnErrorExit:
 //----------------------------------------------------------------
 // Description
 //----------------------------------------------------------------
-const idpPluginT oidcPluginDesc = {
-    .uid = "oidc",
-    .info = "openid connect idp",
-    .registerConfig = oidcRegisterConfig,
-    .registerAlias = oidcRegisterAlias
-};
-
-
+const idpPluginT oidcPluginDesc = {.uid = "oidc",
+                                   .info = "openid connect idp",
+                                   .registerConfig = oidcRegisterConfig,
+                                   .registerAlias = oidcRegisterAlias};

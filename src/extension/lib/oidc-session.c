@@ -56,7 +56,10 @@ static void destroySession(oidcSessionT *session)
 }
 
 // callback for creating session object
-static int createSession(void *closure, void **value, void (**freecb)(void*), void **freeclo)
+static int createSession(void *closure,
+                         void **value,
+                         void (**freecb)(void *),
+                         void **freeclo)
 {
     oidcSessionT *session = calloc(1, sizeof *session);
     if (session == NULL)
@@ -64,7 +67,7 @@ static int createSession(void *closure, void **value, void (**freecb)(void*), vo
     session->uuid = afb_session_uuid(closure);
     *value = session;
     *freeclo = session;
-    *freecb = (void*)destroySession;
+    *freecb = (void *)destroySession;
     return 0;
 }
 
@@ -75,7 +78,9 @@ oidcSessionT *oidcSessionOfAfbSession(struct afb_session *ases)
     if (ases == NULL)
         EXT_CRITICAL("[oidc-session] AFB session is NULL");
     else {
-        int rc = afb_session_cookie_getinit(ases, oidcSessionOfAfbSession, (void*)&session, createSession, ases);
+        int rc =
+            afb_session_cookie_getinit(ases, oidcSessionOfAfbSession,
+                                       (void *)&session, createSession, ases);
         if (rc < 0) {
             EXT_CRITICAL("[oidc-session] iCreation of session failed");
             return NULL;
@@ -118,11 +123,14 @@ static void ensureNowIsSet(oidcSessionT *session)
 
 static int timeLesser(const struct timespec *a, const struct timespec *b)
 {
-    return a->tv_sec < b->tv_sec
-        || (a->tv_sec == b->tv_sec && a->tv_nsec < b->tv_nsec);
+    return a->tv_sec < b->tv_sec ||
+           (a->tv_sec == b->tv_sec && a->tv_nsec < b->tv_nsec);
 }
 
-static void timeAdd(struct timespec *dest, const struct timespec *src, long sec, long nsec)
+static void timeAdd(struct timespec *dest,
+                    const struct timespec *src,
+                    long sec,
+                    long nsec)
 {
     dest->tv_sec = src->tv_sec + sec;
     dest->tv_nsec = src->tv_nsec + nsec;
@@ -199,7 +207,8 @@ const oidcProfileT *oidcSessionGetIdpProfile(oidcSessionT *session)
     return session->profile;
 }
 
-void oidcSessionSetIdpProfile(oidcSessionT *session, const oidcProfileT *profile)
+void oidcSessionSetIdpProfile(oidcSessionT *session,
+                              const oidcProfileT *profile)
 {
     session->profile = profile;
 }
@@ -217,7 +226,9 @@ void oidcSessionDropFedIdLink(oidcSessionT *session)
     session->fedlink.email = NULL;
 }
 
-int oidcSessionSetFedIdLink(oidcSessionT *session, const char *pseudo, const char *email)
+int oidcSessionSetFedIdLink(oidcSessionT *session,
+                            const char *pseudo,
+                            const char *email)
 {
     oidcSessionDropFedIdLink(session);
     session->fedlink.pseudo = strdup(pseudo);
@@ -272,7 +283,8 @@ int oidcSessionEventSubscribe(afb_req_t wreq)
 {
     oidcSessionT *session = oidcSessionOfReq(wreq);
     if (session->event == NULL) {
-        int rc = afb_api_new_event(afb_req_get_api(wreq), "session", &session->event);
+        int rc = afb_api_new_event(afb_req_get_api(wreq), "session",
+                                   &session->event);
         if (rc < 0) {
             EXT_INFO("failed to create session event");
             return rc;
@@ -315,6 +327,4 @@ int oidcSessionEventPush(oidcSessionT *session, const char *desc, ...)
         }
     }
     return rc;
-
 }
-

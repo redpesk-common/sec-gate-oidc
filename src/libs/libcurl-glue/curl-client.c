@@ -50,9 +50,11 @@ typedef struct httpRqtHndlS
 
 static uint8_t curl_initialised = 0;
 
-#define INIT if(!curl_initialised){\
-                    curl_global_init(CURL_GLOBAL_ALL);\
-                    curl_initialised=1;}
+#define INIT                               \
+    if (!curl_initialised) {               \
+        curl_global_init(CURL_GLOBAL_ALL); \
+        curl_initialised = 1;              \
+    }
 
 // create systemd source event and attach http processing callback to sock fd
 static int multiSetSockCB(CURL *easy,
@@ -64,10 +66,9 @@ static int multiSetSockCB(CURL *easy,
     httpRqtHndlT *hndl = (httpRqtHndlT *)userdata;
 
     if (hndl->verbose > 2)
-            fprintf(stderr, "[curl-client] multiSockCB sock=%d what=%d\n",
-                    sock, what);
-    int err =
-        hndl->evtCallback->multiSocket(hndl, sock, what, &hndl->sockdata);
+        fprintf(stderr, "[curl-client] multiSockCB sock=%d what=%d\n", sock,
+                what);
+    int err = hndl->evtCallback->multiSocket(hndl, sock, what, &hndl->sockdata);
     if (err && hndl->verbose)
         fprintf(stderr, "[curl-client] multiSocket failed %d", err);
 
@@ -89,7 +90,10 @@ static int multiSetTimerCB(CURLM *curl, long timeout, void *ctx)
     return err;
 }
 
-static size_t writeBuffer(void *data, size_t blkSize, size_t blkCount, httpBufferT *buffer)
+static size_t writeBuffer(void *data,
+                          size_t blkSize,
+                          size_t blkCount,
+                          httpBufferT *buffer)
 {
     size_t size = blkSize * blkCount;
     if (size > 0) {
@@ -117,7 +121,10 @@ static size_t httpBodyCB(void *data, size_t blkSize, size_t blkCount, void *ctx)
 }
 
 // callback might be called as many time as needed to transfert all data
-static size_t httpHeadersCB(void *data, size_t blkSize, size_t blkCount, void *ctx)
+static size_t httpHeadersCB(void *data,
+                            size_t blkSize,
+                            size_t blkCount,
+                            void *ctx)
 {
     httpRqtHndlT *hndl = (httpRqtHndlT *)ctx;
 
@@ -133,7 +140,8 @@ static void freeHttpRqtHndl(httpRqtHndlT *hndl)
         hndl->freeCtx(hndl->httpRqt.userData);
     if (hndl->multi != NULL) {
         curl_multi_remove_handle(hndl->multi, hndl->easy);
-        hndl->evtCallback->multiSocket(hndl, -1, CURL_POLL_REMOVE, &hndl->sockdata);
+        hndl->evtCallback->multiSocket(hndl, -1, CURL_POLL_REMOVE,
+                                       &hndl->sockdata);
         hndl->evtCallback->multiTimer(hndl, -1, &hndl->timedata);
         curl_multi_cleanup(hndl->multi);
         hndl->multi = NULL;
@@ -152,8 +160,7 @@ static void rqtDone(httpRqtHndlT *hndl, CURL *easy, CURLcode status)
         int len;
         curl_easy_getinfo(easy, CURLINFO_EFFECTIVE_URL, &url);
 
-        len = asprintf(&message,
-                       "[curl-client] status=%d error='%s' url=[%s]",
+        len = asprintf(&message, "[curl-client] status=%d error='%s' url=[%s]",
                        status, curl_easy_strerror(status), url);
         if (hndl->verbose)
             fprintf(stderr, "%s\n", message);
@@ -167,14 +174,18 @@ static void rqtDone(httpRqtHndlT *hndl, CURL *easy, CURLcode status)
         long rcode;
         curl_easy_getinfo(easy, CURLINFO_SIZE_DOWNLOAD_T, &off);
         if ((size_t)off != hndl->httpRqt.body.length && hndl->verbose)
-            fprintf(stderr, "[curl-client] warning! body length mismatch %lu != %lu.\n",
-                    (unsigned long)off, (unsigned long)hndl->httpRqt.body.length);
+            fprintf(stderr,
+                    "[curl-client] warning! body length mismatch %lu != %lu.\n",
+                    (unsigned long)off,
+                    (unsigned long)hndl->httpRqt.body.length);
         curl_easy_getinfo(easy, CURLINFO_RESPONSE_CODE, &rcode);
         hndl->httpRqt.status = (int)rcode;
         if ((long)hndl->httpRqt.status != rcode && hndl->verbose)
-            fprintf(stderr, "[curl-client] error! status truncated %ld != %ld.\n",
+            fprintf(stderr,
+                    "[curl-client] error! status truncated %ld != %ld.\n",
                     rcode, hndl->httpRqt.status);
-        curl_easy_getinfo(easy, CURLINFO_CONTENT_TYPE, &hndl->httpRqt.contentType);
+        curl_easy_getinfo(easy, CURLINFO_CONTENT_TYPE,
+                          &hndl->httpRqt.contentType);
     }
 
     // compute request elapsed time
@@ -185,10 +196,12 @@ static void rqtDone(httpRqtHndlT *hndl, CURL *easy, CURLcode status)
         (hndl->httpRqt.stopTime.tv_sec - hndl->httpRqt.startTime.tv_sec) * 1000;
 
     if (hndl->verbose > 2) {
-        fprintf(stderr, "[curl-client] done, header: %.*s\n", (int)hndl->httpRqt.headers.length, hndl->httpRqt.headers.buffer);
-        fprintf(stderr, "[curl-client] done, body: %.*s\n", (int)hndl->httpRqt.body.length, hndl->httpRqt.body.buffer);
+        fprintf(stderr, "[curl-client] done, header: %.*s\n",
+                (int)hndl->httpRqt.headers.length,
+                hndl->httpRqt.headers.buffer);
+        fprintf(stderr, "[curl-client] done, body: %.*s\n",
+                (int)hndl->httpRqt.body.length, hndl->httpRqt.body.buffer);
     }
-
     // call request callback (note: callback should free hndl)
     httpRqtActionT action = hndl->rqtCallback(&hndl->httpRqt);
     if (action == HTTP_HANDLE_FREE)
@@ -207,7 +220,6 @@ static int multiAction(httpRqtHndlT *hndl, int sock, int action)
         fprintf(stderr, "[curl-client]: curl_multi_socket_action fail ");
         return -1;
     }
-
     // read action resulting messages
     for (;;) {
         CURLMsg *msg = curl_multi_info_read(multi, &count);
@@ -216,10 +228,10 @@ static int multiAction(httpRqtHndlT *hndl, int sock, int action)
             return 0;
 
         if (hndl->verbose > 2)
-            fprintf(stderr, "[curl-client] multiAction: status=%d \n", msg->msg);
+            fprintf(stderr, "[curl-client] multiAction: status=%d \n",
+                    msg->msg);
 
         if (msg->msg == CURLMSG_DONE) {
-
             CURL *easy = msg->easy_handle;
             CURLcode status = msg->data.result;
 
@@ -235,7 +247,8 @@ static int multiAction(httpRqtHndlT *hndl, int sock, int action)
 int httpOnSocketCB(httpRqtHndlT *hndl, int sock, int action)
 {
     if (hndl->verbose > 2)
-        fprintf(stderr, "[curl-client] httpOnSocketCB: sock=%d action=%d\n", sock, action);
+        fprintf(stderr, "[curl-client] httpOnSocketCB: sock=%d action=%d\n",
+                sock, action);
     return multiAction(hndl, sock, action);
 }
 
@@ -253,11 +266,12 @@ static void addHeaders(httpRqtHndlT *hndl, const httpKeyValT *headers)
     if (headers != NULL) {
         struct curl_slist *lst;
         char buffer[DFLT_HEADER_MAX_LEN];
-        for ( ; headers->tag != NULL ; headers++) {
-            snprintf(buffer, sizeof buffer, "%s: %s", headers->tag, headers->value);
+        for (; headers->tag != NULL; headers++) {
+            snprintf(buffer, sizeof buffer, "%s: %s", headers->tag,
+                     headers->value);
             lst = curl_slist_append(hndl->headers, buffer);
             if (lst != NULL)
-                hndl->headers = lst; // TODO error report?
+                hndl->headers = lst;  // TODO error report?
         }
     }
 }
@@ -273,15 +287,13 @@ static int httpSendQuery(httpPoolT *httpPool,
                          int post)
 {
     httpRqtHndlT *hndl = calloc(1, sizeof(httpRqtHndlT));
-    int verbose =  httpPool ? httpPool->verbose : 1;
+    int verbose = httpPool ? httpPool->verbose : 1;
     if (hndl == NULL && verbose) {
         fprintf(stderr, "[curl-client] allocation of hndl failed");
         goto OnErrorExit;
     }
 
-    INIT
-
-    hndl->verbose = verbose;
+    INIT hndl->verbose = verbose;
     hndl->easy = curl_easy_init();
     if (hndl->easy == NULL && verbose) {
         fprintf(stderr, "[curl-client] allocation of easy CURL failed");
@@ -310,8 +322,7 @@ static int httpSendQuery(httpPoolT *httpPool,
         if (opts->freeCtx)
             hndl->freeCtx = opts->freeCtx;
         if (opts->follow)
-            curl_easy_setopt(hndl->easy, CURLOPT_FOLLOWLOCATION,
-                             opts->follow);
+            curl_easy_setopt(hndl->easy, CURLOPT_FOLLOWLOCATION, opts->follow);
         if (opts->verbose)
             curl_easy_setopt(hndl->easy, CURLOPT_VERBOSE, opts->verbose);
         if (opts->agent)
@@ -341,14 +352,12 @@ static int httpSendQuery(httpPoolT *httpPool,
         if (opts->password)
             curl_easy_setopt(hndl->easy, CURLOPT_PASSWORD, opts->password);
     }
-
     // raw post
     if (post) {
         curl_easy_setopt(hndl->easy, CURLOPT_POST, 1L);
         curl_easy_setopt(hndl->easy, CURLOPT_POSTFIELDSIZE, datalen);
         curl_easy_setopt(hndl->easy, CURLOPT_POSTFIELDS, datas);
     }
-
     // add headers
     if (hndl->headers)
         curl_easy_setopt(hndl->easy, CURLOPT_HTTPHEADER, hndl->headers);
@@ -400,7 +409,8 @@ int httpSendGet(httpPoolT *httpPool,
                 httpRqtCbT rqtCallback,
                 void *ctx)
 {
-    return httpSendQuery(httpPool, url, opts, headers, NULL, 0, rqtCallback, ctx, 0);
+    return httpSendQuery(httpPool, url, opts, headers, NULL, 0, rqtCallback,
+                         ctx, 0);
 }
 
 // Create CURL multi httpPool and attach it to systemd evtLoop
@@ -411,9 +421,8 @@ httpPoolT *httpCreatePool(void *evtLoop,
     httpPoolT *httpPool;
 
     INIT
-
-    // create the object
-    httpPool = calloc(1, sizeof(httpPoolT));
+        // create the object
+        httpPool = calloc(1, sizeof(httpPoolT));
     if (httpPool != NULL) {
         httpPool->verbose = verbose;
         httpPool->evtLoop = evtLoop;
@@ -423,4 +432,3 @@ httpPoolT *httpCreatePool(void *evtLoop,
     }
     return httpPool;
 }
-

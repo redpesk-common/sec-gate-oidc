@@ -28,4 +28,3 @@
 int idsvcDeclare(oidcCoreHdlT *oidc,
                  afb_apiset *declare_set,
                  afb_apiset *call_set);
-

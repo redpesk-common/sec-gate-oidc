@@ -62,7 +62,8 @@ const oidcAliasT *oidcSessionGetAlias(oidcSessionT *session);
 void oidcSessionSetAlias(oidcSessionT *session, const oidcAliasT *alias);
 
 const oidcProfileT *oidcSessionGetIdpProfile(oidcSessionT *session);
-void oidcSessionSetIdpProfile(oidcSessionT *session, const oidcProfileT *profile);
+void oidcSessionSetIdpProfile(oidcSessionT *session,
+                              const oidcProfileT *profile);
 
 int oidcSessionSetFedIdLink(oidcSessionT *session,
                             const char *pseudo,
@@ -83,4 +84,3 @@ void oidcSessionSetFedUser(oidcSessionT *session, fedUserRawT *fedUser);
 
 void *oidcSessionGetOpaqueData(oidcSessionT *session);
 void oidcSessionSetOpaqueData(oidcSessionT *session, void *data);
-

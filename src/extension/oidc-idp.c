@@ -25,8 +25,8 @@
 #include <dlfcn.h>
 #include <string.h>
 
-#include <rp-utils/rp-jsonc.h>
 #include <rp-utils/rp-enum-map.h>
+#include <rp-utils/rp-jsonc.h>
 
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
@@ -35,9 +35,8 @@
 #include "oidc-core.h"
 #include "oidc-fedid.h"
 #include "oidc-idp.h"
-//#include "oidc-utils.h"
 
-#define OIDC_PLUGIN_INIT   "oidcPluginInit"
+#define OIDC_PLUGIN_INIT "oidcPluginInit"
 
 typedef struct idpRegistryS
 {
@@ -81,14 +80,17 @@ void idpRqtCtxFree(idpRqtCtxT *rqtCtx)
 // get the first profile of idp enough for the targeted LOA
 // and the given scope (that might be NULL)
 // Return NULL if no profile matches the LOA
-const oidcProfileT *idpGetFirstProfile(const oidcIdpT *idp, int targetLOA, const char *scope)
+const oidcProfileT *idpGetFirstProfile(const oidcIdpT *idp,
+                                       int targetLOA,
+                                       const char *scope)
 {
     const oidcProfileT *iter = idp->profiles;
     const oidcProfileT *result = NULL;
     while (iter->uid != NULL) {
-        if (iter->loa >= targetLOA
-         && (scope == NULL || (iter->scope != NULL && strcmp(scope, iter->scope) == 0))
-         && (result == NULL || iter->loa < result->loa))
+        if (iter->loa >= targetLOA &&
+            (scope == NULL ||
+             (iter->scope != NULL && strcmp(scope, iter->scope) == 0)) &&
+            (result == NULL || iter->loa < result->loa))
             result = iter;
         iter++;
     }
@@ -478,7 +480,8 @@ static int idpPluginParseOne(oidcCoreHdlT *oidc, json_object *pluginJ)
     oidcPluginInitCbT registerPluginCB;
 
     // get the load path copy
-    if (!json_object_object_get_ex(pluginJ, "ldpath", &obj) || !json_object_is_type(obj, json_type_string)) {
+    if (!json_object_object_get_ex(pluginJ, "ldpath", &obj) ||
+        !json_object_is_type(obj, json_type_string)) {
         EXT_ERROR("[oidc-idp] idp plugin config requires a 'ldpath'");
         return -1;
     }
@@ -487,7 +490,6 @@ static int idpPluginParseOne(oidcCoreHdlT *oidc, json_object *pluginJ)
         EXT_ERROR("[oidc-idp] out of memory");
         return -1;
     }
-
     // iterate over paths of the copy
     next = NULL;
     head = strtok_r(copy, ":", &next);
@@ -496,7 +498,9 @@ static int idpPluginParseOne(oidcCoreHdlT *oidc, json_object *pluginJ)
         if (handle != NULL) {
             registerPluginCB = dlsym(handle, OIDC_PLUGIN_INIT);
             if (registerPluginCB == NULL)
-                EXT_WARNING("[oidc-idp] no symbol "OIDC_PLUGIN_INIT" in %s, skipping", head);
+                EXT_WARNING("[oidc-idp] no symbol " OIDC_PLUGIN_INIT
+                            " in %s, skipping",
+                            head);
             else {
                 rc = registerPluginCB(oidc);
                 if (rc == 0) {
@@ -504,13 +508,15 @@ static int idpPluginParseOne(oidcCoreHdlT *oidc, json_object *pluginJ)
                     free(copy);
                     return 0;
                 }
-                EXT_WARNING("[oidc-idp] fail to initialize plugin %s, skipping", head);
+                EXT_WARNING("[oidc-idp] fail to initialize plugin %s, skipping",
+                            head);
             }
             dlclose(handle);
         }
         head = strtok_r(NULL, ":", &next);
     }
-    EXT_ERROR("[oidc-idp] no available plugin from %s", json_object_get_string(obj));
+    EXT_ERROR("[oidc-idp] no available plugin from %s",
+              json_object_get_string(obj));
     copy = strdup(json_object_get_string(obj));
     free(copy);
     return -1;
@@ -524,7 +530,8 @@ static int idpParseOne(oidcCoreHdlT *oidc, json_object *idpJ, oidcIdpT *idp)
     json_object *pluginJ, *obj;
 
     // get IDP uid
-    if (!json_object_object_get_ex(idpJ, "uid", &obj) || !json_object_is_type(obj, json_type_string)) {
+    if (!json_object_object_get_ex(idpJ, "uid", &obj) ||
+        !json_object_is_type(obj, json_type_string)) {
         EXT_ERROR("[oidc-idp] idp config requires a string 'uid'");
         goto OnErrorExit;
     }
@@ -580,7 +587,8 @@ int idpPluginsParseConfig(oidcCoreHdlT *oidc, json_object *pluginsJ)
     case json_type_array:
         count = (int)json_object_array_length(pluginsJ);
         for (idx = 0; idx < count; idx++) {
-            err = idpPluginParseOne(oidc, json_object_array_get_idx(pluginsJ, idx));
+            err = idpPluginParseOne(oidc,
+                                    json_object_array_get_idx(pluginsJ, idx));
             if (err)
                 return -1;
         }
@@ -653,11 +661,13 @@ int idpRegisterAlias(oidcCoreHdlT *oidc, oidcIdpT *idp, afb_hsrv *hsrv)
         return 0;
 
     // call idp's alias register callback
-    EXT_DEBUG("[idp-register-alias] idp/plugin uids: %s/%s", idp->uid, idp->plugin->uid);
+    EXT_DEBUG("[idp-register-alias] idp/plugin uids: %s/%s", idp->uid,
+              idp->plugin->uid);
     err = idp->plugin->registerAlias(idp, hsrv);
     if (err)
         EXT_ERROR(
-            "[idp-register-alias] failed to register idp alias, idp/plugin uids: %s/%s",
+            "[idp-register-alias] failed to register idp alias, idp/plugin "
+            "uids: %s/%s",
             idp->uid, idp->plugin->uid);
     return err;
 }
@@ -675,13 +685,13 @@ int idpRegisterApis(oidcCoreHdlT *oidc,
         return 0;
 
     // call idp's api register callback
-    EXT_DEBUG("[idp-register-apis] idp/plugin uids: %s/%s",
-            idp->uid, idp->plugin->uid);
+    EXT_DEBUG("[idp-register-apis] idp/plugin uids: %s/%s", idp->uid,
+              idp->plugin->uid);
     err = idp->plugin->registerApis(idp, declare_set, call_set);
     if (err)
         EXT_ERROR(
-            "[idp-register-apis] failed to register idp api, idp/plugin uids: %s/%s",
+            "[idp-register-apis] failed to register idp api, idp/plugin uids: "
+            "%s/%s",
             idp->uid, idp->plugin->uid);
     return err;
 }
-

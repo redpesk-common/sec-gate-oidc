@@ -42,4 +42,3 @@ int registerBuiltinIdps(void)
         rc = idpRegisterPlugin(&ldapPluginDesc);
     return rc;
 }
-

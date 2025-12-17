@@ -63,8 +63,8 @@ typedef struct
 // buffers
 typedef struct httpBufferS
 {
-    size_t  length;
-    char   *buffer;
+    size_t length;
+    char *buffer;
 } httpBufferT;
 
 // http request handle
@@ -85,7 +85,9 @@ typedef httpRqtActionT (*httpRqtCbT)(httpRqtT *httpRqt);
 
 // mainloop glue API interface
 typedef void *(*evtMainLoopCbT)();
-typedef int (*multiTimerCbT)(httpRqtHndlT *httpRqtHndl, long timeout, void **timedata);
+typedef int (*multiTimerCbT)(httpRqtHndlT *httpRqtHndl,
+                             long timeout,
+                             void **timedata);
 typedef int (*multiSocketCbT)(httpRqtHndlT *httpRqtHndl,
                               int sock,
                               int action,
