@@ -35,6 +35,7 @@
 #include "oidc-core.h"
 #include "oidc-fedid.h"
 #include "oidc-idp.h"
+#include "oidc-idp-plugin.h"
 
 #define OIDC_PLUGIN_INIT "oidcPluginInit"
 

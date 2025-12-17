@@ -38,6 +38,7 @@
 #include "oidc-core.h"
 #include "oidc-fedid.h"
 #include "oidc-idp.h"
+#include "oidc-idp-plugin.h"
 #include "oidc-session.h"
 
 // import pcsc-little API
