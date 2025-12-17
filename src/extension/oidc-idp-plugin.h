@@ -40,3 +40,10 @@ struct idpPluginS
 
 // idp callback definition
 typedef int (*oidcPluginInitCbT)(oidcCoreHdlT *oidc);
+
+
+const idpPluginT *idpPluginFind(const char *type);
+int idpPluginRegister(const idpPluginT *plugin);
+int idpPluginParseOne(oidcCoreHdlT *oidc, json_object *pluginJ);
+int idpPluginsParseConfig(oidcCoreHdlT *oidc, json_object *pluginsJ);
+

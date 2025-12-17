@@ -25,6 +25,7 @@ add_library(sec-gate-oidc SHARED
 	oidc-core.c
 	oidc-fedid.c
 	oidc-idp.c
+	oidc-idp-plugin.c
 	oidc-idsvc.c
 )
 

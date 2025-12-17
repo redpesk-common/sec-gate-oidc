@@ -157,5 +157,5 @@ json_object *idpLoaProfilsGet(oidcCoreHdlT *oidc,
                               int loa,
                               const char **idps,
                               int noslave);
-int idpRegisterPlugin(const idpPluginT *pluginCbs);
+int idpPluginRegister(const idpPluginT *pluginCbs);
 void idpRqtCtxFree(idpRqtCtxT *rqtCtx);

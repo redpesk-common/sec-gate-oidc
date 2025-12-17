@@ -594,6 +594,6 @@ static const idpPluginT idppcscAuth = {.uid = "pcsc",
 // Plugin init call at config.json parsing time
 int oidcPluginInit(oidcCoreHdlT *oidc)
 {
-    int status = idpRegisterPlugin(&idppcscAuth);
+    int status = idpPluginRegister(&idppcscAuth);
     return status;
 }

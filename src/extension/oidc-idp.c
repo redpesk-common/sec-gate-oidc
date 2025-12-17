@@ -37,18 +37,6 @@
 #include "oidc-idp.h"
 #include "oidc-idp-plugin.h"
 
-#define OIDC_PLUGIN_INIT "oidcPluginInit"
-
-typedef struct idpRegistryS
-{
-    struct idpRegistryS *next;
-    const char *type;
-    const idpPluginT *plugin;
-} idpRegistryT;
-
-// registry holds a linked list of core+pugins idps
-static idpRegistryT *registryHead = NULL;
-
 const rp_enum_map_t idpAuthMethods[] = {
     {"secret-unknown", IDP_CLIENT_SECRET_UNKNOWN},
     {"client_secret_post", IDP_CLIENT_SECRET_POST},
@@ -148,42 +136,6 @@ json_object *idpLoaProfilsGet(oidcCoreHdlT *oidc,
         }
     }
     return idpsJ;
-}
-
-// search for a plugin idps/decoders CB list
-static const idpPluginT *idpFindPlugin(const char *type)
-{
-    idpRegistryT *registryIdx = registryHead;
-    while (registryIdx != NULL) {
-        if (strcasecmp(type, registryIdx->type) == 0)
-            return registryIdx->plugin;
-        registryIdx = registryIdx->next;
-    }
-    return NULL;
-}
-
-// add a new plugin idp to the registry
-int idpRegisterPlugin(const idpPluginT *plugin)
-{
-    idpRegistryT *registryIdx, *registryEntry;
-
-    // create holding hat for idp/decoder CB
-    registryEntry = (idpRegistryT *)calloc(1, sizeof(idpRegistryT));
-    registryEntry->type = plugin->uid;
-    registryEntry->plugin = plugin;
-
-    // if not 1st idp insert at the end of the chain
-    if (!registryHead) {
-        registryHead = registryEntry;
-    }
-    else {
-        for (registryIdx = registryHead; registryIdx->next;
-             registryIdx = registryIdx->next)
-            ;
-        registryIdx->next = registryEntry;
-    }
-
-    return 0;
 }
 
 static const oidcCredentialsT *idpParseCredentials(
@@ -471,58 +423,6 @@ OnErrorExit:
     return 1;
 }
 
-// parse one plugin configuration
-static int idpPluginParseOne(oidcCoreHdlT *oidc, json_object *pluginJ)
-{
-    int rc;
-    json_object *obj;
-    char *copy, *head, *next;
-    void *handle;
-    oidcPluginInitCbT registerPluginCB;
-
-    // get the load path copy
-    if (!json_object_object_get_ex(pluginJ, "ldpath", &obj) ||
-        !json_object_is_type(obj, json_type_string)) {
-        EXT_ERROR("[oidc-idp] idp plugin config requires a 'ldpath'");
-        return -1;
-    }
-    copy = strdup(json_object_get_string(obj));
-    if (copy == NULL) {
-        EXT_ERROR("[oidc-idp] out of memory");
-        return -1;
-    }
-    // iterate over paths of the copy
-    next = NULL;
-    head = strtok_r(copy, ":", &next);
-    while (head != NULL) {
-        handle = dlopen(head, RTLD_NOW | RTLD_LOCAL);
-        if (handle != NULL) {
-            registerPluginCB = dlsym(handle, OIDC_PLUGIN_INIT);
-            if (registerPluginCB == NULL)
-                EXT_WARNING("[oidc-idp] no symbol " OIDC_PLUGIN_INIT
-                            " in %s, skipping",
-                            head);
-            else {
-                rc = registerPluginCB(oidc);
-                if (rc == 0) {
-                    EXT_INFO("[oidc-idp] using plugin %s", head);
-                    free(copy);
-                    return 0;
-                }
-                EXT_WARNING("[oidc-idp] fail to initialize plugin %s, skipping",
-                            head);
-            }
-            dlclose(handle);
-        }
-        head = strtok_r(NULL, ":", &next);
-    }
-    EXT_ERROR("[oidc-idp] no available plugin from %s",
-              json_object_get_string(obj));
-    copy = strdup(json_object_get_string(obj));
-    free(copy);
-    return -1;
-}
-
 // parse one idp configuration
 static int idpParseOne(oidcCoreHdlT *oidc, json_object *idpJ, oidcIdpT *idp)
 {
@@ -559,7 +459,7 @@ static int idpParseOne(oidcCoreHdlT *oidc, json_object *idpJ, oidcIdpT *idp)
 
     idp->magic = MAGIC_OIDC_IDP;
     idp->oidc = oidc;
-    idp->plugin = idpFindPlugin(type);
+    idp->plugin = idpPluginFind(type);
     if (!idp->plugin) {
         EXT_ERROR("[idp-plugin-missing] fail to find type=%s [idp=%s]", type,
                   uid);
@@ -577,35 +477,6 @@ static int idpParseOne(oidcCoreHdlT *oidc, json_object *idpJ, oidcIdpT *idp)
 
 OnErrorExit:
     return 1;
-}
-
-// Parse the configuration object for idp plugins
-int idpPluginsParseConfig(oidcCoreHdlT *oidc, json_object *pluginsJ)
-{
-    int err, count, idx;
-
-    switch (json_object_get_type(pluginsJ)) {
-    case json_type_array:
-        count = (int)json_object_array_length(pluginsJ);
-        for (idx = 0; idx < count; idx++) {
-            err = idpPluginParseOne(oidc,
-                                    json_object_array_get_idx(pluginsJ, idx));
-            if (err)
-                return -1;
-        }
-        break;
-
-    case json_type_object:
-        err = idpPluginParseOne(oidc, pluginsJ);
-        if (err)
-            return -1;
-        break;
-
-    default:
-        EXT_ERROR("[oidc-idp] Bad idp-plugins config object");
-        return -1;
-    }
-    return 0;
 }
 
 // Parse the configuration object idpJ for idps list

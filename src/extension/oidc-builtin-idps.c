@@ -35,10 +35,10 @@
 
 int registerBuiltinIdps(void)
 {
-    int rc = idpRegisterPlugin(&oidcPluginDesc);
+    int rc = idpPluginRegister(&oidcPluginDesc);
     if (rc == 0)
-        rc = idpRegisterPlugin(&githubPluginDesc);
+        rc = idpPluginRegister(&githubPluginDesc);
     if (rc == 0)
-        rc = idpRegisterPlugin(&ldapPluginDesc);
+        rc = idpPluginRegister(&ldapPluginDesc);
     return rc;
 }

@@ -442,7 +442,7 @@ int oidcPluginInit(oidcCoreHdlT *oidc)
     }
     close(handle);
 
-    int status = idpRegisterPlugin(&idpPamAuth);
+    int status = idpPluginRegister(&idpPamAuth);
     return status;
 
 OnErrorExit:
