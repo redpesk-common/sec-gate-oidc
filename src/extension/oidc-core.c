@@ -30,6 +30,7 @@
 
 #include <json-c/json.h>
 #include <rp-utils/rp-jsonc.h>
+#include <rp-utils/rp-escape.h>
 
 #include <libafb/afb-extension.h>
 #include <libafb/afb-v4.h>
@@ -171,6 +172,7 @@ int oidcCoreParseConfig(oidcCoreHdlT **poidc, struct json_object *oidcJ, char co
     // There is at least one IDP and one profile per IDP
     // So test if there is only one profile of only one idp
     // or not when global loginUrl is NULL
+    // see oidcCoreRedirectLogin
     if (!oidc->globals.loginUrl &&
         (oidc->idps[1].uid || oidc->idps[0].profiles[1].uid))
         oidc->globals.loginUrl = URL_OIDC_USR_LOGIN;
@@ -330,3 +332,82 @@ int oidcCoreGetFilteredIdpList(const oidcCoreHdlT *oidc,
     }
     return index;
 }
+
+int oidcCoreRedirectLogin(const oidcCoreHdlT *oidc,
+                          afb_hreq *hreq)
+{
+    int rc;
+    char url[EXT_URL_MAX_LEN];
+    char redirectUrl[EXT_HEADER_MAX_LEN];
+    const char *redirurl;
+    const oidcIdpT *idp;
+    const oidcProfileT *profile;
+    oidcSessionT *session;
+
+    if (oidc->globals.loginUrl) {
+        const char *params[] = {
+#if FORCELANG
+            "language", setlocale(LC_CTYPE, ""),
+#endif
+            NULL};
+        size_t sz = rp_escape_url_to(NULL, oidc->globals.loginUrl,
+                                     params, url, sizeof url);
+        if (sz < sizeof url)
+            redirurl = url;
+        else {
+            EXT_ERROR("[oidc-core] redirect too long");
+            redirurl = oidc->globals.loginUrl;
+        }
+    }
+    else {
+        // when no global login page defined use idp[0]+profile[0] with openid
+        // url form
+        idp = oidc->idps;
+        profile = idp->profiles;
+        session = oidcSessionOfHttpReq(hreq);
+
+        rc = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin, redirectUrl,
+                                    sizeof(redirectUrl));
+        if (rc < 0) {
+            EXT_ERROR("[oidc-core] failed to make here url");
+            redirurl = URL_OIDC_USR_LOGIN;
+        }
+        else {
+            const char *params[] = {"client_id",
+                                    idp->credentials->clientId,
+                                    "response_type",
+                                    idp->wellknown->respondLabel,
+                                    "state",
+                                    oidcSessionUUID(session),
+                                    "nonce",
+                                    oidcSessionUUID(session),
+                                    "scope",
+                                    profile->scope,
+                                    "redirect_uri",
+                                    redirectUrl,
+#if FORCELANG
+                                    "language",
+                                    setlocale(LC_CTYPE, ""),
+#endif
+                                    NULL};
+
+            // build wreq and send it
+            size_t sz = rp_escape_url_to(NULL, idp->wellknown->authorize,
+                                         params, url, sizeof url);
+            if (sz >= sizeof url) {
+                EXT_ERROR("[oidc-core] redirect too long");
+                redirurl = URL_OIDC_USR_LOGIN;
+            }
+            else {
+                // keep track of selected idp profile
+                oidcSessionSetIdpProfile(session, profile);
+                redirurl = url;
+            }
+        }
+    }
+
+    EXT_DEBUG("[oidc-core] redirect login %s", redirurl);
+    afb_hreq_redirect_to(hreq, redirurl, HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
+    return 1;
+}
+

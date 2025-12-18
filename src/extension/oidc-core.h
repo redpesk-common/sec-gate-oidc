@@ -94,3 +94,6 @@ int oidcCoreGetFilteredIdpList(const oidcCoreHdlT *oidc,
                                const char **dest,
                                int nrDest,
                                const char *excludedUID);
+
+int oidcCoreRedirectLogin(const oidcCoreHdlT *oidc,
+                          afb_hreq *hreq);
