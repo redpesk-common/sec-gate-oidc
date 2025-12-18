@@ -152,7 +152,7 @@ int idpRegisterApis(oidcCoreHdlT *oidc,
                     oidcIdpT *idp,
                     struct afb_apiset *declare_set,
                     struct afb_apiset *call_set);
-int idpRegisterAlias(oidcCoreHdlT *oidc, oidcIdpT *idp, afb_hsrv *hsrv);
+int idpRegisterAlias(oidcCoreHdlT *oidc, const oidcIdpT *idp, afb_hsrv *hsrv);
 json_object *idpLoaProfilsGet(oidcCoreHdlT *oidc,
                               int loa,
                               const char **idps,

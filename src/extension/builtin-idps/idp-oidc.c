@@ -636,20 +636,20 @@ OnErrorExit:
     return 1;
 }
 
-static int oidcRegisterAlias(oidcIdpT *idp, afb_hsrv *hsrv)
+static int oidcRegisterAlias(const oidcIdpT *idp, afb_hsrv *hsrv)
 {
     int err;
     EXT_DEBUG("[oidc-register-alias] uid=%s login='%s'", idp->uid,
               idp->statics->aliasLogin);
 
-    err = afb_hsrv_add_handler(hsrv, idp->statics->aliasLogin, oidcLoginCB, idp,
+    err = afb_hsrv_add_handler(hsrv, idp->statics->aliasLogin, oidcLoginCB, (void*)idp,
                                EXT_HIGHEST_PRIO);
     if (!err)
         goto OnErrorExit;
 
     if (idp->statics->aliasLogout) {
         err = afb_hsrv_add_handler(hsrv, idp->statics->aliasLogout,
-                                   oidcLogoutCB, idp, EXT_HIGHEST_PRIO);
+                                   oidcLogoutCB, (void*)idp, EXT_HIGHEST_PRIO);
         if (!err)
             goto OnErrorExit;
     }

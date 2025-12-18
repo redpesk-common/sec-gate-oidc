@@ -417,14 +417,14 @@ OnErrorExit:
     return 1;
 }
 
-static int githubRegisterAlias(oidcIdpT *idp, afb_hsrv *hsrv)
+static int githubRegisterAlias(const oidcIdpT *idp, afb_hsrv *hsrv)
 {
     int err;
     EXT_DEBUG("[github-register-alias] uid=%s login='%s'", idp->uid,
               idp->statics->aliasLogin);
 
     err = afb_hsrv_add_handler(hsrv, idp->statics->aliasLogin, githubLoginCB,
-                               idp, EXT_HIGHEST_PRIO);
+                               (void*)idp, EXT_HIGHEST_PRIO);
     if (!err)
         goto OnErrorExit;
 

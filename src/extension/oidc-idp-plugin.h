@@ -33,7 +33,7 @@ struct idpPluginS
     int (*registerApis)(oidcIdpT *idp,
                         struct afb_apiset *declare_set,
                         struct afb_apiset *call_set);
-    int (*registerAlias)(oidcIdpT *idp, afb_hsrv *hsrv);
+    int (*registerAlias)(const oidcIdpT *idp, afb_hsrv *hsrv);
     void (*resetSession)(const oidcProfileT *idpProfile, void *ctx);
     void *ctx;
 };

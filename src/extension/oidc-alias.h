@@ -41,4 +41,4 @@ typedef struct oidcAliasesS
 } oidcAliasT;
 
 oidcAliasT *aliasParseConfig(oidcCoreHdlT *oidc, json_object *aliasesJ);
-int aliasRegisterOne(oidcAliasT *alias, afb_hsrv *hsrv);
+int aliasRegisterOne(const oidcAliasT *alias, afb_hsrv *hsrv);

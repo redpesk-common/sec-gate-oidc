@@ -244,7 +244,7 @@ static int aliasCheckReq(afb_hreq *hreq, void *ctx)
 /**
  * Register one alias, described by 'alias', to the HTTP server 'hsrv'
  */
-int aliasRegisterOne(oidcAliasT *alias, afb_hsrv *hsrv)
+int aliasRegisterOne(const oidcAliasT *alias, afb_hsrv *hsrv)
 {
     const char *rootdir;
     int rc;
@@ -258,7 +258,7 @@ int aliasRegisterOne(oidcAliasT *alias, afb_hsrv *hsrv)
 
     // insert LOA checking if required
     if (alias->loa > 0) {
-        rc = afb_hsrv_add_handler(hsrv, alias->url, aliasCheckReq, alias,
+        rc = afb_hsrv_add_handler(hsrv, alias->url, aliasCheckReq, (void*)alias,
                                   alias->priority);
         if (rc == 0) {
             EXT_ERROR("[oidc-alias] failed to add alias %s handler %s",

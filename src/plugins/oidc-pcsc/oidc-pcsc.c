@@ -498,13 +498,13 @@ OnErrorExit:
     return 1;
 }
 
-static int pcscRegisterAlias(oidcIdpT *idp, afb_hsrv *hsrv)
+static int pcscRegisterAlias(const oidcIdpT *idp, afb_hsrv *hsrv)
 {
     int err;
     EXT_DEBUG("[pcsc-register-alias] uid=%s login='%s'", idp->uid,
               idp->statics->aliasLogin);
 
-    err = afb_hsrv_add_handler(hsrv, idp->statics->aliasLogin, pcscLoginCB, idp,
+    err = afb_hsrv_add_handler(hsrv, idp->statics->aliasLogin, pcscLoginCB, (void*)idp,
                                EXT_HIGHEST_PRIO);
     if (!err)
         goto OnErrorExit;

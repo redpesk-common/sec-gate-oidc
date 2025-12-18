@@ -550,13 +550,13 @@ OnErrorExit:
     return 1;
 }
 
-static int ldapRegisterAlias(oidcIdpT *idp, afb_hsrv *hsrv)
+static int ldapRegisterAlias(const oidcIdpT *idp, afb_hsrv *hsrv)
 {
     int err;
     EXT_DEBUG("[ldap-register-alias] uid=%s login='%s'", idp->uid,
               idp->statics->aliasLogin);
 
-    err = afb_hsrv_add_handler(hsrv, idp->statics->aliasLogin, ldapLoginCB, idp,
+    err = afb_hsrv_add_handler(hsrv, idp->statics->aliasLogin, ldapLoginCB, (void*)idp,
                                EXT_HIGHEST_PRIO);
     if (!err)
         goto OnErrorExit;

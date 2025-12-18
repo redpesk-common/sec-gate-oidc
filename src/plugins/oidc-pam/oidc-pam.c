@@ -360,13 +360,13 @@ OnErrorExit:
     return 1;
 }
 
-static int pamRegisterAlias(oidcIdpT *idp, afb_hsrv *hsrv)
+static int pamRegisterAlias(const oidcIdpT *idp, afb_hsrv *hsrv)
 {
     int err;
     EXT_DEBUG("[pam-register-alias] uid=%s login='%s'", idp->uid,
               idp->statics->aliasLogin);
 
-    err = afb_hsrv_add_handler(hsrv, idp->statics->aliasLogin, pamLoginCB, idp,
+    err = afb_hsrv_add_handler(hsrv, idp->statics->aliasLogin, pamLoginCB, (void*)idp,
                                EXT_HIGHEST_PRIO);
     if (!err)
         goto OnErrorExit;
