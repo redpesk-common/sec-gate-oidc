@@ -45,7 +45,7 @@ oidcSessionT *oidcSessionOfHttpReq(afb_hreq *hreq);
 oidcSessionT *oidcSessionOfReq(afb_req_v4 *wreq);
 oidcSessionT *oidcSessionOfUUID(const char *uuid);
 
-const char *oidcSessionUUID(oidcSessionT *session);
+const char *oidcSessionUUID(const oidcSessionT *session);
 
 int oidcSessionIsValid(oidcSessionT *session);
 void oidcSessionValidate(oidcSessionT *session, long seconds);

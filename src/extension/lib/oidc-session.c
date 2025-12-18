@@ -108,7 +108,7 @@ oidcSessionT *oidcSessionOfUUID(const char *uuid)
     return ases == NULL ? NULL : oidcSessionOfAfbSession(ases);
 }
 
-const char *oidcSessionUUID(oidcSessionT *session)
+const char *oidcSessionUUID(const oidcSessionT *session)
 {
     return session->uuid;
 }
