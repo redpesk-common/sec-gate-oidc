@@ -89,3 +89,8 @@ json_object *oidcCoreGetProfilsForLOA(const oidcCoreHdlT *oidc,
                               int loa,
                               const char **idps,
                               int noslave);
+
+int oidcCoreGetFilteredIdpList(const oidcCoreHdlT *oidc,
+                               const char **dest,
+                               int nrDest,
+                               const char *excludedUID);

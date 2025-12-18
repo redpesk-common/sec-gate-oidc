@@ -218,24 +218,17 @@ static void idpQueryUser(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     }
     else {
         // if no idps list provided build one from config
-        const oidcProfileT *profile;
         const char *idps[MAX_OIDC_IDPS + 1];
-        int index = 0;
-        profile = oidcSessionGetIdpProfile(session);
-        for (int idx = 0; profile->idp->oidc->idps[idx].uid; idx++) {
-            if (index == MAX_OIDC_IDPS) {
-                EXT_ERROR(
-                    "[idp-federate-list] too many idps in config "
-                    "MAX_OIDC_IDPS=%d (remaining ignored)",
-                    MAX_OIDC_IDPS);
-                break;
-            }
-            oidcIdpT *idp = &profile->idp->oidc->idps[idx];
-            if (strcasecmp(idp->uid, profile->idp->uid)) {
-                idps[index++] = idp->uid;
-            }
+        const oidcProfileT *profile = oidcSessionGetIdpProfile(session);
+        int count = oidcCoreGetFilteredIdpList(profile->idp->oidc, idps, MAX_OIDC_IDPS + 1, profile->idp->uid);
+        if (count > MAX_OIDC_IDPS) {
+            EXT_ERROR(
+                "[idp-federate-list] too many idps in config "
+                "MAX_OIDC_IDPS=%d (remaining ignored)",
+                MAX_OIDC_IDPS);
+            count = MAX_OIDC_IDPS;
         }
-        idps[index] = NULL;
+        idps[count] = NULL;
 
         json_object *responseJ = idpQueryList(wreq, idps);
         if (!responseJ)

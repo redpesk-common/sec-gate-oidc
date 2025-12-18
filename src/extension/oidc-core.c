@@ -315,3 +315,18 @@ json_object *oidcCoreGetProfilsForLOA(const oidcCoreHdlT *oidc,
     }
     return idpsJ;
 }
+
+int oidcCoreGetFilteredIdpList(const oidcCoreHdlT *oidc,
+                               const char **dest,
+                               int nrDest,
+                               const char *excludedUID)
+{
+    int index = 0;
+    const oidcIdpT *idp = oidc->idps;
+    for (; idp->uid != NULL && index < nrDest ; idp++) {
+        if (excludedUID != NULL || strcasecmp(idp->uid, excludedUID)) {
+            dest[index++] = idp->uid;
+        }
+    }
+    return index;
+}
