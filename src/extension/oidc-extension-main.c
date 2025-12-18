@@ -61,7 +61,7 @@ int AfbExtensionDeclareV1(void *ctx,
 {
     oidcCoreHdlT *oidc = (oidcCoreHdlT *)ctx;
 
-    EXT_INFO("Extension %s got to declare", oidc->uid);
+    EXT_INFO("Extension %s got to declare", AfbExtensionManifest.name);
 
     return oidcCoreDeclareApis(oidc, declare_set, call_set);
 }
@@ -71,7 +71,7 @@ int AfbExtensionHTTPV1(void *ctx, afb_hsrv *hsrv)
 {
     oidcCoreHdlT *oidc = (oidcCoreHdlT *)ctx;
 
-    EXT_NOTICE("Extension %s got to http", oidc->uid);
+    EXT_NOTICE("Extension %s got to http", AfbExtensionManifest.name);
 
     return oidcCoreDeclareHTTP(oidc, hsrv);
 }
