@@ -153,9 +153,8 @@ int idpRegisterApis(oidcCoreHdlT *oidc,
                     struct afb_apiset *declare_set,
                     struct afb_apiset *call_set);
 int idpRegisterAlias(oidcCoreHdlT *oidc, const oidcIdpT *idp, afb_hsrv *hsrv);
-json_object *idpLoaProfilsGet(oidcCoreHdlT *oidc,
-                              int loa,
-                              const char **idps,
-                              int noslave);
+
 int idpPluginRegister(const idpPluginT *pluginCbs);
 void idpRqtCtxFree(idpRqtCtxT *rqtCtx);
+
+

@@ -84,3 +84,8 @@ typedef struct
 int oidcCoreParseConfig(oidcCoreHdlT **poidc, struct json_object *oidcJ, char const *uid);
 int oidcCoreDeclareApis(oidcCoreHdlT *oidc, struct afb_apiset *declare_set, struct afb_apiset *call_set);
 int oidcCoreDeclareHTTP(oidcCoreHdlT *oidc, afb_hsrv *hsrv);
+
+json_object *oidcCoreGetProfilsForLOA(const oidcCoreHdlT *oidc,
+                              int loa,
+                              const char **idps,
+                              int noslave);

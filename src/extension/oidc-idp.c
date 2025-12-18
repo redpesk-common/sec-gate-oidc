@@ -86,58 +86,6 @@ const oidcProfileT *idpGetFirstProfile(const oidcIdpT *idp,
     return result;
 }
 
-// return the idp list to display corresponding login page.
-json_object *idpLoaProfilsGet(oidcCoreHdlT *oidc,
-                              int loa,
-                              const char **idps,
-                              int noslave)
-{
-    json_object *idpsJ = json_object_new_array();
-    const oidcIdpT *idp = oidc->idps;
-    for (; idp->uid; idp++) {
-        json_object *profilesJ = NULL;
-        const oidcProfileT *prof = idp->profiles;
-        // search for requested LOA within idp existing profile
-        for (; prof->uid; prof++) {
-            // if loa does not fit ignore IDP
-            if (prof->loa < loa && prof->loa != abs(loa))
-                continue;
-            if (noslave && prof->slave)
-                continue;
-
-            // idp is not within idps list excluse it from list
-            if (idps) {
-                const char **iter = idps;
-                for (; *iter; iter++) {
-                    if (!strcasecmp(*iter, idp->uid))
-                        break;
-                }
-                if (!*iter)
-                    continue;
-            }
-
-            json_object *profileJ;
-            if (!profilesJ)
-                profilesJ = json_object_new_array();
-            rp_jsonc_pack(&profileJ, "{ss ss* ss si}", "uid", prof->uid, "info",
-                          prof->info, "scope", prof->scope, "loa", prof->loa);
-            json_object_array_add(profilesJ, profileJ);
-        }
-
-        // only return IDP with a corresponding loa/scope
-        if (profilesJ) {
-            json_object *idpJ;
-            rp_jsonc_pack(&idpJ, "{ss ss* ss* ss* ss* so}", "uid", idp->uid,
-                          "info", idp->info, "logo", idp->statics->aliasLogo,
-                          "client-id", idp->credentials->clientId, "login-url",
-                          idp->statics->aliasLogin, "profiles", profilesJ);
-
-            json_object_array_add(idpsJ, idpJ);
-        }
-    }
-    return idpsJ;
-}
-
 static const oidcCredentialsT *idpParseCredentials(
     oidcIdpT *idp,
     json_object *credentialsJ,
