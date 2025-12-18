@@ -34,8 +34,8 @@
 
 #include "oidc-core.h"
 #include "oidc-fedid.h"
-#include "oidc-idp.h"
 #include "oidc-idp-plugin.h"
+#include "oidc-idp.h"
 
 #define OIDC_PLUGIN_INIT "oidcPluginInit"
 
@@ -137,7 +137,6 @@ int idpPluginParseOne(oidcCoreHdlT *oidc, json_object *pluginJ)
     return -1;
 }
 
-
 // Parse the configuration object for idp plugins
 int idpPluginsParseConfig(oidcCoreHdlT *oidc, json_object *pluginsJ)
 {
@@ -166,4 +165,3 @@ int idpPluginsParseConfig(oidcCoreHdlT *oidc, json_object *pluginsJ)
     }
     return 0;
 }
-

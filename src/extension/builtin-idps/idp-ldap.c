@@ -38,8 +38,8 @@
 #include "curl-glue.h"
 #include "oidc-core.h"
 #include "oidc-fedid.h"
-#include "oidc-idp.h"
 #include "oidc-idp-plugin.h"
+#include "oidc-idp.h"
 #include "oidc-session.h"
 #include "oidc-utils.h"
 
@@ -556,8 +556,8 @@ static int ldapRegisterAlias(const oidcIdpT *idp, afb_hsrv *hsrv)
     EXT_DEBUG("[ldap-register-alias] uid=%s login='%s'", idp->uid,
               idp->statics->aliasLogin);
 
-    err = afb_hsrv_add_handler(hsrv, idp->statics->aliasLogin, ldapLoginCB, (void*)idp,
-                               EXT_HIGHEST_PRIO);
+    err = afb_hsrv_add_handler(hsrv, idp->statics->aliasLogin, ldapLoginCB,
+                               (void *)idp, EXT_HIGHEST_PRIO);
     if (!err)
         goto OnErrorExit;
 

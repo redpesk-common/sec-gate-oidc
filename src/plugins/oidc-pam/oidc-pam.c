@@ -35,8 +35,8 @@
 
 #include "oidc-core.h"
 #include "oidc-fedid.h"
-#include "oidc-idp.h"
 #include "oidc-idp-plugin.h"
+#include "oidc-idp.h"
 #include "oidc-session.h"
 
 // provide dummy default values to oidc callbacks
@@ -349,8 +349,9 @@ int pamRegisterApis(oidcIdpT *idp,
     // add a dedicate verb to check login/passwd from websocket
     // err= afb_api_add_verb(idp->oidc->apiv4, idp->uid, idp->info,
     // checkLoginVerb, idp, NULL, 0, 0);
-    err = afb_api_v4_add_verb_hookable(oidcCoreAfbApi(idp->oidc), idp->uid, idp->info,
-                                       checkLoginVerb, idp, NULL, 0, 0);
+    err = afb_api_v4_add_verb_hookable(oidcCoreAfbApi(idp->oidc), idp->uid,
+                                       idp->info, checkLoginVerb, idp, NULL, 0,
+                                       0);
     if (err)
         goto OnErrorExit;
 
@@ -366,8 +367,8 @@ static int pamRegisterAlias(const oidcIdpT *idp, afb_hsrv *hsrv)
     EXT_DEBUG("[pam-register-alias] uid=%s login='%s'", idp->uid,
               idp->statics->aliasLogin);
 
-    err = afb_hsrv_add_handler(hsrv, idp->statics->aliasLogin, pamLoginCB, (void*)idp,
-                               EXT_HIGHEST_PRIO);
+    err = afb_hsrv_add_handler(hsrv, idp->statics->aliasLogin, pamLoginCB,
+                               (void *)idp, EXT_HIGHEST_PRIO);
     if (!err)
         goto OnErrorExit;
 

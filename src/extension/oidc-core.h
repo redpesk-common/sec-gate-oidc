@@ -53,19 +53,22 @@ const oidGlobalsT *oidcCoreGlobals(const oidcCoreHdlT *oidc);
 afb_api_v4 *oidcCoreAfbApi(const oidcCoreHdlT *oidc);
 httpPoolT *oidcCoreHTTPPool(const oidcCoreHdlT *oidc);
 
-int oidcCoreParseConfig(oidcCoreHdlT **poidc, struct json_object *oidcJ, char const *uid);
-int oidcCoreDeclareApis(oidcCoreHdlT *oidc, struct afb_apiset *declare_set, struct afb_apiset *call_set);
+int oidcCoreParseConfig(oidcCoreHdlT **poidc,
+                        struct json_object *oidcJ,
+                        char const *uid);
+int oidcCoreDeclareApis(oidcCoreHdlT *oidc,
+                        struct afb_apiset *declare_set,
+                        struct afb_apiset *call_set);
 int oidcCoreDeclareHTTP(oidcCoreHdlT *oidc, afb_hsrv *hsrv);
 
 json_object *oidcCoreGetProfilsForLOA(const oidcCoreHdlT *oidc,
-                              int loa,
-                              const char **idps,
-                              int noslave);
+                                      int loa,
+                                      const char **idps,
+                                      int noslave);
 
 int oidcCoreGetFilteredIdpList(const oidcCoreHdlT *oidc,
                                const char **dest,
                                int nrDest,
                                const char *excludedUID);
 
-int oidcCoreRedirectLogin(const oidcCoreHdlT *oidc,
-                          afb_hreq *hreq);
+int oidcCoreRedirectLogin(const oidcCoreHdlT *oidc, afb_hreq *hreq);

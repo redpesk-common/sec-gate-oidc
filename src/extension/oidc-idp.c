@@ -34,8 +34,8 @@
 
 #include "oidc-core.h"
 #include "oidc-fedid.h"
-#include "oidc-idp.h"
 #include "oidc-idp-plugin.h"
+#include "oidc-idp.h"
 
 const rp_enum_map_t idpAuthMethods[] = {
     {"secret-unknown", IDP_CLIENT_SECRET_UNKNOWN},

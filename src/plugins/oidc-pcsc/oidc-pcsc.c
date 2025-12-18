@@ -37,8 +37,8 @@
 
 #include "oidc-core.h"
 #include "oidc-fedid.h"
-#include "oidc-idp.h"
 #include "oidc-idp-plugin.h"
+#include "oidc-idp.h"
 #include "oidc-session.h"
 
 // import pcsc-little API
@@ -474,8 +474,8 @@ int pcscLoginCB(afb_hreq *hreq, void *ctx)
     return 1;  // we're done
 
 OnErrorExit:
-    afb_hreq_redirect_to(hreq, oidcCoreGlobals(idp->oidc)->loginUrl, HREQ_QUERY_INCL,
-                         HREQ_REDIR_TMPY);
+    afb_hreq_redirect_to(hreq, oidcCoreGlobals(idp->oidc)->loginUrl,
+                         HREQ_QUERY_INCL, HREQ_REDIR_TMPY);
     return 1;
 }
 
@@ -488,8 +488,9 @@ int pcscRegisterApis(oidcIdpT *idp,
     // add a dedicate verb to check login/passwd from websocket
     // err= afb_api_add_verb(idp->oidc->apiv4, idp->uid, idp->info,
     // checkLoginVerb, idp, NULL, 0, 0);
-    err = afb_api_v4_add_verb_hookable(oidcCoreAfbApi(idp->oidc), idp->uid, idp->info,
-                                       checkLoginVerb, idp, NULL, 0, 0);
+    err = afb_api_v4_add_verb_hookable(oidcCoreAfbApi(idp->oidc), idp->uid,
+                                       idp->info, checkLoginVerb, idp, NULL, 0,
+                                       0);
     if (err)
         goto OnErrorExit;
     return 0;
@@ -504,8 +505,8 @@ static int pcscRegisterAlias(const oidcIdpT *idp, afb_hsrv *hsrv)
     EXT_DEBUG("[pcsc-register-alias] uid=%s login='%s'", idp->uid,
               idp->statics->aliasLogin);
 
-    err = afb_hsrv_add_handler(hsrv, idp->statics->aliasLogin, pcscLoginCB, (void*)idp,
-                               EXT_HIGHEST_PRIO);
+    err = afb_hsrv_add_handler(hsrv, idp->statics->aliasLogin, pcscLoginCB,
+                               (void *)idp, EXT_HIGHEST_PRIO);
     if (!err)
         goto OnErrorExit;
 

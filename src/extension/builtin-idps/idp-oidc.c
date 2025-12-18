@@ -447,8 +447,8 @@ static int oidcAccessToken(afb_hreq *hreq,
             "[oidc-access-token] curl -H 'Authorization: %s' -X post -d '%s' "
             "%s\n",
             schema->auth64, (char *)rqtCtx->userData, idp->wellknown->tokenid);
-        err = httpSendPost(oidcCoreHTTPPool(idp->oidc), idp->wellknown->tokenid, &dfltOpts,
-                           headers, rqtCtx->userData, dataLen,
+        err = httpSendPost(oidcCoreHTTPPool(idp->oidc), idp->wellknown->tokenid,
+                           &dfltOpts, headers, rqtCtx->userData, dataLen,
                            oidcAccessTokenCB, rqtCtx);
         break;
     }
@@ -473,8 +473,8 @@ static int oidcAccessToken(afb_hreq *hreq,
 
         EXT_DEBUG("[oidc-access-token] curl -X post -d '%s' %s\n",
                   (char *)rqtCtx->userData, idp->wellknown->tokenid);
-        err = httpSendPost(oidcCoreHTTPPool(idp->oidc), idp->wellknown->tokenid, &dfltOpts,
-                           headers, rqtCtx->userData, dataLen,
+        err = httpSendPost(oidcCoreHTTPPool(idp->oidc), idp->wellknown->tokenid,
+                           &dfltOpts, headers, rqtCtx->userData, dataLen,
                            oidcAccessTokenCB, rqtCtx);
         break;
 
@@ -641,14 +641,14 @@ static int oidcRegisterAlias(const oidcIdpT *idp, afb_hsrv *hsrv)
     EXT_DEBUG("[oidc-register-alias] uid=%s login='%s'", idp->uid,
               idp->statics->aliasLogin);
 
-    err = afb_hsrv_add_handler(hsrv, idp->statics->aliasLogin, oidcLoginCB, (void*)idp,
-                               EXT_HIGHEST_PRIO);
+    err = afb_hsrv_add_handler(hsrv, idp->statics->aliasLogin, oidcLoginCB,
+                               (void *)idp, EXT_HIGHEST_PRIO);
     if (!err)
         goto OnErrorExit;
 
     if (idp->statics->aliasLogout) {
         err = afb_hsrv_add_handler(hsrv, idp->statics->aliasLogout,
-                                   oidcLogoutCB, (void*)idp, EXT_HIGHEST_PRIO);
+                                   oidcLogoutCB, (void *)idp, EXT_HIGHEST_PRIO);
         if (!err)
             goto OnErrorExit;
     }
@@ -780,8 +780,8 @@ static httpRqtActionT oidcDiscoveryCB(httpRqtT *httpRqt)
     // if jwks is define request URI to get jwt keys
     if (idp->wellknown->jwks && schema->jwksJ &&
         json_object_get_boolean(schema->jwksJ)) {
-        int err = httpSendGet(oidcCoreHTTPPool(idp->oidc), idp->wellknown->jwks, NULL,
-                              NULL, oidcDiscoJwksCB, schema);
+        int err = httpSendGet(oidcCoreHTTPPool(idp->oidc), idp->wellknown->jwks,
+                              NULL, NULL, oidcDiscoJwksCB, schema);
         if (err)
             goto OnErrorExit;
     }
@@ -849,8 +849,9 @@ static int oidcRegisterConfig(oidcIdpT *idp, json_object *configJ)
     if (idp->wellknown->discovery) {
         EXT_NOTICE("[oidc-wellknown-get] oidc wellknown url=%s",
                    idp->wellknown->discovery);
-        int err = httpSendGet(oidcCoreHTTPPool(idp->oidc), idp->wellknown->discovery,
-                              &dfltOpts, NULL, oidcDiscoveryCB, idp);
+        int err =
+            httpSendGet(oidcCoreHTTPPool(idp->oidc), idp->wellknown->discovery,
+                        &dfltOpts, NULL, oidcDiscoveryCB, idp);
         if (err && !idp->wellknown->lazy) {
             EXT_CRITICAL(
                 "[fail-wellknown-discovery] invalid url='%s' (oidcDiscoveryCB)",

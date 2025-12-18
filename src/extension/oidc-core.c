@@ -29,8 +29,8 @@
 #include <stdlib.h>
 
 #include <json-c/json.h>
-#include <rp-utils/rp-jsonc.h>
 #include <rp-utils/rp-escape.h>
+#include <rp-utils/rp-jsonc.h>
 
 #include <libafb/afb-extension.h>
 #include <libafb/afb-v4.h>
@@ -129,7 +129,9 @@ static int globalConfig(oidGlobalsT *globals, json_object *globalsJ)
 }
 
 // Pase and load config.json info oidc global context
-int oidcCoreParseConfig(oidcCoreHdlT **poidc, struct json_object *oidcJ, char const *uid)
+int oidcCoreParseConfig(oidcCoreHdlT **poidc,
+                        struct json_object *oidcJ,
+                        char const *uid)
 {
     int err;
     json_object *idpsJ = NULL, *aliasJ = NULL, *apisJ = NULL, *globalsJ = NULL,
@@ -268,14 +270,14 @@ int oidcCoreDeclareHTTP(oidcCoreHdlT *oidc, afb_hsrv *hsrv)
     const oidcAliasT *aliasiter;
 
     // register IDP aliases
-    for (idpiter = oidc->idps ; idpiter->uid != NULL ; idpiter++) {
+    for (idpiter = oidc->idps; idpiter->uid != NULL; idpiter++) {
         int err = idpRegisterAlias(oidc, idpiter, hsrv);
         if (err)
             goto OnErrorExit;
     }
 
     // register other aliases
-    for (aliasiter = oidc->aliases ; aliasiter->uid != NULL ; aliasiter++) {
+    for (aliasiter = oidc->aliases; aliasiter->uid != NULL; aliasiter++) {
         int err = aliasRegisterOne(aliasiter, hsrv);
         if (err)
             goto OnErrorExit;
@@ -289,9 +291,9 @@ OnErrorExit:
 
 // return the idp list to display corresponding login page.
 json_object *oidcCoreGetProfilsForLOA(const oidcCoreHdlT *oidc,
-                              int loa,
-                              const char **idps,
-                              int noslave)
+                                      int loa,
+                                      const char **idps,
+                                      int noslave)
 {
     json_object *idpsJ = json_object_new_array();
     const oidcIdpT *idp = oidc->idps;
@@ -346,7 +348,7 @@ int oidcCoreGetFilteredIdpList(const oidcCoreHdlT *oidc,
 {
     int index = 0;
     const oidcIdpT *idp = oidc->idps;
-    for (; idp->uid != NULL && index < nrDest ; idp++) {
+    for (; idp->uid != NULL && index < nrDest; idp++) {
         if (excludedUID != NULL || strcasecmp(idp->uid, excludedUID)) {
             dest[index++] = idp->uid;
         }
@@ -354,8 +356,7 @@ int oidcCoreGetFilteredIdpList(const oidcCoreHdlT *oidc,
     return index;
 }
 
-int oidcCoreRedirectLogin(const oidcCoreHdlT *oidc,
-                          afb_hreq *hreq)
+int oidcCoreRedirectLogin(const oidcCoreHdlT *oidc, afb_hreq *hreq)
 {
     int rc;
     char url[EXT_URL_MAX_LEN];
@@ -371,8 +372,8 @@ int oidcCoreRedirectLogin(const oidcCoreHdlT *oidc,
             "language", setlocale(LC_CTYPE, ""),
 #endif
             NULL};
-        size_t sz = rp_escape_url_to(NULL, oidc->globals.loginUrl,
-                                     params, url, sizeof url);
+        size_t sz = rp_escape_url_to(NULL, oidc->globals.loginUrl, params, url,
+                                     sizeof url);
         if (sz < sizeof url)
             redirurl = url;
         else {
@@ -431,4 +432,3 @@ int oidcCoreRedirectLogin(const oidcCoreHdlT *oidc,
     afb_hreq_redirect_to(hreq, redirurl, HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
     return 1;
 }
-

@@ -42,7 +42,7 @@
 #include "oidc-idsvc.h"
 #include "oidc-session.h"
 
-#define MAX_OIDC_IDPS         16    // max number of IDPS in config
+#define MAX_OIDC_IDPS 16  // max number of IDPS in config
 
 static void idsvcPing(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 {
@@ -220,7 +220,8 @@ static void idpQueryUser(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
         // if no idps list provided build one from config
         const char *idps[MAX_OIDC_IDPS + 1];
         const oidcProfileT *profile = oidcSessionGetIdpProfile(session);
-        int count = oidcCoreGetFilteredIdpList(profile->idp->oidc, idps, MAX_OIDC_IDPS + 1, profile->idp->uid);
+        int count = oidcCoreGetFilteredIdpList(
+            profile->idp->oidc, idps, MAX_OIDC_IDPS + 1, profile->idp->uid);
         if (count > MAX_OIDC_IDPS) {
             EXT_ERROR(
                 "[idp-federate-list] too many idps in config "
@@ -435,10 +436,8 @@ static void sessionReset(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     fedidsessionReset(session, profile);
 
     const oidGlobalsT *globals = oidcCoreGlobals(profile->idp->oidc);
-    rp_jsonc_pack(&responseJ, "{ss ss* ss*}", "home",
-                  globals->homeUrl ?: "/", "login",
-                  globals->loginUrl, "error",
-                  globals->errorUrl);
+    rp_jsonc_pack(&responseJ, "{ss ss* ss*}", "home", globals->homeUrl ?: "/",
+                  "login", globals->loginUrl, "error", globals->errorUrl);
     afb_create_data_raw(&reply, AFB_PREDEFINED_TYPE_JSON_C, responseJ, 0,
                         (void *)json_object_put, responseJ);
     afb_req_reply(wreq, 0, 1, &reply);
@@ -579,10 +578,10 @@ static void urlQuery(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     oidcCoreHdlT *oidc = afb_api_get_userdata(afb_req_get_api(wreq));
 
     const oidGlobalsT *globals = oidcCoreGlobals(oidc);
-    err = rp_jsonc_pack(
-        &responseJ, "{ss ss ss ss ss}", "home", globals->homeUrl, "login",
-        globals->loginUrl, "federate", globals->fedlinkUrl,
-        "register", globals->registerUrl, "error", globals->errorUrl);
+    err = rp_jsonc_pack(&responseJ, "{ss ss ss ss ss}", "home",
+                        globals->homeUrl, "login", globals->loginUrl,
+                        "federate", globals->fedlinkUrl, "register",
+                        globals->registerUrl, "error", globals->errorUrl);
     if (err)
         goto OnErrorExit;
 
@@ -606,40 +605,45 @@ static afb_verb_t idsvcVerbs[] = {
     {
      .verb = "ping",
      .callback = idsvcPing,
-     .info = "ping test"}, {
-                            .verb = "url-query-conf",
-                            .callback = urlQuery,
-                            .info = "wreq wellknown url list/tag"}, {
-                                                                     .verb = "idp-query-conf",
-                                                                     .callback = idpQueryConf,
-                                                                     .info = "wreq idp list/scope for a given LOA level"}, {
-                                                                                                                            .verb = "idp-query-user",
-                                                                                                                            .callback = idpQueryUser,
-                                                                                                                            .info =
-                                                                                                                            "return pseudo/email idps list before linking user multiple IDPs"},
-    {
+     .info = "ping test"
+    }, {
+     .verb = "url-query-conf",
+     .callback = urlQuery,
+     .info = "wreq wellknown url list/tag"
+    }, {
+     .verb = "idp-query-conf",
+     .callback = idpQueryConf,
+     .info = "wreq idp list/scope for a given LOA level"
+    }, {
+     .verb = "idp-query-user",
+     .callback = idpQueryUser,
+     .info = "return pseudo/email idps list before linking user multiple IDPs"
+    }, {
      .verb = "session-get",
      .callback = sessionGet,
-     .info = "retrieve current client session [profile, user, social]"}, {
-                                                                          .verb = "session-event",
-                                                                          .callback = subscribeEvent,
-                                                                          .info = "subscribe to sgate private client session events"}, {
-                                                                                                                                        .verb = "session-reset",
-                                                                                                                                        .callback =
-                                                                                                                                        sessionReset,
-                                                                                                                                        .info =
-                                                                                                                                        "reset current session [set loa=0]"},
+     .info = "retrieve current client session [profile, user, social]"
+    }, {
+     .verb = "session-event",
+     .callback = subscribeEvent,
+     .info = "subscribe to sgate private client session events"
+    }, {
+     .verb = "session-reset",
+     .callback = sessionReset,
+     .info = "reset current session [set loa=0]"
+    },
     {
      .verb = "usr-register",
      .callback = userRegister,
-     .info = "register federated user profile into local fedid store"}, {
-                                                                         .verb = "usr-check",
-                                                                         .callback = userCheckAttr,
-                                                                         .info = "check user attribute within local store"}, {
-                                                                                                                              .verb = "usr-federate",
-                                                                                                                              .callback = userFederate,
-                                                                                                                              .info =
-                                                                                                                              "request federating current user with an other existing IDP"},
+     .info = "register federated user profile into local fedid store"
+    }, {
+     .verb = "usr-check",
+     .callback = userCheckAttr,
+     .info = "check user attribute within local store"
+    }, {
+     .verb = "usr-federate",
+     .callback = userFederate,
+     .info = "request federating current user with an other existing IDP"
+    },
     {NULL}                      // terminator
     // clang-format on
 };
@@ -668,8 +672,8 @@ int idsvcDeclareApi(afb_api_v4 **api,
         public_set = declare_set;
 
     // create the API
-    rc = afb_api_v4_create(api, public_set, call_set, apiname,
-                           Afb_String_Const, IDSVC_INFO, Afb_String_Const,
+    rc = afb_api_v4_create(api, public_set, call_set, apiname, Afb_String_Const,
+                           IDSVC_INFO, Afb_String_Const,
                            0,                      // noconcurrency unset
                            NULL, NULL,             // pre-initcb + ctx
                            NULL, Afb_String_Const  // no binding.so path
@@ -680,7 +684,7 @@ int idsvcDeclareApi(afb_api_v4 **api,
         EXT_CRITICAL("[oidc-idsvc] creation of api %s failed", apiname);
         return -1;
     }
-    afb_api_v4_set_userdata(*api, (void*)oidc);
+    afb_api_v4_set_userdata(*api, (void *)oidc);
 
     // export (if possible) the api internally
     snprintf(apiwsname, sizeof(apiwsname), "unix:@%s", apiname);

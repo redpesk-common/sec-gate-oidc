@@ -46,12 +46,14 @@
 AFB_EXTENSION("sec-gate-oidc")
 
 // Parse and load config.json info oidc global context
-int AfbExtensionConfigV1(void **ctx, struct json_object *config, char const *uid)
+int AfbExtensionConfigV1(void **ctx,
+                         struct json_object *config,
+                         char const *uid)
 {
-
     EXT_INFO("Extension %s got to config", AfbExtensionManifest.name);
 
-    return oidcCoreParseConfig((oidcCoreHdlT **)ctx, config, AfbExtensionManifest.name);
+    return oidcCoreParseConfig((oidcCoreHdlT **)ctx, config,
+                               AfbExtensionManifest.name);
 }
 
 // Declares the apis
@@ -75,4 +77,3 @@ int AfbExtensionHTTPV1(void *ctx, afb_hsrv *hsrv)
 
     return oidcCoreDeclareHTTP(oidc, hsrv);
 }
-

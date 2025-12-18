@@ -187,8 +187,8 @@ int aliasRegisterOne(const oidcAliasT *alias, afb_hsrv *hsrv)
 
     // insert LOA checking if required
     if (alias->loa > 0) {
-        rc = afb_hsrv_add_handler(hsrv, alias->url, aliasCheckReq, (void*)alias,
-                                  alias->priority);
+        rc = afb_hsrv_add_handler(hsrv, alias->url, aliasCheckReq,
+                                  (void *)alias, alias->priority);
         if (rc == 0) {
             EXT_ERROR("[oidc-alias] failed to add alias %s handler %s",
                       alias->uid, alias->url);

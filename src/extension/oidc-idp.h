@@ -136,7 +136,6 @@ typedef struct idpRqtCtxS
     void *userData;
 } idpRqtCtxT;
 
-
 // idp exported functions
 const oidcProfileT *idpGetFirstProfile(const oidcIdpT *idp,
                                        int targetLOA,
@@ -156,5 +155,3 @@ int idpRegisterAlias(oidcCoreHdlT *oidc, const oidcIdpT *idp, afb_hsrv *hsrv);
 
 int idpPluginRegister(const idpPluginT *pluginCbs);
 void idpRqtCtxFree(idpRqtCtxT *rqtCtx);
-
-
