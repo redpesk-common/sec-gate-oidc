@@ -150,6 +150,12 @@ int oidcCoreParseConfig(oidcCoreHdlT **poidc, struct json_object *oidcJ, char co
     if (err)
         goto OnErrorExit;
 
+    // create libcurl http multi pool
+    // oidc->httpPool= httpCreatePool(hsrv->efd, glueGetCbs(), oidc->verbose);
+    oidc->httpPool = httpCreatePool(NULL, glueGetCbs(), oidc->verbose);
+    if (!oidc->httpPool)
+        goto OnErrorExit;
+
     // load the plugins if exist
     if (pluginsJ != NULL) {
         err = idpPluginsParseConfig(oidc, pluginsJ);
@@ -239,12 +245,6 @@ int oidcCoreDeclareHTTP(oidcCoreHdlT *oidc, afb_hsrv *hsrv)
 {
     const oidcIdpT *idpiter;
     const oidcAliasT *aliasiter;
-
-    // create libcurl http multi pool
-    // oidc->httpPool= httpCreatePool(hsrv->efd, glueGetCbs(), oidc->verbose);
-    oidc->httpPool = httpCreatePool(NULL, glueGetCbs(), oidc->verbose);
-    if (!oidc->httpPool)
-        goto OnErrorExit;
 
     // register IDP aliases
     for (idpiter = oidc->idps ; idpiter->uid != NULL ; idpiter++) {
