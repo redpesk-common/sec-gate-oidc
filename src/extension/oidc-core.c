@@ -43,7 +43,7 @@
 #include "oidc-idp.h"
 #include "oidc-idsvc.h"
 
-AFB_EXTENSION("sec-gate-oidc")
+
 /* read and setup the global configuration object */
 static int globalConfig(oidGlobalsT *globals, json_object *globalsJ)
 {
@@ -86,21 +86,19 @@ static int globalConfig(oidGlobalsT *globals, json_object *globalsJ)
 }
 
 // Pase and load config.json info oidc global context
-int AfbExtensionConfigV1(void **ctx, struct json_object *oidcJ, char const *uid)
+int oidcCoreParseConfig(oidcCoreHdlT **poidc, struct json_object *oidcJ, char const *uid)
 {
     int err;
-    oidcCoreHdlT *oidc;
     json_object *idpsJ = NULL, *aliasJ = NULL, *apisJ = NULL, *globalsJ = NULL,
                 *pluginsJ = NULL;
-
-    EXT_INFO("Extension %s got to config", AfbExtensionManifest.name);
+    oidcCoreHdlT *oidc;
 
     oidc = calloc(1, sizeof(oidcCoreHdlT));
     if (oidc == NULL)
         goto OnErrorExit;
 
     oidc->magic = MAGIC_OIDC_MAIN;
-    oidc->uid = AfbExtensionManifest.name;
+    oidc->uid = uid;
     json_object_get(oidcJ);
 
     // register builtin IDPs
@@ -157,25 +155,22 @@ int AfbExtensionConfigV1(void **ctx, struct json_object *oidcJ, char const *uid)
         (oidc->idps[1].uid || oidc->idps[0].profiles[1].uid))
         oidc->globals.loginUrl = URL_OIDC_USR_LOGIN;
 
-    *ctx = oidc;
+    *poidc = oidc;
     return 0;
 
 OnErrorExit:
     free(oidc);  // TODO also free sub components
-    *ctx = NULL;
+    *poidc = NULL;
     EXT_CRITICAL("[oidc-core] Failed to initialize at configuration");
     return -1;
 }
 
 // Declares the apis
-int AfbExtensionDeclareV1(void *ctx,
-                          struct afb_apiset *declare_set,
-                          struct afb_apiset *call_set)
+int oidcCoreDeclareApis(oidcCoreHdlT *oidc,
+                        struct afb_apiset *declare_set,
+                        struct afb_apiset *call_set)
 {
     int err, idx;
-    oidcCoreHdlT *oidc = (oidcCoreHdlT *)ctx;
-
-    EXT_INFO("Extension %s got to declare", oidc->uid);
 
     // import/connect to fedid API
     if (oidc->fedapi) {
@@ -218,12 +213,10 @@ OnErrorExit:
 }
 
 // Declare HTTP hooks
-int AfbExtensionHTTPV1(void *ctx, afb_hsrv *hsrv)
+int oidcCoreDeclareHTTP(oidcCoreHdlT *oidc, afb_hsrv *hsrv)
 {
-    int idx, err;
-    oidcCoreHdlT *oidc = (oidcCoreHdlT *)ctx;
-
-    EXT_NOTICE("Extension %s got to http", oidc->uid);
+    const oidcIdpT *idpiter;
+    const oidcAliasT *aliasiter;
 
     // create libcurl http multi pool
     // oidc->httpPool= httpCreatePool(hsrv->efd, glueGetCbs(), oidc->verbose);
@@ -232,15 +225,15 @@ int AfbExtensionHTTPV1(void *ctx, afb_hsrv *hsrv)
         goto OnErrorExit;
 
     // register IDP aliases
-    for (idx = 0; oidc->idps[idx].uid; idx++) {
-        err = idpRegisterAlias(oidc, &oidc->idps[idx], hsrv);
+    for (idpiter = oidc->idps ; idpiter->uid != NULL ; idpiter++) {
+        int err = idpRegisterAlias(oidc, idpiter, hsrv);
         if (err)
             goto OnErrorExit;
     }
 
     // register other aliases
-    for (idx = 0; oidc->aliases[idx].uid; idx++) {
-        err = aliasRegisterOne(&oidc->aliases[idx], hsrv);
+    for (aliasiter = oidc->aliases ; aliasiter->uid != NULL ; aliasiter++) {
+        int err = aliasRegisterOne(aliasiter, hsrv);
         if (err)
             goto OnErrorExit;
     }

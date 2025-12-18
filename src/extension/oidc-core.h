@@ -25,6 +25,8 @@
 
 #include "oidc-common.h"
 
+#include <json-c/json.h>
+
 typedef struct oidcAliasesS oidcAliasT;
 typedef struct oidcApisS oidcApisT;
 typedef struct oidcIdpS oidcIdpT;
@@ -74,3 +76,7 @@ typedef struct
     afb_api_v4 *apiv4;
     oidGlobalsT globals;
 } oidcCoreHdlT;
+
+int oidcCoreParseConfig(oidcCoreHdlT **poidc, struct json_object *oidcJ, char const *uid);
+int oidcCoreDeclareApis(oidcCoreHdlT *oidc, struct afb_apiset *declare_set, struct afb_apiset *call_set);
+int oidcCoreDeclareHTTP(oidcCoreHdlT *oidc, afb_hsrv *hsrv);
