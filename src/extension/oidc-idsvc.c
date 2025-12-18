@@ -657,9 +657,11 @@ static afb_verb_t idsvcVerbs[] = {
 
 #define IDSVC_INFO "internal oidc idp api"
 
-int idsvcDeclare(oidcCoreHdlT *oidc,
-                 afb_apiset *declare_set,
-                 afb_apiset *call_set)
+int idsvcDeclareApi(afb_api_v4 **api,
+                    const char *apiname,
+                    const oidcCoreHdlT *oidc,
+                    afb_apiset *declare_set,
+                    afb_apiset *call_set)
 {
     int rc;
     afb_apiset *public_set;
@@ -677,23 +679,25 @@ int idsvcDeclare(oidcCoreHdlT *oidc,
         public_set = declare_set;
 
     // create the API
-    rc = afb_api_v4_create(&oidc->apiv4, public_set, call_set, oidc->api,
+    rc = afb_api_v4_create(api, public_set, call_set, apiname,
                            Afb_String_Const, IDSVC_INFO, Afb_String_Const,
                            0,                      // noconcurrency unset
                            NULL, NULL,             // pre-initcb + ctx
                            NULL, Afb_String_Const  // no binding.so path
     );
     if (rc == 0)
-        rc = afb_api_v4_set_verbs_hookable(oidc->apiv4, idsvcVerbs);
+        rc = afb_api_v4_set_verbs_hookable(*api, idsvcVerbs);
     if (rc) {
-        EXT_CRITICAL("[oidc-idsvc] creation of api %s failed", oidc->api);
+        EXT_CRITICAL("[oidc-idsvc] creation of api %s failed", apiname);
         return -1;
     }
-    afb_api_v4_set_userdata(oidc->apiv4, oidc);
+    afb_api_v4_set_userdata(*api, (void*)oidc);
 
     // export (if possible) the api internally
-    snprintf(apiwsname, sizeof(apiwsname), "unix:@%s", oidc->api);
-    afb_api_ws_add_server(apiwsname, public_set, call_set);
+    snprintf(apiwsname, sizeof(apiwsname), "unix:@%s", apiname);
+    rc = afb_api_ws_add_server(apiwsname, public_set, call_set);
+    if (rc < 0)
+        EXT_WARNING("[oidc-idsvc] publishing api %s failed", apiwsname);
 
     return 0;
 }

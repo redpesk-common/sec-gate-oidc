@@ -25,6 +25,8 @@
 #include "oidc-core.h"
 #include "oidc-session.h"
 
-int idsvcDeclare(oidcCoreHdlT *oidc,
-                 afb_apiset *declare_set,
-                 afb_apiset *call_set);
+int idsvcDeclareApi(afb_api_v4 **api,
+                    const char *apiname,
+                    const oidcCoreHdlT *oidc,
+                    afb_apiset *declare_set,
+                    afb_apiset *call_set);

@@ -204,7 +204,7 @@ int oidcCoreDeclareApis(oidcCoreHdlT *oidc,
         }
     }
     // declare internal identity service api
-    err = idsvcDeclare(oidc, declare_set, call_set);
+    err = idsvcDeclareApi(&oidc->apiv4, oidc->api, oidc, declare_set, call_set);
     if (err)
         goto OnErrorExit;
 
