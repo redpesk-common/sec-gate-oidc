@@ -44,6 +44,28 @@
 #include "oidc-idp.h"
 #include "oidc-idsvc.h"
 
+#define URL_OIDC_USR_ERROR    "/sgate/common/error.html"
+#define URL_OIDC_USR_LOGIN    "/sgate/common/login.html"
+#define URL_OIDC_USR_REGISTER "/sgate/common/register.html"
+#define URL_OIDC_USR_FEDLINK  "/sgate/common/fedlink.html"
+#define URL_OIDC_USR_HOME     "/"
+#define URL_OIDC_AUTH_CACHE   5000  // 5sec alias authen cache
+
+struct oidcCoreHdlS
+{
+    const char *uid;
+    const char *info;
+    const char *api;
+    int verbose;
+    oidcAliasT *aliases;
+    oidcApisT *apis;
+    oidcIdpT *idps;
+    httpPoolT *httpPool;
+    const char *fedapi;
+    oidcApisT *apisHash;
+    afb_api_v4 *apiv4;
+    oidGlobalsT globals;
+};
 
 const char *oidcCoreUID(const oidcCoreHdlT *oidc)
 {
@@ -118,7 +140,6 @@ int oidcCoreParseConfig(oidcCoreHdlT **poidc, struct json_object *oidcJ, char co
     if (oidc == NULL)
         goto OnErrorExit;
 
-    oidc->magic = MAGIC_OIDC_MAIN;
     oidc->uid = uid;
     json_object_get(oidcJ);
 

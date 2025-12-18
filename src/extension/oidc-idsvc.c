@@ -42,6 +42,8 @@
 #include "oidc-idsvc.h"
 #include "oidc-session.h"
 
+#define MAX_OIDC_IDPS         16    // max number of IDPS in config
+
 static void idsvcPing(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 {
     static int count = 0;
@@ -121,8 +123,6 @@ static json_object *idpQueryList(afb_req_t wreq, const char **idps)
 
     // retrieve OIDC global context from API handle
     oidcCoreHdlT *oidc = afb_api_get_userdata(afb_req_get_api(wreq));
-    if (!oidc || oidc->magic != MAGIC_OIDC_MAIN)
-        goto OnErrorExit;
 
     // retrieve oidc config from current alias cookie
     const oidcAliasT *alias;
@@ -532,8 +532,6 @@ static void idpQueryConf(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 
     // retrieve OIDC global context from API handle
     oidcCoreHdlT *oidc = afb_api_get_userdata(afb_req_get_api(wreq));
-    if (!oidc || oidc->magic != MAGIC_OIDC_MAIN)
-        goto OnErrorExit;
 
     // retrieve current wreq LOA from session (to be fixed by Jose)
     oidcSessionT *session = oidcSessionOfReq(wreq);
@@ -579,8 +577,6 @@ static void urlQuery(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 
     // retrieve OIDC global context from API handle
     oidcCoreHdlT *oidc = afb_api_get_userdata(afb_req_get_api(wreq));
-    if (!oidc || oidc->magic != MAGIC_OIDC_MAIN)
-        goto OnErrorExit;
 
     const oidGlobalsT *globals = oidcCoreGlobals(oidc);
     err = rp_jsonc_pack(

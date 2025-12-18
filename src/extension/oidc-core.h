@@ -33,21 +33,10 @@ typedef struct oidcIdpS oidcIdpT;
 typedef struct httpPoolS httpPoolT;
 typedef struct idpPluginS idpPluginT;
 
-#define MAGIC_OIDC_MAIN         321987
-#define MAGIC_OIDC_SESSION(VAR) void *VAR = &VAR
+typedef struct oidGlobalsS oidGlobalsT;
+typedef struct oidcCoreHdlS oidcCoreHdlT;
 
-#define URL_OIDC_USR_ERROR    "/sgate/common/error.html"
-#define URL_OIDC_USR_LOGIN    "/sgate/common/login.html"
-#define URL_OIDC_USR_REGISTER "/sgate/common/register.html"
-#define URL_OIDC_USR_FEDLINK  "/sgate/common/fedlink.html"
-#define URL_OIDC_USR_HOME     "/"
-#define URL_OIDC_AUTH_CACHE   5000  // 5sec alias authen cache
-#define MAX_OIDC_IDPS         16    // max number of IDPS in config
-
-#define STATUS_OIDC_AUTH_DENY 403
-#define STATUS_OIDC_LOA_RESET 423
-
-typedef struct
+struct oidGlobalsS
 {
     const char *loginUrl;
     const char *errorUrl;
@@ -57,29 +46,12 @@ typedef struct
     unsigned long tCache;
     unsigned long sTimeout;
     int debug;
-} oidGlobalsT;
+};
 
 const char *oidcCoreUID(const oidcCoreHdlT *oidc);
 const oidGlobalsT *oidcCoreGlobals(const oidcCoreHdlT *oidc);
 afb_api_v4 *oidcCoreAfbApi(const oidcCoreHdlT *oidc);
 httpPoolT *oidcCoreHTTPPool(const oidcCoreHdlT *oidc);
-// this structure is returned by plugin registration callback
-typedef struct
-{
-    long magic;
-    const char *uid;
-    const char *info;
-    const char *api;
-    int verbose;
-    oidcAliasT *aliases;
-    oidcApisT *apis;
-    oidcIdpT *idps;
-    httpPoolT *httpPool;
-    const char *fedapi;
-    oidcApisT *apisHash;
-    afb_api_v4 *apiv4;
-    oidGlobalsT globals;
-} oidcCoreHdlT;
 
 int oidcCoreParseConfig(oidcCoreHdlT **poidc, struct json_object *oidcJ, char const *uid);
 int oidcCoreDeclareApis(oidcCoreHdlT *oidc, struct afb_apiset *declare_set, struct afb_apiset *call_set);
