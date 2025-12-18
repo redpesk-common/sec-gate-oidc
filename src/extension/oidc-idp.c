@@ -312,7 +312,7 @@ static const oidcStaticsT *idpParsestatic(oidcIdpT *idp,
     if (defaults)
         memcpy(statics, defaults, sizeof(oidcStaticsT));
     if (!statics->sTimeout)
-        statics->sTimeout = idp->oidc->globals.sTimeout;
+        statics->sTimeout = oidcCoreGlobals(idp->oidc)->sTimeout;
 
     int err = rp_jsonc_unpack(
         staticJ, "{s?s,s?s,s?s,s?i}", "login", &statics->aliasLogin, "logout",

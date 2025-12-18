@@ -290,7 +290,7 @@ int aliasRegisterOne(const oidcAliasT *alias, afb_hsrv *hsrv)
  *
  * @return 0 on success or else not zero for error
  */
-static int parseOneAlias(oidcCoreHdlT *oidc,
+static int parseOneAlias(const oidcCoreHdlT *oidc,
                          json_object *aliasJ,
                          oidcAliasT *alias)
 {
@@ -299,8 +299,8 @@ static int parseOneAlias(oidcCoreHdlT *oidc,
     json_object *requireJ = NULL;
 
     // set tCache default
-    alias->tCache = oidc->globals.tCache;
     alias->oidc = oidc;
+    alias->tCache = oidcCoreGlobals(oidc)->tCache;
 
     rc = rp_jsonc_unpack(aliasJ, "{ss,s?s,s?s,s?s,s?i,s?i,s?o}", "uid",
                          &alias->uid, "info", &alias->info, "url", &alias->url,
@@ -362,7 +362,7 @@ static int parseOneAlias(oidcCoreHdlT *oidc,
  *
  * @return NULL on error or the array of aliases
  */
-oidcAliasT *aliasParseConfig(oidcCoreHdlT *oidc, json_object *aliasesJ)
+oidcAliasT *aliasParseConfig(const oidcCoreHdlT *oidc, json_object *aliasesJ)
 {
     oidcAliasT *aliases = NULL;
     int rc = 0, count, idx;

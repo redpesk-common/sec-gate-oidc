@@ -36,9 +36,9 @@ typedef struct oidcAliasesS
     const char *url;
     const char *path;
     const char **roles;
-    oidcCoreHdlT *oidc;
+    const oidcCoreHdlT *oidc;
     unsigned long tCache;
 } oidcAliasT;
 
-oidcAliasT *aliasParseConfig(oidcCoreHdlT *oidc, json_object *aliasesJ);
+oidcAliasT *aliasParseConfig(const oidcCoreHdlT *oidc, json_object *aliasesJ);
 int aliasRegisterOne(const oidcAliasT *alias, afb_hsrv *hsrv);

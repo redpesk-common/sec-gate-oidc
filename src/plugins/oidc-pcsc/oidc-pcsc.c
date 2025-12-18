@@ -474,7 +474,7 @@ int pcscLoginCB(afb_hreq *hreq, void *ctx)
     return 1;  // we're done
 
 OnErrorExit:
-    afb_hreq_redirect_to(hreq, idp->oidc->globals.loginUrl, HREQ_QUERY_INCL,
+    afb_hreq_redirect_to(hreq, oidcCoreGlobals(idp->oidc)->loginUrl, HREQ_QUERY_INCL,
                          HREQ_REDIR_TMPY);
     return 1;
 }
@@ -488,7 +488,7 @@ int pcscRegisterApis(oidcIdpT *idp,
     // add a dedicate verb to check login/passwd from websocket
     // err= afb_api_add_verb(idp->oidc->apiv4, idp->uid, idp->info,
     // checkLoginVerb, idp, NULL, 0, 0);
-    err = afb_api_v4_add_verb_hookable(idp->oidc->apiv4, idp->uid, idp->info,
+    err = afb_api_v4_add_verb_hookable(oidcCoreAfbApi(idp->oidc), idp->uid, idp->info,
                                        checkLoginVerb, idp, NULL, 0, 0);
     if (err)
         goto OnErrorExit;

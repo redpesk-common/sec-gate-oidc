@@ -539,7 +539,7 @@ static int ldapRegisterApis(oidcIdpT *idp,
     int err;
 
     // add a dedicate verb to check login/passwd from websocket
-    err = afb_api_add_verb(idp->oidc->apiv4, idp->uid, idp->info,
+    err = afb_api_add_verb(oidcCoreAfbApi(idp->oidc), idp->uid, idp->info,
                            checkLoginVerb, idp, NULL, 0, 0);
     if (err)
         goto OnErrorExit;

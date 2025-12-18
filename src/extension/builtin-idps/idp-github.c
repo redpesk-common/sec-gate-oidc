@@ -140,7 +140,7 @@ static void githubGetAttrsByToken(idpRqtCtxT *rqtCtx, const char *orgApiUrl)
     // https://docs.github.com/en/rest/reference/orgs#list-organizations-for-the-authenticated-user
     EXT_DEBUG("[github-attrs-get] curl -H 'Authorization: %s' %s\n", tokenVal,
               orgApiUrl);
-    int err = httpSendGet(idp->oidc->httpPool, orgApiUrl, &dfltOpts, authToken,
+    int err = httpSendGet(oidcCoreHTTPPool(idp->oidc), orgApiUrl, &dfltOpts, authToken,
                           githubAttrsGetByTokenCB, rqtCtx);
     if (err)
         EXT_ERROR("[github-attrs-fail] curl -H 'Authorization: %s' %s\n",
@@ -227,7 +227,7 @@ static void githubUserGetByToken(idpRqtCtxT *rqtCtx)
     // https://docs.github.com/en/rest/reference/orgs#list-organizations-for-the-authenticated-user
     EXT_DEBUG("[github-profile-get] curl -H 'Authorization: %s' %s\n", tokenVal,
               idp->wellknown->userinfo);
-    int err = httpSendGet(idp->oidc->httpPool, idp->wellknown->userinfo,
+    int err = httpSendGet(oidcCoreHTTPPool(idp->oidc), idp->wellknown->userinfo,
                           &dfltOpts, authToken, githubUserGetByTokenCB, rqtCtx);
     if (err)
         goto OnErrorExit;
@@ -281,7 +281,6 @@ static int githubAccessToken(afb_hreq *hreq,
 {
     assert(idp->magic == MAGIC_OIDC_IDP);
     char url[EXT_URL_MAX_LEN];
-    oidcCoreHdlT *oidc = idp->oidc;
     int err;
 
     const char *params[] = {
@@ -315,7 +314,7 @@ static int githubAccessToken(afb_hreq *hreq,
         goto OnErrorExit;
 
     EXT_DEBUG("[github-access-token] curl -X post %s\n", url);
-    err = httpSendPost(oidc->httpPool, url, &dfltOpts, NULL /*headers */,
+    err = httpSendPost(oidcCoreHTTPPool(idp->oidc), url, &dfltOpts, NULL /*headers */,
                        NULL /*data */, 0 /*length */, githubAccessTokenCB,
                        rqtCtx);
     if (err)

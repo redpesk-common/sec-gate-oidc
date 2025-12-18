@@ -59,6 +59,10 @@ typedef struct
     int debug;
 } oidGlobalsT;
 
+const char *oidcCoreUID(const oidcCoreHdlT *oidc);
+const oidGlobalsT *oidcCoreGlobals(const oidcCoreHdlT *oidc);
+afb_api_v4 *oidcCoreAfbApi(const oidcCoreHdlT *oidc);
+httpPoolT *oidcCoreHTTPPool(const oidcCoreHdlT *oidc);
 // this structure is returned by plugin registration callback
 typedef struct
 {

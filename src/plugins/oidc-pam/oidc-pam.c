@@ -349,7 +349,7 @@ int pamRegisterApis(oidcIdpT *idp,
     // add a dedicate verb to check login/passwd from websocket
     // err= afb_api_add_verb(idp->oidc->apiv4, idp->uid, idp->info,
     // checkLoginVerb, idp, NULL, 0, 0);
-    err = afb_api_v4_add_verb_hookable(idp->oidc->apiv4, idp->uid, idp->info,
+    err = afb_api_v4_add_verb_hookable(oidcCoreAfbApi(idp->oidc), idp->uid, idp->info,
                                        checkLoginVerb, idp, NULL, 0, 0);
     if (err)
         goto OnErrorExit;

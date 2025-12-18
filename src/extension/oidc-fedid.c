@@ -76,11 +76,12 @@ void fedidsessionReset(oidcSessionT *session, const oidcProfileT *idpProfile)
             }
         }
 
+        const oidGlobalsT *globals = oidcCoreGlobals(idpProfile->idp->oidc);
         count = oidcSessionEventPush(
             session, "{ss ss ss* ss*}", "status", "loa-reset", "home",
-            idpProfile->idp->oidc->globals.homeUrl ?: "/", "login",
-            idpProfile->idp->oidc->globals.loginUrl, "error",
-            idpProfile->idp->oidc->globals.errorUrl);
+            globals->homeUrl ?: "/", "login",
+            globals->loginUrl, "error",
+            globals->errorUrl);
         if (!count)
             EXT_DEBUG("[fedid-session-reset] no client subscribed uuid=%s ?",
                       oidcSessionUUID(session));
@@ -145,11 +146,11 @@ static void fedidCheckCB(void *ctx,
         oidcSessionSetFedUser(session, idpRqtCtx->fedUser);
         oidcSessionSetFedSocial(session, idpRqtCtx->fedSocial);
         if (idpProfile->slave) {
-            targetUrl = idpRqtCtx->idp->oidc->globals.fedlinkUrl;
+            targetUrl = oidcCoreGlobals(idpRqtCtx->idp->oidc)->fedlinkUrl;
             oidcSessionSetFedIdLinkRequest(session, FEDID_LINK_REQUESTED);
         }
         else {
-            targetUrl = idpRqtCtx->idp->oidc->globals.registerUrl;
+            targetUrl = oidcCoreGlobals(idpRqtCtx->idp->oidc)->registerUrl;
         }
         if (hreq) {
             const char *params[] = {
@@ -269,7 +270,7 @@ static void fedidCheckCB(void *ctx,
 OnErrorExit:
     EXT_NOTICE("[fedid-authent-redirect] (hoops!!!) internal error");
     if (hreq)
-        afb_hreq_redirect_to(hreq, idpRqtCtx->idp->oidc->globals.errorUrl,
+        afb_hreq_redirect_to(hreq, oidcCoreGlobals(idpRqtCtx->idp->oidc)->errorUrl,
                              HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
     if (wreq)
         afb_req_v4_reply_hookable(wreq, -1, 0, NULL);
@@ -289,7 +290,7 @@ int fedidCheck(idpRqtCtxT *idpRqtCtx)
         goto OnErrorExit;
 
     afb_data_addref(params[0]);  // prevent params to be deleted
-    afb_api_v4_call_hookable(idpRqtCtx->idp->oidc->apiv4, API_OIDC_USR_SVC,
+    afb_api_v4_call_hookable(oidcCoreAfbApi(idpRqtCtx->idp->oidc), API_OIDC_USR_SVC,
                              "social-check", 1, params, fedidCheckCB,
                              idpRqtCtx);
     return 0;

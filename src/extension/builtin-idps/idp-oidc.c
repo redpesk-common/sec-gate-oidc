@@ -282,7 +282,7 @@ static int oidcUserGetByToken(idpRqtCtxT *rqtCtx)
     // https://docs.oidc.com/en/rest/reference/orgs#list-organizations-for-the-authenticated-user
     EXT_DEBUG("[oidc-profile-get] curl -H 'Authorization: %s' %s\n",
               rqtCtx->token, idp->wellknown->userinfo);
-    int err = httpSendGet(idp->oidc->httpPool, idp->wellknown->userinfo,
+    int err = httpSendGet(oidcCoreHTTPPool(idp->oidc), idp->wellknown->userinfo,
                           &dfltOpts, authToken, oidcUserGetByTokenCB, rqtCtx);
     if (err)
         goto OnErrorExit;
@@ -418,7 +418,6 @@ static int oidcAccessToken(afb_hreq *hreq,
                            oidcSessionT *session)
 {
     assert(idp->magic == MAGIC_OIDC_IDP);
-    oidcCoreHdlT *oidc = idp->oidc;
     int err, dataLen;
     oidcSchemaT *schema = (oidcSchemaT *)idp->userData;
 
@@ -448,7 +447,7 @@ static int oidcAccessToken(afb_hreq *hreq,
             "[oidc-access-token] curl -H 'Authorization: %s' -X post -d '%s' "
             "%s\n",
             schema->auth64, (char *)rqtCtx->userData, idp->wellknown->tokenid);
-        err = httpSendPost(oidc->httpPool, idp->wellknown->tokenid, &dfltOpts,
+        err = httpSendPost(oidcCoreHTTPPool(idp->oidc), idp->wellknown->tokenid, &dfltOpts,
                            headers, rqtCtx->userData, dataLen,
                            oidcAccessTokenCB, rqtCtx);
         break;
@@ -474,7 +473,7 @@ static int oidcAccessToken(afb_hreq *hreq,
 
         EXT_DEBUG("[oidc-access-token] curl -X post -d '%s' %s\n",
                   (char *)rqtCtx->userData, idp->wellknown->tokenid);
-        err = httpSendPost(oidc->httpPool, idp->wellknown->tokenid, &dfltOpts,
+        err = httpSendPost(oidcCoreHTTPPool(idp->oidc), idp->wellknown->tokenid, &dfltOpts,
                            headers, rqtCtx->userData, dataLen,
                            oidcAccessTokenCB, rqtCtx);
         break;
@@ -781,7 +780,7 @@ static httpRqtActionT oidcDiscoveryCB(httpRqtT *httpRqt)
     // if jwks is define request URI to get jwt keys
     if (idp->wellknown->jwks && schema->jwksJ &&
         json_object_get_boolean(schema->jwksJ)) {
-        int err = httpSendGet(idp->oidc->httpPool, idp->wellknown->jwks, NULL,
+        int err = httpSendGet(oidcCoreHTTPPool(idp->oidc), idp->wellknown->jwks, NULL,
                               NULL, oidcDiscoJwksCB, schema);
         if (err)
             goto OnErrorExit;
@@ -850,7 +849,7 @@ static int oidcRegisterConfig(oidcIdpT *idp, json_object *configJ)
     if (idp->wellknown->discovery) {
         EXT_NOTICE("[oidc-wellknown-get] oidc wellknown url=%s",
                    idp->wellknown->discovery);
-        int err = httpSendGet(idp->oidc->httpPool, idp->wellknown->discovery,
+        int err = httpSendGet(oidcCoreHTTPPool(idp->oidc), idp->wellknown->discovery,
                               &dfltOpts, NULL, oidcDiscoveryCB, idp);
         if (err && !idp->wellknown->lazy) {
             EXT_CRITICAL(

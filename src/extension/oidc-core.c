@@ -44,6 +44,26 @@
 #include "oidc-idsvc.h"
 
 
+const char *oidcCoreUID(const oidcCoreHdlT *oidc)
+{
+    return oidc->uid;
+}
+
+const oidGlobalsT *oidcCoreGlobals(const oidcCoreHdlT *oidc)
+{
+    return &oidc->globals;
+}
+
+afb_api_v4 *oidcCoreAfbApi(const oidcCoreHdlT *oidc)
+{
+    return oidc->apiv4;
+}
+
+httpPoolT *oidcCoreHTTPPool(const oidcCoreHdlT *oidc)
+{
+    return oidc->httpPool;
+}
+
 /* read and setup the global configuration object */
 static int globalConfig(oidGlobalsT *globals, json_object *globalsJ)
 {
