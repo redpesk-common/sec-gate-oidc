@@ -244,7 +244,6 @@ OnErrorExit:
 int pamLoginCB(afb_hreq *hreq, void *ctx)
 {
     const oidcIdpT *idp = (const oidcIdpT *)ctx;
-    assert(idp->magic == MAGIC_OIDC_IDP);
     char redirectUrl[EXT_HEADER_MAX_LEN];
     const oidcProfileT *profile = NULL;
     int err, status, targetLOA;

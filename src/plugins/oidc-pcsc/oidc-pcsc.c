@@ -434,7 +434,6 @@ OnErrorExit:
 int pcscLoginCB(afb_hreq *hreq, void *ctx)
 {
     const oidcIdpT *idp = (const oidcIdpT *)ctx;
-    assert(idp->magic == MAGIC_OIDC_IDP);
     const oidcProfileT *profile = NULL;
     int err, targetLOA;
 

@@ -449,7 +449,6 @@ OnErrorExit:
 static int ldapLoginCB(afb_hreq *hreq, void *ctx)
 {
     oidcIdpT *idp = (oidcIdpT *)ctx;
-    assert(idp->magic == MAGIC_OIDC_IDP);
     char redirectUrl[EXT_HEADER_MAX_LEN];
     const oidcProfileT *profile = NULL;
     int err, status, targetLOA;

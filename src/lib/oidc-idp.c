@@ -350,7 +350,6 @@ int idpParseOidcConfig(oidcIdpT *idp,
         idp->info = idp->uid;
 
     // parse config sections
-    idp->magic = MAGIC_OIDC_IDP;
     idp->ctx = ctx;
     idp->credentials =
         idpParseCredentials(idp, credentialsJ, defaults->credentials);
@@ -405,7 +404,6 @@ static int idpParseOne(const oidcCoreHdlT *oidc, json_object *idpJ, oidcIdpT *id
             goto OnErrorExit;
     }
 
-    idp->magic = MAGIC_OIDC_IDP;
     idp->oidc = oidc;
     idp->plugin = idpPluginFind(type);
     if (!idp->plugin) {

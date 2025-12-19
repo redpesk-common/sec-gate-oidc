@@ -279,7 +279,6 @@ static int githubAccessToken(afb_hreq *hreq,
                              const char *code,
                              oidcSessionT *session)
 {
-    assert(idp->magic == MAGIC_OIDC_IDP);
     char url[EXT_URL_MAX_LEN];
     int err;
 
@@ -331,7 +330,6 @@ OnErrorExit:
 static int githubLoginCB(afb_hreq *hreq, void *ctx)
 {
     const oidcIdpT *idp = (const oidcIdpT *)ctx;
-    assert(idp->magic == MAGIC_OIDC_IDP);
     char redirectUrl[EXT_HEADER_MAX_LEN];
     const oidcProfileT *profile = NULL;
     int err, status, targetLOA;

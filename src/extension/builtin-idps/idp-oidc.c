@@ -417,7 +417,6 @@ static int oidcAccessToken(afb_hreq *hreq,
                            const char *code,
                            oidcSessionT *session)
 {
-    assert(idp->magic == MAGIC_OIDC_IDP);
     int err, dataLen;
     oidcSchemaT *schema = (oidcSchemaT *)idp->userData;
 
@@ -501,7 +500,6 @@ OnErrorExit:
 static int oidcLoginCB(afb_hreq *hreq, void *ctx)
 {
     oidcIdpT *idp = (oidcIdpT *)ctx;
-    assert(idp->magic == MAGIC_OIDC_IDP);
     char redirectUrl[EXT_HEADER_MAX_LEN];
     const oidcProfileT *profile = NULL;
     int err, status, targetLOA;
