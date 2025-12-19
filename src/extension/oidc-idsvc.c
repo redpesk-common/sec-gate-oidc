@@ -72,6 +72,14 @@ static void fedIdSubCall(
                     afb_req_subcall_on_behalf, callback, closure);
 }
 
+/*
+ * helper function for getting oidc core object from a request
+ */
+static const oidcCoreHdlT *wreq2oidc(afb_req_t wreq)
+{
+    return (const oidcCoreHdlT *)afb_api_get_userdata(afb_req_get_api(wreq));
+}
+
 /************************************************************************
  * Implement verb "ping"
  *
@@ -159,7 +167,7 @@ static json_object *idpQueryList(afb_req_t wreq, const char **idps)
     int err;
 
     // retrieve OIDC global context from API handle
-    oidcCoreHdlT *oidc = afb_api_get_userdata(afb_req_get_api(wreq));
+    const oidcCoreHdlT *oidc = wreq2oidc(wreq);
 
     // retrieve oidc config from current alias cookie
     const oidcAliasT *alias;
@@ -564,7 +572,7 @@ static void idpQueryConf(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     const oidcAliasT *alias;
 
     // retrieve OIDC global context from API handle
-    oidcCoreHdlT *oidc = afb_api_get_userdata(afb_req_get_api(wreq));
+    const oidcCoreHdlT *oidc = wreq2oidc(wreq);
 
     // retrieve current wreq LOA from session (to be fixed by Jose)
     oidcSessionT *session = oidcSessionOfReq(wreq);
@@ -609,7 +617,7 @@ static void urlQuery(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     json_object *responseJ;
 
     // retrieve OIDC global context from API handle
-    oidcCoreHdlT *oidc = afb_api_get_userdata(afb_req_get_api(wreq));
+    const oidcCoreHdlT *oidc = wreq2oidc(wreq);
 
     const oidGlobalsT *globals = oidcCoreGlobals(oidc);
     err = rp_jsonc_pack(&responseJ, "{ss ss ss ss ss}", "home",
