@@ -74,6 +74,17 @@ int AfbExtensionDeclareV1(void *ctx,
 
     EXT_INFO("Extension %s got to declare", AfbExtensionManifest.name);
 
+    // TODO: asking oidcCore for inputs is not verry good,
+    // TODO: also, internals of oidcCore are depending on fedid stuff
+    // TODO: so situation should be made cleaner.
+    // TODO: A way is:
+    // TODO:  1. split config read into main and oidc core
+    // TODO:  2. add an extension object
+    // TODO:  3. setup fedid in main extension
+    // TODO:  4. deliver fedid to oidcCore
+    // TODO: But federation is a specific topic that should I think
+    // TODO: be separated from oidcCore that should focus on authorization
+
     // import/connect to fedid API
     fedidUri = oidcCoreFedIdURI(oidc);
     if (fedidUri != NULL)
