@@ -94,59 +94,50 @@ static void idsvcPing(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
         afb_req_reply(wreq, count, 1, &data);
 }
 
-// get result from /fedid/create-user
+/************************************************************************
+ * Implement verb "usr-check"
+ *
+ * Receive a JSON object with 2 fields: label and value
+ *
+ * Checks in the table of users if an entry exists with the given
+ * value.
+ *
+ * Return the status 1 and the string value 'locked' if an entry
+ * is found or the status 0 and the string 'available' otherwise.
+ * If a negative status is returned, it indecates an error.
+ */
+
 static void userCheckAttrCB(void *ctx,
                             int status,
                             unsigned argc,
                             const afb_data_t argv[],
                             afb_req_t wreq)
 {
-    static char errorMsg[] = "[user-attr-fail]  (userCheckAttrCB)";
-    static char existMsg[] = "locked";
-    static char freeMsg[] = "available";
-    afb_data_t reply[1], argd[2];
-    fedUserRawT *fedUser;
-    oidcProfileT *profile;
-    json_object *profileJ;
-
-    // return creation status to HTML5
-    if (status < 0)
-        goto OnErrorExit;
-
-    if (status > 0)
-        afb_create_data_raw(&reply[0], AFB_PREDEFINED_TYPE_STRINGZ, existMsg,
-                            sizeof(existMsg), NULL, NULL);
-    else
-        afb_create_data_raw(&reply[0], AFB_PREDEFINED_TYPE_STRINGZ, freeMsg,
-                            sizeof(freeMsg), NULL, NULL);
-
-    afb_req_reply(wreq, status, 1, reply);
-    return;
-
-OnErrorExit:
-    afb_create_data_raw(&reply[0], AFB_PREDEFINED_TYPE_STRINGZ, errorMsg,
-                        sizeof(errorMsg), NULL, NULL);
-    afb_req_reply(wreq, -1, 1, reply);
-    return;
+    if (status < 0) {
+        // got an error from fedid
+        EXT_NOTICE("[oidc-idsvc] usr-check got error");
+        afb_data_array_addref(argc, argv);
+        afb_req_reply(wreq, status, argc, argv);
+    }
+    else {
+        // no error, try to add the string
+        afb_data_t data;
+        int rc = makeStringData(&data, status ? "locked" : "available", 0);
+        afb_req_reply(wreq, status, rc >= 0, &data);
+    }
 }
 
-// check user email/pseudo attribute
 static void userCheckAttr(afb_req_t wreq,
                           unsigned argc,
                           afb_data_t const argv[])
 {
-    int err;
-
-    if (argc != 1)
-        goto OnErrorExit;
     afb_data_array_addref(argc, argv);
     afb_req_subcall(wreq, API_OIDC_USR_SVC, "user-check", argc, argv,
                     afb_req_subcall_on_behalf, userCheckAttrCB, NULL);
-    return;
-
-OnErrorExit:
-    afb_req_reply(wreq, -100, 0, NULL);
 }
+
+/************************************************************************
+ */
 
 static json_object *idpQueryList(afb_req_t wreq, const char **idps)
 {
