@@ -39,9 +39,8 @@
 #include "oidc-alias.h"
 #include "oidc-core.h"
 #include "oidc-fedid.h"
-#include "oidc-idp-plugin.h"
-#include "oidc-idsvc.h"
 #include "oidc-session.h"
+#include "oidc-idp-plugin.h"
 
 // clang-format off
 const rp_enum_map_t oidcFedidSchema[] = {

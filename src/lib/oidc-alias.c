@@ -38,7 +38,6 @@
 #include "oidc-alias.h"
 #include "oidc-core.h"
 #include "oidc-fedid.h"
-#include "oidc-idsvc.h"
 #include "oidc-session.h"
 
 // dummy unique value for session key

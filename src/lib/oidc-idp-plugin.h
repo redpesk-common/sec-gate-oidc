@@ -23,23 +23,25 @@
 
 #pragma once
 
-#include <json-c/json.h>
-#include "oidc-core.h"
+#include "oidc-idp.h"
 
-typedef struct oidcApisS
+struct idpPluginS
 {
     const char *uid;
-    const char *uri;
     const char *info;
-    int loa;
-    int lazy;
-    const char **roles;
-    oidcCoreHdlT *oidc;
-    struct afb_apiset *apiset;
-} oidcApisT;
+    int (*registerConfig)(oidcIdpT *idp, json_object *idpJ);
+    int (*registerApis)(const oidcIdpT *idp,
+                        struct afb_apiset *declare_set,
+                        struct afb_apiset *call_set);
+    int (*registerAlias)(const oidcIdpT *idp, afb_hsrv *hsrv);
+    void (*resetSession)(const oidcProfileT *idpProfile, void *ctx);
+    void *ctx;
+};
 
-oidcApisT *apisParseConfig(oidcCoreHdlT *oidc, json_object *apisJ);
-int apisRegisterOne(oidcCoreHdlT *oidc,
-                    oidcApisT *api,
-                    afb_apiset *declare_set,
-                    afb_apiset *call_set);
+// idp callback definition
+typedef int (*oidcPluginInitCbT)(const oidcCoreHdlT *oidc);
+
+const idpPluginT *idpPluginFind(const char *type);
+int idpPluginRegister(const idpPluginT *plugin);
+int idpPluginParseOne(const oidcCoreHdlT *oidc, json_object *pluginJ);
+int idpPluginsParseConfig(const oidcCoreHdlT *oidc, json_object *pluginsJ);

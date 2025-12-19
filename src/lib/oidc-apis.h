@@ -23,25 +23,23 @@
 
 #pragma once
 
-#include "oidc-idp.h"
+#include <json-c/json.h>
+#include "oidc-core.h"
 
-struct idpPluginS
+typedef struct oidcApisS
 {
     const char *uid;
+    const char *uri;
     const char *info;
-    int (*registerConfig)(oidcIdpT *idp, json_object *idpJ);
-    int (*registerApis)(oidcIdpT *idp,
-                        struct afb_apiset *declare_set,
-                        struct afb_apiset *call_set);
-    int (*registerAlias)(const oidcIdpT *idp, afb_hsrv *hsrv);
-    void (*resetSession)(const oidcProfileT *idpProfile, void *ctx);
-    void *ctx;
-};
+    int loa;
+    int lazy;
+    const char **roles;
+    const oidcCoreHdlT *oidc;
+    struct afb_apiset *apiset;
+} oidcApisT;
 
-// idp callback definition
-typedef int (*oidcPluginInitCbT)(oidcCoreHdlT *oidc);
-
-const idpPluginT *idpPluginFind(const char *type);
-int idpPluginRegister(const idpPluginT *plugin);
-int idpPluginParseOne(oidcCoreHdlT *oidc, json_object *pluginJ);
-int idpPluginsParseConfig(oidcCoreHdlT *oidc, json_object *pluginsJ);
+oidcApisT *apisParseConfig(const oidcCoreHdlT *oidc, json_object *apisJ);
+int apisRegister(const oidcCoreHdlT *oidc,
+                 oidcApisT *api,
+                 afb_apiset *declare_set,
+                 afb_apiset *call_set);

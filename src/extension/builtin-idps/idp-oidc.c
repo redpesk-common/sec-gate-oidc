@@ -179,7 +179,7 @@ OnErrorExit:
 
 static int oidcUserFederateId(idpRqtCtxT *rqtCtx, json_object *profileJ)
 {
-    oidcIdpT *idp = rqtCtx->idp;
+    const oidcIdpT *idp = rqtCtx->idp;
     oidcSchemaT *schema = (oidcSchemaT *)idp->userData;
     fedSocialRawT *fedSocial;
     fedUserRawT *fedUser;
@@ -270,7 +270,7 @@ OnErrorExit:
 // https://docs.oidc.com/en/developers/apps/authorizing-oauth-apps#web-application-flow
 static int oidcUserGetByToken(idpRqtCtxT *rqtCtx)
 {
-    oidcIdpT *idp = rqtCtx->idp;
+    const oidcIdpT *idp = rqtCtx->idp;
 
     httpKeyValT authToken[] = {
         {.tag = "Authorization", .value = rqtCtx->token},

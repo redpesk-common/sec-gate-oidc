@@ -23,10 +23,8 @@
 
 #pragma once
 
-#define _GNU_SOURCE
-
-#include "oidc-alias.h"
 #include "oidc-common.h"
+#include "oidc-alias.h"
 #include "oidc-idp.h"
 
 typedef struct

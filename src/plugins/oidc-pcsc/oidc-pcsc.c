@@ -333,7 +333,7 @@ OnErrorExit: {
 }
 
 // check pcsc login/passwd using scope as pcsc application
-static int pcscScardGet(oidcIdpT *idp,
+static int pcscScardGet(const oidcIdpT *idp,
                         const oidcProfileT *profile,
                         ulong pin,
                         afb_hreq *hreq,
@@ -379,7 +379,7 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
 {
     const char *errmsg =
         "[pcsc-login-fail] invalid credentials (insert a valid scard)";
-    oidcIdpT *idp = (oidcIdpT *)afb_req_v4_vcbdata(wreq);
+    const oidcIdpT *idp = (const oidcIdpT *)afb_req_v4_vcbdata(wreq);
     struct afb_data *args[nparams];
     const char *scope = NULL;
     const oidcProfileT *profile = NULL;
@@ -433,7 +433,7 @@ OnErrorExit:
 // when call with no login/passwd display form otherwise try to log user
 int pcscLoginCB(afb_hreq *hreq, void *ctx)
 {
-    oidcIdpT *idp = (oidcIdpT *)ctx;
+    const oidcIdpT *idp = (const oidcIdpT *)ctx;
     assert(idp->magic == MAGIC_OIDC_IDP);
     const oidcProfileT *profile = NULL;
     int err, targetLOA;
@@ -479,7 +479,7 @@ OnErrorExit:
     return 1;
 }
 
-int pcscRegisterApis(oidcIdpT *idp,
+int pcscRegisterApis(const oidcIdpT *idp,
                      struct afb_apiset *declare_set,
                      struct afb_apiset *call_set)
 {
@@ -489,7 +489,7 @@ int pcscRegisterApis(oidcIdpT *idp,
     // err= afb_api_add_verb(idp->oidc->apiv4, idp->uid, idp->info,
     // checkLoginVerb, idp, NULL, 0, 0);
     err = afb_api_v4_add_verb_hookable(oidcCoreAfbApi(idp->oidc), idp->uid,
-                                       idp->info, checkLoginVerb, idp, NULL, 0,
+                                       idp->info, checkLoginVerb, (void*)idp, NULL, 0,
                                        0);
     if (err)
         goto OnErrorExit;

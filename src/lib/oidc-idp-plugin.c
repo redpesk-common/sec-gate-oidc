@@ -86,7 +86,7 @@ int idpPluginRegister(const idpPluginT *plugin)
 }
 
 // parse one plugin configuration
-int idpPluginParseOne(oidcCoreHdlT *oidc, json_object *pluginJ)
+int idpPluginParseOne(const oidcCoreHdlT *oidc, json_object *pluginJ)
 {
     int rc;
     json_object *obj;
@@ -138,7 +138,7 @@ int idpPluginParseOne(oidcCoreHdlT *oidc, json_object *pluginJ)
 }
 
 // Parse the configuration object for idp plugins
-int idpPluginsParseConfig(oidcCoreHdlT *oidc, json_object *pluginsJ)
+int idpPluginsParseConfig(const oidcCoreHdlT *oidc, json_object *pluginsJ)
 {
     int err, count, idx;
 

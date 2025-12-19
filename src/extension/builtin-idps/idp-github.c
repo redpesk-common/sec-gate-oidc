@@ -128,7 +128,7 @@ OnErrorExit:
 static void githubGetAttrsByToken(idpRqtCtxT *rqtCtx, const char *orgApiUrl)
 {
     char tokenVal[EXT_TOKEN_MAX_LEN];
-    oidcIdpT *idp = rqtCtx->idp;
+    const oidcIdpT *idp = rqtCtx->idp;
     rqtCtx->ucount++;
 
     snprintf(tokenVal, sizeof(tokenVal), "Bearer %s", rqtCtx->token);
@@ -154,7 +154,7 @@ static void githubGetAttrsByToken(idpRqtCtxT *rqtCtx, const char *orgApiUrl)
 static httpRqtActionT githubUserGetByTokenCB(httpRqtT *httpRqt)
 {
     idpRqtCtxT *rqtCtx = (idpRqtCtxT *)httpRqt->userData;
-    oidcIdpT *idp = rqtCtx->idp;
+    const oidcIdpT *idp = rqtCtx->idp;
     fedSocialRawT *fedSocial = NULL;
     fedUserRawT *fedUser = NULL;
     int err;
@@ -216,7 +216,7 @@ OnErrorExit:
 static void githubUserGetByToken(idpRqtCtxT *rqtCtx)
 {
     char tokenVal[EXT_TOKEN_MAX_LEN];
-    oidcIdpT *idp = rqtCtx->idp;
+    const oidcIdpT *idp = rqtCtx->idp;
 
     snprintf(tokenVal, sizeof(tokenVal), "Bearer %s", rqtCtx->token);
     httpKeyValT authToken[] = {
@@ -274,7 +274,7 @@ OnErrorExit:
 }
 
 static int githubAccessToken(afb_hreq *hreq,
-                             oidcIdpT *idp,
+                             const oidcIdpT *idp,
                              const char *redirectUrl,
                              const char *code,
                              oidcSessionT *session)
@@ -330,7 +330,7 @@ OnErrorExit:
 // this check idp code and either wreq profile or redirect to idp login page
 static int githubLoginCB(afb_hreq *hreq, void *ctx)
 {
-    oidcIdpT *idp = (oidcIdpT *)ctx;
+    const oidcIdpT *idp = (const oidcIdpT *)ctx;
     assert(idp->magic == MAGIC_OIDC_IDP);
     char redirectUrl[EXT_HEADER_MAX_LEN];
     const oidcProfileT *profile = NULL;

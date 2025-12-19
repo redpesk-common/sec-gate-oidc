@@ -52,6 +52,9 @@ const char *oidcCoreUID(const oidcCoreHdlT *oidc);
 const oidGlobalsT *oidcCoreGlobals(const oidcCoreHdlT *oidc);
 afb_api_v4 *oidcCoreAfbApi(const oidcCoreHdlT *oidc);
 httpPoolT *oidcCoreHTTPPool(const oidcCoreHdlT *oidc);
+const char *oidcCoreFedIdURI(const oidcCoreHdlT *oidc);
+const char *oidcCoreAfbApiName(const oidcCoreHdlT *oidc);
+void oidcCoreSetAfbApi(oidcCoreHdlT *oidc, afb_api_v4 *apiv4);
 
 int oidcCoreParseConfig(oidcCoreHdlT **poidc,
                         struct json_object *oidcJ,

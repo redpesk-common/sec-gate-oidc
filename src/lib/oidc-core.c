@@ -39,10 +39,9 @@
 #include "curl-glue.h"
 #include "oidc-alias.h"
 #include "oidc-apis.h"
-#include "oidc-builtin-idps.h"
 #include "oidc-defaults.h"
 #include "oidc-idp.h"
-#include "oidc-idsvc.h"
+#include "oidc-session.h"
 
 #define URL_OIDC_USR_ERROR    "/sgate/common/error.html"
 #define URL_OIDC_USR_LOGIN    "/sgate/common/login.html"
@@ -85,6 +84,21 @@ afb_api_v4 *oidcCoreAfbApi(const oidcCoreHdlT *oidc)
 httpPoolT *oidcCoreHTTPPool(const oidcCoreHdlT *oidc)
 {
     return oidc->httpPool;
+}
+
+const char *oidcCoreFedIdURI(const oidcCoreHdlT *oidc)
+{
+    return oidc->fedapi;
+}
+
+const char *oidcCoreAfbApiName(const oidcCoreHdlT *oidc)
+{
+    return oidc->api;
+}
+
+void oidcCoreSetAfbApi(oidcCoreHdlT *oidc, afb_api_v4 *apiv4)
+{
+    oidc->apiv4 = apiv4;
 }
 
 /* read and setup the global configuration object */
@@ -145,18 +159,18 @@ int oidcCoreParseConfig(oidcCoreHdlT **poidc,
     oidc->uid = uid;
     json_object_get(oidcJ);
 
-    // register builtin IDPs
-    err = registerBuiltinIdps();
-    if (err)
-        goto OnErrorExit;
-
     // clang-format off
     err = rp_jsonc_unpack (oidcJ,
                            "{s?s,s?s,s?o,s?o,s?o,s?o,s?o,s?o,s?i}",
                            "api", &oidc->api,
                            "info", &oidc->info,
                            "globals", &globalsJ,
-                           "plugins", &pluginsJ, "idp", &idpsJ, "idps", &idpsJ, "alias", &aliasJ, "apis", &apisJ, "verbose", &oidc->verbose);
+                           "plugins", &pluginsJ,
+                           "idp", &idpsJ,
+                           "idps", &idpsJ,
+                           "alias", &aliasJ,
+                           "apis", &apisJ,
+                           "verbose", &oidc->verbose);
     // clang-format on
     if (err) {
         EXT_ERROR("[oidc-core] misconfig %s (pos %d)",
@@ -221,34 +235,20 @@ int oidcCoreDeclareApis(oidcCoreHdlT *oidc,
                         struct afb_apiset *declare_set,
                         struct afb_apiset *call_set)
 {
-    int err, idx;
-
-    // import/connect to fedid API
-    if (oidc->fedapi) {
-        err = afb_api_ws_add_client(oidc->fedapi, declare_set, call_set, 1);
-        if (err) {
-            EXT_ERROR(
-                "[oidc-fedapi-not-found] ext=%s fail to connect to fedidp=%s  "
-                "(AfbExtensionDeclareV1)",
-                oidc->uid, oidc->fedapi);
-            goto OnErrorExit;
-        }
-    }
-    // declare internal identity service api
-    err = idsvcDeclareApi(&oidc->apiv4, oidc->api, oidc, declare_set, call_set);
-    if (err)
-        goto OnErrorExit;
+    int err;
+    const oidcIdpT *idpiter;
+    oidcApisT *apiiter;
 
     // register apis of idps
-    for (idx = 0; oidc->idps[idx].uid; idx++) {
-        err = idpRegisterApis(oidc, &oidc->idps[idx], declare_set, call_set);
+    for (idpiter = oidc->idps; idpiter->uid != NULL; idpiter++) {
+        err = idpRegisterApis(oidc, idpiter, declare_set, call_set);
         if (err)
             goto OnErrorExit;
     }
 
     // register protected apis
-    for (idx = 0; oidc->apis[idx].uid; idx++) {
-        err = apisRegisterOne(oidc, &oidc->apis[idx], declare_set, call_set);
+    for (apiiter = oidc->apis; apiiter->uid != NULL; apiiter++) {
+        err = apisRegister(oidc, apiiter, declare_set, call_set);
         if (err)
             goto OnErrorExit;
     }
@@ -256,29 +256,26 @@ int oidcCoreDeclareApis(oidcCoreHdlT *oidc,
     return 0;
 
 OnErrorExit:
-    EXT_CRITICAL(
-        "[oidc-declare-ext-fail] ext=%s fail to declare oidc API "
-        "(AfbExtensionDeclareV1)",
-        oidc->uid);
     return -1;
 }
 
 // Declare HTTP hooks
 int oidcCoreDeclareHTTP(oidcCoreHdlT *oidc, afb_hsrv *hsrv)
 {
+    int err;
     const oidcIdpT *idpiter;
     const oidcAliasT *aliasiter;
 
     // register IDP aliases
     for (idpiter = oidc->idps; idpiter->uid != NULL; idpiter++) {
-        int err = idpRegisterAlias(oidc, idpiter, hsrv);
+        err = idpRegisterAlias(oidc, idpiter, hsrv);
         if (err)
             goto OnErrorExit;
     }
 
     // register other aliases
     for (aliasiter = oidc->aliases; aliasiter->uid != NULL; aliasiter++) {
-        int err = aliasRegisterOne(aliasiter, hsrv);
+        err = aliasRegisterOne(aliasiter, hsrv);
         if (err)
             goto OnErrorExit;
     }

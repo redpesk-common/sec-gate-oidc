@@ -1,4 +1,5 @@
 add_subdirectory(libcurl-glue)
 add_subdirectory(pcscd-client)
+add_subdirectory(lib)
 add_subdirectory(extension)
 add_subdirectory(plugins)

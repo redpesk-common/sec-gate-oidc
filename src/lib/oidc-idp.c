@@ -372,7 +372,7 @@ OnErrorExit:
 }
 
 // parse one idp configuration
-static int idpParseOne(oidcCoreHdlT *oidc, json_object *idpJ, oidcIdpT *idp)
+static int idpParseOne(const oidcCoreHdlT *oidc, json_object *idpJ, oidcIdpT *idp)
 {
     int err;
     const char *uid, *type;
@@ -428,7 +428,7 @@ OnErrorExit:
 }
 
 // Parse the configuration object idpJ for idps list
-oidcIdpT *idpParseConfig(oidcCoreHdlT *oidc, json_object *idpsJ)
+oidcIdpT *idpParseConfig(const oidcCoreHdlT *oidc, json_object *idpsJ)
 {
     oidcIdpT *idps = NULL;
     int err, count, idx;
@@ -472,7 +472,7 @@ OnErrorExit:
 }
 
 // register aliases of IDPs
-int idpRegisterAlias(oidcCoreHdlT *oidc, const oidcIdpT *idp, afb_hsrv *hsrv)
+int idpRegisterAlias(const oidcCoreHdlT *oidc, const oidcIdpT *idp, afb_hsrv *hsrv)
 {
     int err;
 
@@ -493,8 +493,8 @@ int idpRegisterAlias(oidcCoreHdlT *oidc, const oidcIdpT *idp, afb_hsrv *hsrv)
 }
 
 // register IDP login and authentication callback endpoint
-int idpRegisterApis(oidcCoreHdlT *oidc,
-                    oidcIdpT *idp,
+int idpRegisterApis(const oidcCoreHdlT *oidc,
+                    const oidcIdpT *idp,
                     struct afb_apiset *declare_set,
                     struct afb_apiset *call_set)
 {

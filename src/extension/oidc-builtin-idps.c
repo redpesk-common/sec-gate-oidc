@@ -31,7 +31,7 @@
 #include "builtin-idps/idp-github.h"
 #include "builtin-idps/idp-ldap.h"
 #include "builtin-idps/idp-oidc.h"
-#include "oidc-idp.h"
+#include "oidc-idp-plugin.h"
 
 int registerBuiltinIdps(void)
 {

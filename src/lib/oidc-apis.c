@@ -55,10 +55,10 @@ static void apisCheckReq(void *closure, struct afb_req_common *req)
 static struct afb_api_itf api_frontend_itf = {.process = apisCheckReq};
 
 // import API client from uri and map corresponding roles into apis hashtable
-int apisRegisterOne(oidcCoreHdlT *oidc,
-                    oidcApisT *api,
-                    afb_apiset *declare_set,
-                    afb_apiset *call_set)
+int apisRegister(const oidcCoreHdlT *oidc,
+                 oidcApisT *api,
+                 afb_apiset *declare_set,
+                 afb_apiset *call_set)
 {
     int err, index;
     struct afb_api_item api_item;
@@ -115,7 +115,7 @@ OnErrorExit:
 }
 
 // parse one API configuration
-static int apisParseOne(oidcCoreHdlT *oidc, json_object *apiJ, oidcApisT *api)
+static int apisParseOne(const oidcCoreHdlT *oidc, json_object *apiJ, oidcApisT *api)
 {
     int rc, idx, count;
     const char **roles;
@@ -172,7 +172,7 @@ static int apisParseOne(oidcCoreHdlT *oidc, json_object *apiJ, oidcApisT *api)
 }
 
 // parse API configuration object
-oidcApisT *apisParseConfig(oidcCoreHdlT *oidc, json_object *apisJ)
+oidcApisT *apisParseConfig(const oidcCoreHdlT *oidc, json_object *apisJ)
 {
     oidcApisT *apis = NULL;
     int rc = 0, count, idx;

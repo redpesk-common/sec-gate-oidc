@@ -88,7 +88,7 @@ static int pamChalengeCB(int num_msg,
 }
 
 // check pam login/passwd using scope as pam application
-static int pamAccessToken(oidcIdpT *idp,
+static int pamAccessToken(const oidcIdpT *idp,
                           const oidcProfileT *profile,
                           const char *login,
                           const char *passwd,
@@ -175,7 +175,7 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
                            struct afb_data *const params[])
 {
     const char *errmsg = "[pam-login] invalid credentials";
-    oidcIdpT *idp = (oidcIdpT *)afb_req_v4_vcbdata(wreq);
+    const oidcIdpT *idp = (const oidcIdpT *)afb_req_v4_vcbdata(wreq);
     struct afb_data *args[nparams];
     const char *login, *passwd = NULL, *scope = NULL;
     const oidcProfileT *profile = NULL;
@@ -243,7 +243,7 @@ OnErrorExit:
 // when call with no login/passwd display form otherwise try to log user
 int pamLoginCB(afb_hreq *hreq, void *ctx)
 {
-    oidcIdpT *idp = (oidcIdpT *)ctx;
+    const oidcIdpT *idp = (const oidcIdpT *)ctx;
     assert(idp->magic == MAGIC_OIDC_IDP);
     char redirectUrl[EXT_HEADER_MAX_LEN];
     const oidcProfileT *profile = NULL;
@@ -340,7 +340,7 @@ OnErrorExit:
     return 1;
 }
 
-int pamRegisterApis(oidcIdpT *idp,
+int pamRegisterApis(const oidcIdpT *idp,
                     struct afb_apiset *declare_set,
                     struct afb_apiset *call_set)
 {
@@ -350,7 +350,7 @@ int pamRegisterApis(oidcIdpT *idp,
     // err= afb_api_add_verb(idp->oidc->apiv4, idp->uid, idp->info,
     // checkLoginVerb, idp, NULL, 0, 0);
     err = afb_api_v4_add_verb_hookable(oidcCoreAfbApi(idp->oidc), idp->uid,
-                                       idp->info, checkLoginVerb, idp, NULL, 0,
+                                       idp->info, checkLoginVerb, (void*)idp, NULL, 0,
                                        0);
     if (err)
         goto OnErrorExit;

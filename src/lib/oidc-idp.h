@@ -108,7 +108,7 @@ struct oidcIdpS
     const oidcProfileT *profiles;
     void *ctx;
     const idpPluginT *plugin;
-    oidcCoreHdlT *oidc;
+    const oidcCoreHdlT *oidc;
     void *userData;
 };
 
@@ -126,7 +126,7 @@ typedef struct idpRqtCtxS
 {
     int ucount;
     const char *uuid;
-    oidcIdpT *idp;
+    const oidcIdpT *idp;
     afb_hreq *hreq;
     struct afb_req_v4 *wreq;
     fedSocialRawT *fedSocial;
@@ -141,17 +141,17 @@ const oidcProfileT *idpGetFirstProfile(const oidcIdpT *idp,
                                        int targetLOA,
                                        const char *scope);
 
-int idpPluginsParseConfig(oidcCoreHdlT *oidc, json_object *pluginsJ);
-oidcIdpT *idpParseConfig(oidcCoreHdlT *oidc, json_object *idpsJ);
+int idpPluginsParseConfig(const oidcCoreHdlT *oidc, json_object *pluginsJ);
+oidcIdpT *idpParseConfig(const oidcCoreHdlT *oidc, json_object *idpsJ);
 int idpParseOidcConfig(oidcIdpT *idp,
                        json_object *configJ,
                        oidcDefaultsT *defaults,
                        void *ctx);
-int idpRegisterApis(oidcCoreHdlT *oidc,
-                    oidcIdpT *idp,
+int idpRegisterApis(const oidcCoreHdlT *oidc,
+                    const oidcIdpT *idp,
                     struct afb_apiset *declare_set,
                     struct afb_apiset *call_set);
-int idpRegisterAlias(oidcCoreHdlT *oidc, const oidcIdpT *idp, afb_hsrv *hsrv);
+int idpRegisterAlias(const oidcCoreHdlT *oidc, const oidcIdpT *idp, afb_hsrv *hsrv);
 
 int idpPluginRegister(const idpPluginT *pluginCbs);
 void idpRqtCtxFree(idpRqtCtxT *rqtCtx);

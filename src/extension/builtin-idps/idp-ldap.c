@@ -326,7 +326,7 @@ OnErrorExit:
 }
 
 // check ldap login/passwd scope is unused
-static int ldapAccessProfile(oidcIdpT *idp,
+static int ldapAccessProfile(const oidcIdpT *idp,
                              const char *login,
                              const char *passwd,
                              afb_hreq *hreq,
@@ -398,7 +398,7 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
                            struct afb_data *const params[])
 {
     const char *errmsg = "[ldap-login] invalid credentials";
-    oidcIdpT *idp = (oidcIdpT *)afb_req_v4_vcbdata(wreq);
+    const oidcIdpT *idp = (const oidcIdpT *)afb_req_v4_vcbdata(wreq);
     struct afb_data *args[nparams];
     const char *login, *passwd = NULL, *scope = NULL;
     const oidcProfileT *profile = NULL;
@@ -532,7 +532,7 @@ OnErrorExit:
     return 1;
 }
 
-static int ldapRegisterApis(oidcIdpT *idp,
+static int ldapRegisterApis(const oidcIdpT *idp,
                             struct afb_apiset *declare_set,
                             struct afb_apiset *call_set)
 {
@@ -540,7 +540,7 @@ static int ldapRegisterApis(oidcIdpT *idp,
 
     // add a dedicate verb to check login/passwd from websocket
     err = afb_api_add_verb(oidcCoreAfbApi(idp->oidc), idp->uid, idp->info,
-                           checkLoginVerb, idp, NULL, 0, 0);
+                           checkLoginVerb, (void*)idp, NULL, 0, 0);
     if (err)
         goto OnErrorExit;
 

@@ -16,13 +16,18 @@
 
 # Define project Targets
 add_library(sgoidc SHARED
+	oidc-alias.c
+	oidc-apis.c
+	oidc-core.c
+	oidc-fedid.c
+	oidc-idp.c
+	oidc-idp-plugin.c
 	oidc-session.c
 	oidc-utils.c
 )
 
 target_include_directories(sgoidc BEFORE PUBLIC
    ${CMAKE_CURRENT_SOURCE_DIR}
-   ${CMAKE_CURRENT_SOURCE_DIR}/..  # TODO remove that
 )
 
 add_dependencies(sgoidc curl-glue-afb)
@@ -31,9 +36,17 @@ target_link_libraries(sgoidc curl-glue-afb)
 install(TARGETS sgoidc DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(FILES
+		oidc-alias.h
+		oidc-apis.h
+		oidc-common.h
+		oidc-core.h
+		oidc-defaults.h
+		oidc-fedid.h
+		oidc-idp.h
+		oidc-idp-plugin.h
 		oidc-session.h
 		oidc-utils.h
         DESTINATION
-		${CMAKE_INSTALL_INCLUDEDIR}
+		${CMAKE_INSTALL_INCLUDEDIR}/xxxxx
 )
 
