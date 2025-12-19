@@ -286,7 +286,20 @@ OnErrorExit:
     return -1;
 }
 
-// return the idp list to display corresponding login page.
+// Search in avalaible IDP the IDP that offer profiles
+// for the expexted LOA.
+//
+// When 'idps' isn't NULL, it must be a NULL terminated array
+// of the IDP that are expected (IDP out of the list are ignored).
+//
+// When 'loa' is >= 0 any profile with loa greater or equal is selected.
+// When 'loa' is < 0 only profile with loa equal to -loa are selected.
+//
+// If 'noslave' isn't null, slave profiles are ignored.
+//
+// Return a JSON array listing the IDP matching the criterium.
+// [ {uid, info, logo, client-id, login-url,
+//     profiles: [ {uid, info, scope, loa} ... ] } ... ]
 json_object *oidcCoreGetProfilsForLOA(const oidcCoreHdlT *oidc,
                                       int loa,
                                       const char **idps,
@@ -295,26 +308,26 @@ json_object *oidcCoreGetProfilsForLOA(const oidcCoreHdlT *oidc,
     json_object *idpsJ = json_object_new_array();
     const oidcIdpT *idp = oidc->idps;
     for (; idp->uid; idp++) {
+        // Check if idp is in list
+        if (idps) {
+            const char **iter = idps;
+            for (; *iter; iter++) {
+                if (!strcasecmp(*iter, idp->uid))
+                    break;
+            }
+            if (!*iter)
+                continue; // not in list
+        }
+
+        // search for requested LOA within idp existing profile
         json_object *profilesJ = NULL;
         const oidcProfileT *prof = idp->profiles;
-        // search for requested LOA within idp existing profile
         for (; prof->uid; prof++) {
             // if loa does not fit ignore IDP
             if (prof->loa < loa && prof->loa != abs(loa))
                 continue;
             if (noslave && prof->slave)
                 continue;
-
-            // idp is not within idps list excluse it from list
-            if (idps) {
-                const char **iter = idps;
-                for (; *iter; iter++) {
-                    if (!strcasecmp(*iter, idp->uid))
-                        break;
-                }
-                if (!*iter)
-                    continue;
-            }
 
             json_object *profileJ;
             if (!profilesJ)
@@ -324,7 +337,7 @@ json_object *oidcCoreGetProfilsForLOA(const oidcCoreHdlT *oidc,
             json_object_array_add(profilesJ, profileJ);
         }
 
-        // only return IDP with a corresponding loa/scope
+        // Add the IDP if some profile were found
         if (profilesJ) {
             json_object *idpJ;
             rp_jsonc_pack(&idpJ, "{ss ss* ss* ss* ss* so}", "uid", idp->uid,
