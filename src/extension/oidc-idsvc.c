@@ -57,22 +57,41 @@ static int makeStringData(afb_data_t *data, const char *string, int destroy)
                         destroy ? free : NULL, destroy ? (void*)string : NULL);
 }
 
+/************************************************************************
+ * Implement verb "ping"
+ *
+ * Accept any argument
+ *
+ * Checks in the table of users if an entry exists with the given
+ * value.
+ *
+ * Return the status 1 and the string value 'locked' if an entry
+ * is found or the status 0 and the string 'available' otherwise.
+ * If a negative status is returned, it indecates an error.
+ */
+
 static void idsvcPing(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 {
     static int count = 0;
-    char *response;
-    afb_data_t reply;
+    char *buffer;
+    afb_data_t data;
+    int rc;
 
-    int sz = asprintf(&response, "Pong=%d", ++count);
-    AFB_REQ_NOTICE(wreq, "idp:ping count=%d", count);
+    // increment count
+    if (++count < 0)
+        count = 1;
+    AFB_REQ_INFO(wreq, "idp:ping count=%d", count);
 
-    if (sz < 0)
+    // make output
+    rc = asprintf(&buffer, "Pong=%d", count);
+    if (rc >= 0)
+        rc = makeStringData(&data, buffer, 1);
+
+    // send the reply
+    if (rc < 0)
         afb_req_reply(wreq, AFB_ERRNO_INTERNAL_ERROR, 0, NULL);
-    else {
-        afb_create_data_raw(&reply, AFB_PREDEFINED_TYPE_STRINGZ, response,
-                            (size_t)(sz + 1), free, response);
-        afb_req_reply(wreq, 0, 1, &reply);
-    }
+    else
+        afb_req_reply(wreq, count, 1, &data);
 }
 
 // get result from /fedid/create-user
