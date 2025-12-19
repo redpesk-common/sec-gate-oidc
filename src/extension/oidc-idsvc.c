@@ -44,6 +44,19 @@
 
 #define MAX_OIDC_IDPS 16  // max number of IDPS in config
 
+/*
+ * Basic wrapper function for creation of string data
+ * Create a data of type AFB_PREDEFINED_TYPE_STRINGZ for the
+ * string. When destroy is not null, the string will be freed
+ * when data is released.
+ */
+static int makeStringData(afb_data_t *data, const char *string, int destroy)
+{
+    return afb_create_data_raw(data, AFB_PREDEFINED_TYPE_STRINGZ,
+                        string, string == NULL ? 0 : 1 + strlen(string),
+                        destroy ? free : NULL, destroy ? (void*)string : NULL);
+}
+
 static void idsvcPing(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 {
     static int count = 0;
