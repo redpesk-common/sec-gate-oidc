@@ -159,135 +159,130 @@ static void userCheckAttr(afb_req_t wreq,
 }
 
 /************************************************************************
+ * Implement verb "idp-query-user"
+ *
+ * The verb "idp-query-user" doesn't expect any parameter but looks into
+ * the current state of the client session if 'fedidlink' is set or not.
+ *
+ * If 'fedidlink' is set, returns the list of IDP for the linked user.
+ *
+ * If 'fedidlink' is not set, the list of IDP is all IDPs excluding the
+ * current one.
  */
 
+/*
+ * build JSON reply
+ */
 static json_object *idpQueryList(afb_req_t wreq, const char **idps)
 {
-    json_object *responseJ, *idpsJ, *aliasJ;
-    int err;
+    json_object *responseJ = NULL, *idpsJ, *aliasJ = NULL;
 
     // retrieve OIDC global context from API handle
     const oidcCoreHdlT *oidc = wreq2oidc(wreq);
 
     // retrieve oidc config from current alias cookie
-    const oidcAliasT *alias;
     oidcSessionT *session = oidcSessionOfReq(wreq);
-    alias = oidcSessionGetAlias(session);
+    const oidcAliasT *alias = oidcSessionGetAlias(session);
+
 
     // build IDP list with corresponding scope for requested LOA
-    idpsJ = oidcCoreGetProfilsForLOA(oidc, 0, idps, 1);
+    idpsJ = oidcCoreGetProfilsForLOA(oidc, 0, idps, 1); // TODO values of loa and noslave?
     if (alias)
         rp_jsonc_pack(&aliasJ, "{ss ss* ss si}", "uid", alias->uid, "info",
                       alias->info, "url", alias->url, "loa", alias->loa);
-    else
-        aliasJ = NULL;
-
-    err = rp_jsonc_pack(&responseJ, "{so so*}", "idps", idpsJ, "alias", aliasJ);
-    if (err)
-        goto OnErrorExit;
+    if (0 > rp_jsonc_pack(&responseJ, "{so so*}", "idps", idpsJ, "alias", aliasJ)) {
+        json_object_put(idpsJ);
+        json_object_put(aliasJ);
+    }
 
     return responseJ;
-
-OnErrorExit:
-    return NULL;
 }
+/*
+ * build JSON reply and send it
+ */
+static void idpQueryUserReply(afb_req_t wreq, const char **idps)
+{
+    // get the object to send
+    json_object *obj = idpQueryList(wreq, idps);
+    int rc = -(obj == NULL);
+    afb_data_t data;
 
-// get result from /fedid/create-user
+    // create the replied data
+    if (rc >= 0)
+        rc = afb_create_data_raw(&data, AFB_PREDEFINED_TYPE_JSON_C, obj, 0,
+                              (void *)json_object_put, obj);
+
+    // send the reply
+    if (rc >= 0)
+        afb_req_reply(wreq, 0, 1, &data);
+    else {
+        EXT_NOTICE("[oidc-idsvc] idp-query-user failed to build reply");
+        afb_req_reply(wreq, AFB_ERRNO_INTERNAL_ERROR, 0, NULL);
+    }
+}
+/*
+ * receive list of IDP from fedid
+ * send reply from that list
+ */
 static void idpQueryUserCB(void *ctx,
                            int status,
                            unsigned argc,
                            const afb_data_t argv[],
                            afb_req_t wreq)
 {
-    json_object *obj;
-    afb_data_t data = NULL;
-    const char **idps;
-    int err;
-
-    // exit if request returned an error
-    if (status < 0)
-        goto OnErrorExit;
-
-    // check that one value is returned
-    status = AFB_ERRNO_INTERNAL_ERROR;
-    if (argc != 1)
-        goto OnErrorExit;
-
-    // convert and retrieve input arguments
-    err = afb_data_convert(argv[0], fedUserIdpsObjType, &data);
-    if (err < 0)
-        goto OnErrorExit;
-    idps = (void *)afb_data_ro_pointer(data);
-
-    // get the resulting object
-    obj = idpQueryList(wreq, idps);
-    afb_data_unref(data);
-    if (obj == NULL)
-        goto OnErrorExit;
-
-    // create the replied data
-    err = afb_create_data_raw(&data, AFB_PREDEFINED_TYPE_JSON_C, obj, 0,
-                              (void *)json_object_put, obj);
-    if (err >= 0)
-        status = 0;
-
-OnErrorExit:
-    afb_req_reply(wreq, status, !status, &data);
-    return;
+    afb_data_t data;
+    if (status < 0) {
+        // got an error from fedid
+        EXT_NOTICE("[oidc-idsvc] idp-query-user got error from fedid");
+        afb_data_array_addref(argc, argv);
+        afb_req_reply(wreq, status, argc, argv);
+    }
+    else if (argc != 1 || 0 > afb_data_convert(argv[0], fedUserIdpsObjType, &data)) {
+        // unexpected result
+        EXT_NOTICE("[oidc-idsvc] idp-query-user got strange thing from fedid");
+        afb_req_reply(wreq, AFB_ERRNO_INTERNAL_ERROR, 0, NULL);
+    }
+    else {
+        // reply to the query
+        const char **idps = (void *)afb_data_ro_pointer(data);
+        idpQueryUserReply(wreq, idps);
+        afb_data_unref(data);
+    }
 }
-
-// Return user register social IDPs for a given pseudo/email
+/*
+ * Return user registered social IDPs
+ */
 static void idpQueryUser(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 {
-    static char errorMsg[] =
-        "[idp-query-user] federated user unknown within DB (idpQueryUser) ";
-
-    int err;
-    const fedidLinkT *fedlink;
-    json_object *queryJ;
-    afb_data_t query, reply;
-
     // get current social data for further account linking
     oidcSessionT *session = oidcSessionOfReq(wreq);
-    fedlink = oidcSessionGetFedIdLink(session);
-
-    // if not a slave IDP then use email/pseudo to get IDP list
+    const fedidLinkT *fedlink = oidcSessionGetFedIdLink(session);
     if (fedlink) {
+        // fedlink is set
+        json_object *queryJ;
+        afb_data_t data;
         rp_jsonc_pack(&queryJ, "{ss ss}", "email", fedlink->email, "pseudo",
                       fedlink->pseudo);
-        afb_create_data_raw(&query, AFB_PREDEFINED_TYPE_JSON_C, queryJ, 0,
+        afb_create_data_raw(&data, AFB_PREDEFINED_TYPE_JSON_C, queryJ, 0,
                             (void *)json_object_put, queryJ);
-        fedIdSubCall(wreq, "social-idps", 1, &query, idpQueryUserCB, NULL);
+        fedIdSubCall(wreq, "social-idps", 1, &data, idpQueryUserCB, NULL);
         oidcSessionDropFedIdLink(session);
     }
     else {
-        // if no idps list provided build one from config
-        const char *idps[MAX_OIDC_IDPS + 1];
+        // fedlink isn't set
+        const oidcCoreHdlT *oidc = wreq2oidc(wreq);
         const oidcProfileT *profile = oidcSessionGetIdpProfile(session);
-        int count = oidcCoreGetFilteredIdpList(
-            profile->idp->oidc, idps, MAX_OIDC_IDPS + 1, profile->idp->uid);
+        const char *idpId = profile != NULL ? profile->idp->uid : NULL;
+        const char *idps[MAX_OIDC_IDPS + 1];
+        int count = oidcCoreGetFilteredIdpList(oidc, idps, MAX_OIDC_IDPS + 1, idpId);
         if (count > MAX_OIDC_IDPS) {
-            EXT_ERROR(
-                "[idp-federate-list] too many idps in config "
-                "MAX_OIDC_IDPS=%d (remaining ignored)",
-                MAX_OIDC_IDPS);
+            EXT_WARNING("[oidc-idsvc] too many idps, truncates to %d firsts",
+                        MAX_OIDC_IDPS);
             count = MAX_OIDC_IDPS;
         }
         idps[count] = NULL;
-
-        json_object *responseJ = idpQueryList(wreq, idps);
-        if (!responseJ)
-            goto OnErrorExit;
-        afb_create_data_raw(&reply, AFB_PREDEFINED_TYPE_JSON_C, responseJ, 0,
-                            (void *)json_object_put, responseJ);
-        afb_req_reply(wreq, 0, 1, &reply);
+        idpQueryUserReply(wreq, idps);
     }
-    return;
-
-OnErrorExit:
-    afb_create_data_raw(&reply, AFB_PREDEFINED_TYPE_STRINGZ, errorMsg,
-                        strlen(errorMsg) + 1, NULL, NULL);
-    afb_req_reply(wreq, -1, 1, &reply);
 }
 
 // get result from /fedid/create-user
