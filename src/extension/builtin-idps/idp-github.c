@@ -118,8 +118,8 @@ static httpRqtActionT githubAttrsGetByTokenCB(httpRqtT *httpRqt)
 
 OnErrorExit:
     EXT_CRITICAL(
-        "[github-fail-orgs] Fail to get user organisation status=%ld body='%s'",
-        httpRqt->status, httpRqt->body);
+        "[idp-github] Fail to get user organisation status=%d body='%s'",
+        httpRqt->status, httpRqt->body.buffer);
     return HTTP_HANDLE_FREE;
 }
 
@@ -138,12 +138,12 @@ static void githubGetAttrsByToken(idpRqtCtxT *rqtCtx, const char *orgApiUrl)
 
     // asynchronous wreq to IDP user profile
     // https://docs.github.com/en/rest/reference/orgs#list-organizations-for-the-authenticated-user
-    EXT_DEBUG("[github-attrs-get] curl -H 'Authorization: %s' %s\n", tokenVal,
+    EXT_DEBUG("[idp-github] curl -H 'Authorization: %s' %s\n", tokenVal,
               orgApiUrl);
     int err = httpSendGet(oidcCoreHTTPPool(idp->oidc), orgApiUrl, &dfltOpts,
                           authToken, githubAttrsGetByTokenCB, rqtCtx);
     if (err)
-        EXT_ERROR("[github-attrs-fail] curl -H 'Authorization: %s' %s\n",
+        EXT_ERROR("[idp-github] curl -H 'Authorization: %s' %s\n",
                   tokenVal, orgApiUrl);
     return;
 }
@@ -201,9 +201,9 @@ static httpRqtActionT githubUserGetByTokenCB(httpRqtT *httpRqt)
 
 OnErrorExit:
     EXT_CRITICAL(
-        "[github-fail-user-profile] Fail to get user profile from github "
-        "status=%ld body='%s'",
-        httpRqt->status, httpRqt->body);
+        "[idp-github] Fail to get user profile from github "
+        "status=%d body='%s'",
+        httpRqt->status, httpRqt->body.buffer);
     afb_hreq_reply_error(rqtCtx->hreq, EXT_HTTP_UNAUTHORIZED);
     fedSocialUnRef(fedSocial);
     fedUserUnRef(fedUser);
@@ -225,7 +225,7 @@ static void githubUserGetByToken(idpRqtCtxT *rqtCtx)
 
     // asynchronous wreq to IDP user profile
     // https://docs.github.com/en/rest/reference/orgs#list-organizations-for-the-authenticated-user
-    EXT_DEBUG("[github-profile-get] curl -H 'Authorization: %s' %s\n", tokenVal,
+    EXT_DEBUG("[idp-github] curl -H 'Authorization: %s' %s\n", tokenVal,
               idp->wellknown->userinfo);
     int err = httpSendGet(oidcCoreHTTPPool(idp->oidc), idp->wellknown->userinfo,
                           &dfltOpts, authToken, githubUserGetByTokenCB, rqtCtx);
@@ -266,9 +266,9 @@ static httpRqtActionT githubAccessTokenCB(httpRqtT *httpRqt)
 
 OnErrorExit:
     EXT_CRITICAL(
-        "[fail-access-token] Fail to process response from github status=%ld "
+        "[idp-github] Fail to process response from github status=%d "
         "body='%s' (githubAccessTokenCB)",
-        httpRqt->status, httpRqt->body);
+        httpRqt->status, httpRqt->body.buffer);
     afb_hreq_reply_error(rqtCtx->hreq, EXT_HTTP_UNAUTHORIZED);
     return HTTP_HANDLE_FREE;
 }
@@ -312,7 +312,7 @@ static int githubAccessToken(afb_hreq *hreq,
     if (sz >= sizeof url)
         goto OnErrorExit;
 
-    EXT_DEBUG("[github-access-token] curl -X post %s\n", url);
+    EXT_DEBUG("[idp-github] curl -X post %s\n", url);
     err = httpSendPost(oidcCoreHTTPPool(idp->oidc), url, &dfltOpts,
                        NULL /*headers */, NULL /*data */, 0 /*length */,
                        githubAccessTokenCB, rqtCtx);
@@ -322,7 +322,7 @@ static int githubAccessToken(afb_hreq *hreq,
     return 0;
 
 OnErrorExit:
-    afb_hreq_reply_error(hreq, EXT_HTTP_UNAUTHORIZED);
+    afb_hreq_reply_error(hreq, EXT_HTTP_SERVER_ERROR);
     return 1;
 }
 
@@ -355,10 +355,13 @@ static int githubLoginCB(afb_hreq *hreq, void *ctx)
         profile = idpGetFirstProfile(idp, targetLOA, scope);
 
         // if loa working and no profile fit exit without trying authentication
-        if (!profile)
-            goto OnErrorExit;
+        if (!profile) {
+            EXT_WARNING("[idp-gihub] no profile for LOA %d SCOPE %s", targetLOA, scope);
+            afb_hreq_reply_error(hreq, EXT_HTTP_UNAUTHORIZED);
+            return 1;
+        }
 
-        // store working profile to retreive attached loa and role filter if
+        // store working profile to retrieve attached loa and role filter if
         // login succeded
         oidcSessionSetIdpProfile(session, profile);
 
@@ -383,56 +386,46 @@ static int githubLoginCB(afb_hreq *hreq, void *ctx)
         // build wreq and send it
         size_t sz = rp_escape_url_to(NULL, idp->wellknown->authorize, params,
                                      url, sizeof url);
-        if (sz >= sizeof url)
-            goto OnErrorExit;
-
-        EXT_DEBUG("[github-redirect-url] %s (githubRegisterAlias)", url);
-        afb_hreq_redirect_to(hreq, url, HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
-    }
-    else {
-        // check question/response state match
-        const char *oidcState = afb_hreq_get_argument(hreq, "state");
-        if (strcmp(oidcState, uuid)) {
-            EXT_DEBUG(
-                "[github-auth-code] missmatch uuid/state state=%s "
-                "uuid=%s (githubRegisterAlias)",
-                oidcState, uuid);
+        if (sz >= sizeof url) {
+            EXT_WARNING("[idp-github] Authorize URL too long");
             goto OnErrorExit;
         }
 
-        EXT_DEBUG("[github-auth-code] state=%s code=%s (githubRegisterAlias)",
-                  oidcState, code);
-        // wreq authentication token from tempry code
-        err = githubAccessToken(hreq, idp, redirectUrl, code, session);
-        if (err)
-            goto OnErrorExit;
+        EXT_DEBUG("[idp-github] redirect to %s", url);
+        afb_hreq_redirect_to(hreq, url, HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
+        return 1;
     }
-    return 1;  // we're done (0 would search for an html page)
+    // check question/response state match
+    const char *oidcState = afb_hreq_get_argument(hreq, "state");
+    if (strcmp(oidcState, uuid)) {
+        EXT_WARNING("[idp-github] state mismatch recv=%s expect=%s", oidcState, uuid);
+        goto OnErrorExit;
+    }
+
+    EXT_DEBUG("[idp-github] authorized state=%s code=%s", oidcState, code);
+    // wreq authentication token from tempry code
+    githubAccessToken(hreq, idp, redirectUrl, code, session);
+    return 1;
 
 OnErrorExit:
-    afb_hreq_reply_error(hreq, EXT_HTTP_UNAUTHORIZED);
+    afb_hreq_reply_error(hreq, EXT_HTTP_SERVER_ERROR);
     return 1;
 }
 
 static int githubRegisterAlias(const oidcIdpT *idp, afb_hsrv *hsrv)
 {
-    int err;
-    EXT_DEBUG("[github-register-alias] uid=%s login='%s'", idp->uid,
+    int rc;
+
+    EXT_DEBUG("[idp-github] uid=%s login='%s'", idp->uid,
               idp->statics->aliasLogin);
 
-    err = afb_hsrv_add_handler(hsrv, idp->statics->aliasLogin, githubLoginCB,
+    rc = afb_hsrv_add_handler(hsrv, idp->statics->aliasLogin, githubLoginCB,
                                (void *)idp, EXT_HIGHEST_PRIO);
-    if (!err)
-        goto OnErrorExit;
+    if (rc)
+        return 0;
 
-    return 0;
-
-OnErrorExit:
-    EXT_ERROR(
-        "[github-register-alias] idp=%s fail to register alias=%s "
-        "(githubRegisterAlias)",
-        idp->uid, idp->statics->aliasLogin);
-    return 1;
+    EXT_ERROR("[idp-github] fail to register alias=%s", idp->statics->aliasLogin);
+    return -1;
 }
 
 // github is openid compliant. Provide default and delegate parsing to default
@@ -448,16 +441,13 @@ static int githubRegisterConfig(oidcIdpT *idp, json_object *configJ)
     };
     int err = idpParseOidcConfig(idp, configJ, &defaults, NULL);
     if (err)
-        goto OnErrorExit;
+        return -1;
 
     // if timeout defined
     if (idp->credentials->timeout)
         dfltOpts.timeout = idp->credentials->timeout;
 
     return 0;
-
-OnErrorExit:
-    return 1;
 }
 
 //----------------------------------------------------------------

@@ -171,8 +171,8 @@ static httpRqtActionT ldapAccessAttrsCB(httpRqtT *httpRqt)
 
 OnErrorExit:
     EXT_CRITICAL(
-        "[ldap-fail-groups] Fail to get user groups status=%ld body='%s'",
-        httpRqt->status, httpRqt->body);
+        "[ldap-fail-groups] Fail to get user groups status=%d body='%s'",
+        httpRqt->status, httpRqt->body.buffer);
     return HTTP_HANDLE_FREE;
 }
 

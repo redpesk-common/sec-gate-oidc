@@ -30,6 +30,7 @@
 #define EXT_HEADER_MAX_LEN    256
 #define EXT_HTTP_UNAUTHORIZED 401
 #define EXT_HTTP_CONFLICT     409
+#define EXT_HTTP_SERVER_ERROR 500
 #define EXT_SESSION_TIMEOUT   600  // session timeout in seconds
 
 #define HREQ_REDIR_TMPY 0  // temporary redirection

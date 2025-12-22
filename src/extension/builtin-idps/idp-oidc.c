@@ -258,7 +258,7 @@ static httpRqtActionT oidcUserGetByTokenCB(httpRqtT *httpRqt)
 OnErrorExit:
     EXT_CRITICAL(
         "[oidc-fail-user-profile] Fail to get user profile from oidc "
-        "status=%ld body='%s'",
+        "status=%d body='%s'",
         httpRqt->status, httpRqt->body.buffer);
     afb_hreq_reply_error(rqtCtx->hreq, EXT_HTTP_UNAUTHORIZED);
     idpRqtCtxFree(rqtCtx);
@@ -404,7 +404,7 @@ OnErrorExit:
     if (responseJ)
         json_object_put(responseJ);
     EXT_CRITICAL(
-        "[fail-access-token] Fail to process response from oidc status=%ld "
+        "[fail-access-token] Fail to process response from oidc status=%d "
         "body='%s' (oidcAccessTokenCB)",
         httpRqt->status, httpRqt->body.buffer);
     afb_hreq_reply_error(rqtCtx->hreq, EXT_HTTP_UNAUTHORIZED);
@@ -683,7 +683,7 @@ static httpRqtActionT oidcDiscoJwksCB(httpRqtT *httpRqt)
 OnErrorExit:
     EXT_CRITICAL(
         "[fail-wellknown-discovery] Fail to process response from oidc "
-        "status=%ld body='%s' (oidcDiscoveryCB)",
+        "status=%d body='%s' (oidcDiscoveryCB)",
         httpRqt->status, httpRqt->body.buffer);
     return HTTP_HANDLE_FREE;
 }
@@ -789,7 +789,7 @@ static httpRqtActionT oidcDiscoveryCB(httpRqtT *httpRqt)
 OnErrorExit:
     EXT_CRITICAL(
         "[fail-wellknown-discovery] Fail to process response from oidc "
-        "status=%ld body='%s' (oidcDiscoveryCB)",
+        "status=%d body='%s' (oidcDiscoveryCB)",
         httpRqt->status, httpRqt->body.buffer);
     return HTTP_HANDLE_FREE;
 }
