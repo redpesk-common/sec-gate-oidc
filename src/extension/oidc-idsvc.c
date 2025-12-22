@@ -285,6 +285,19 @@ static void idpQueryUser(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     }
 }
 
+/************************************************************************
+ * Implement the verb 'usr-register'
+ *
+ * The verb 'usr-register' expects a single argument: a user description
+ * either as a fedUserRawT (see sec-gate-fedid-binding') or a JSON object
+ * like '{pseudo, email, name, avatar, company, stamp, attrs}'
+ *
+ * It also expects that the current connection state has been identified
+ * by some IDP and that the current Social status is known in the session.
+ *
+ * On success, the verbs replies a JSON object {"target":"URL"} where
+ * URL is the url of the page to load after resteration.
+ */
 // get result from /fedid/create-user
 static void userRegisterCB(void *ctx,
                            int status,
@@ -292,32 +305,30 @@ static void userRegisterCB(void *ctx,
                            const afb_data_t argv[],
                            afb_req_t wreq)
 {
-    char *errorMsg = "[user-create-fail]  (idsvcuserRegisterCB)";
-    afb_data_t reply[1], argd[2];
-    const oidcProfileT *profile;
-    const oidcAliasT *alias;
-    json_object *aliasJ;
-    oidcSessionT *session = oidcSessionOfReq(wreq);
+    if (status < 0) {
+        // got an error from fedid
+        EXT_NOTICE("[oidc-idsvc] usr-register got error from fedid");
+        afb_data_array_addref(argc, argv);
+        afb_req_reply(wreq, status, argc, argv);
+    }
+    else {
+        afb_data_t reply;
+        json_object *aliasJ;
 
-    // return creation status to HTML5
-    if (status < 0)
-        goto OnErrorExit;
+        // return destination alias
+        oidcSessionT *session = oidcSessionOfReq(wreq);
+        const oidcProfileT *profile = oidcSessionGetIdpProfile(session);
+        const oidcAliasT *alias = oidcSessionGetAlias(session);
 
-    // return destination alias
-    profile = oidcSessionGetIdpProfile(session);
-    oidcSessionSetLOA(session, profile->loa);
-    alias = oidcSessionGetAlias(session);
-    rp_jsonc_pack(&aliasJ, "{ss}", "target", alias->url ?: "/");
-    afb_create_data_raw(&reply[0], AFB_PREDEFINED_TYPE_JSON_C, aliasJ, 0,
-                        (void *)json_object_put, aliasJ);
-    afb_req_reply(wreq, status, 1, reply);
-    return;
+        // set current LOA ????
+        oidcSessionSetLOA(session, profile->loa);
 
-OnErrorExit:
-    afb_create_data_raw(&reply[0], AFB_PREDEFINED_TYPE_STRINGZ, errorMsg,
-                        strlen(errorMsg) + 1, NULL, NULL);
-    afb_req_reply(wreq, -1, 1, reply);
-    return;
+        // reply to the query
+        rp_jsonc_pack(&aliasJ, "{ss}", "target", alias->url ?: "/");
+        afb_create_data_raw(&reply, AFB_PREDEFINED_TYPE_JSON_C, aliasJ, 0,
+                            (void *)json_object_put, aliasJ);
+        afb_req_reply(wreq, status, 1, &reply);
+    }
 }
 
 // Try to store fedsocial and feduser into local store
@@ -325,48 +336,44 @@ static void userRegister(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 {
     const oidcProfileT *profile;
     afb_data_t params[2];
+    oidcSessionT *session;
+    const oidcAliasT *alias;
     const fedSocialRawT *fedSocial;
     int err, status;
 
-    // get first argument and check the request
-    status = AFB_ERRNO_INVALID_REQUEST;
-    if (argc != 1)
-        goto OnErrorExit;
-
-    err = afb_data_convert(argv[0], fedUserObjType, &params[0]);
-    if (err < 0)
-        goto OnErrorExit;
-
-    status = AFB_ERRNO_BAD_API_STATE;
-
     // retrieve current wreq LOA from session (to be fixed by Jose)
-    oidcSessionT *session = oidcSessionOfReq(wreq);
-    profile = oidcSessionGetIdpProfile(session);
-    if (!profile)
-        goto OnErrorExit2;
-
-    // retrieve fedsocial from session
+    // Check the current API state: retrieve fedsocial from session
+    status = AFB_ERRNO_BAD_API_STATE;
+    session = oidcSessionOfReq(wreq);
     fedSocial = oidcSessionGetFedSocial(session);
-    if (!fedSocial)
-        goto OnErrorExit2;
+    profile = oidcSessionGetIdpProfile(session);
+    alias = oidcSessionGetAlias(session);
+    if (profile == NULL || alias == NULL || fedSocial == NULL)
+        goto OnErrorExit;
+
+    // get first argument and check it as being a fedUser value
+    status = AFB_ERRNO_INVALID_REQUEST;
+    if (argc != 1 || 0 > afb_req_param_convert(wreq, 0, fedUserObjType, &params[0]))
+        goto OnErrorExit;
 
     // user is new let's register it within fedid DB (do not free fedSocial
     // after call)
     status = AFB_ERRNO_INTERNAL_ERROR;
-    err = afb_create_data_raw(&params[1], fedSocialObjType, fedSocial, 0, NULL,
-                              NULL);
+    err = afb_create_data_raw(&params[1], fedSocialObjType, fedSocial, 0, NULL, NULL);
     if (err < 0)
-        goto OnErrorExit2;
+        goto OnErrorExit;
 
+    afb_data_addref(params[0]);
     fedIdSubCall(wreq, "user-create", 2, params, userRegisterCB, NULL);
     return;
 
-OnErrorExit2:
-    afb_data_unref(params[0]);
 OnErrorExit:
-    AFB_REQ_ERROR(wreq, "userRegister failed %d", status);
+    AFB_REQ_ERROR(wreq, "[oidc-idsvc] usr-register failed %d", status);
     afb_req_reply(wreq, status, 0, NULL);
 }
+
+/************************************************************************
+ */
 
 static void userFederateCB(void *ctx,
                            int status,
