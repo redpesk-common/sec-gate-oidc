@@ -25,7 +25,6 @@
 #include <locale.h>
 #include <string.h>
 
-#include <rp-utils/rp-enum-map.h>
 #include <rp-utils/rp-escape.h>
 #include <rp-utils/rp-jsonc.h>
 
@@ -41,18 +40,6 @@
 #include "oidc-fedid.h"
 #include "oidc-session.h"
 #include "oidc-idp-plugin.h"
-
-// clang-format off
-const rp_enum_map_t oidcFedidSchema[] = {
-    {"pseudo", OIDC_SCHEMA_PSEUDO},
-    {"name", OIDC_SCHEMA_NAME},
-    {"email", OIDC_SCHEMA_EMAIL},
-    {"avatar", OIDC_SCHEMA_AVATAR},
-    {"company", OIDC_SCHEMA_COMPANY},
-    {NULL}                      // terminator
-};
-
-// clang-format on
 
 // session timeout, reset LOA
 void fedidsessionReset(oidcSessionT *session, const oidcProfileT *idpProfile)

@@ -49,6 +49,26 @@
 static const oidcCredentialsT noCredentials = {};
 static const httpKeyValT noHeaders = {};
 
+typedef enum {
+    OIDC_SCHEMA_UNKNOWN = 0,
+    OIDC_SCHEMA_PSEUDO,
+    OIDC_SCHEMA_NAME,
+    OIDC_SCHEMA_EMAIL,
+    OIDC_SCHEMA_AVATAR,
+    OIDC_SCHEMA_COMPANY,
+} oidcFedidSchemaE;
+
+// clang-format off
+static const rp_enum_map_t oidcFedidSchema[] = {
+    {"pseudo", OIDC_SCHEMA_PSEUDO},
+    {"name", OIDC_SCHEMA_NAME},
+    {"email", OIDC_SCHEMA_EMAIL},
+    {"avatar", OIDC_SCHEMA_AVATAR},
+    {"company", OIDC_SCHEMA_COMPANY},
+    {NULL}                      // terminator
+};
+// clang-format on
+
 typedef struct
 {
     const char *avatarAlias;
@@ -114,7 +134,6 @@ static void pcscResetSession(const oidcProfileT *idpProfile, void *ctx)
 
 static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
 {
-    extern const rp_enum_map_t oidcFedidSchema[];
     pcscRqtCtxT *pcscRqtCtx = (pcscRqtCtxT *)ctx;
     idpRqtCtxT *idpRqtCtx = pcscRqtCtx->idpRqtCtx;
     pcscOptsT *pcscOpts = pcscRqtCtx->opts;
