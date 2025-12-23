@@ -284,21 +284,3 @@ int fedidCheck(idpRqtCtxT *idpRqtCtx)
 OnErrorExit:
     return -1;
 }
-
-// check if an attribute equal to value exists in the session
-// return 1 if that is the case
-// return 0 if none matches
-int fedidsessionHasAttribute(oidcSessionT *session, const char *value)
-{
-    const fedSocialRawT *fedSocial = oidcSessionGetFedSocial(session);
-    if (fedSocial != NULL) {
-        const char **attrs = fedSocial->attrs;
-        if (attrs != NULL) {
-            for (; *attrs != NULL; attrs++) {
-                if (!strcasecmp(value, *attrs))
-                    return 1;
-            }
-        }
-    }
-    return 0;
-}

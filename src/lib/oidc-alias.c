@@ -49,7 +49,7 @@ static int aliasCheckAttrs(oidcSessionT *session, oidcAliasT *alias)
 {
     const char **roles = alias->roles;
     while (*roles) {
-        if (fedidsessionHasAttribute(session, *roles))
+        if (oidcSessionHasAttribute(session, *roles))
             return 1;
         roles++;
     }

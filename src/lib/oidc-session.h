@@ -76,6 +76,7 @@ int oidcSessionEventPush(oidcSessionT *session, const char *desc, ...);
 
 const fedSocialRawT *oidcSessionGetFedSocial(oidcSessionT *session);
 void oidcSessionSetFedSocial(oidcSessionT *session, fedSocialRawT *fedSocial);
+int oidcSessionHasAttribute(oidcSessionT *session, const char *value);
 
 const fedUserRawT *oidcSessionGetUser(oidcSessionT *session);
 void oidcSessionSetFedUser(oidcSessionT *session, fedUserRawT *fedUser);
