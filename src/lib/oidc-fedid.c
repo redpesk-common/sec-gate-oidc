@@ -35,6 +35,7 @@
 #include <fedid-types-glue.h>
 
 #include <curl-glue.h>
+#include "fedid-client.h"
 #include "oidc-alias.h"
 #include "oidc-core.h"
 #include "oidc-fedid.h"
@@ -184,8 +185,7 @@ static void fedidCheckCB(void *ctx,
                                       0, NULL, NULL);
             if (err < 0)
                 goto OnErrorExit;
-            err = afb_api_v4_call_sync_hookable(api, API_OIDC_USR_SVC,
-                                                "user-federate", 2, params,
+            err = fedIdClientCallSync(api, "user-federate", 2, params,
                                                 &status, &count, &data);
             if (err < 0 || status != 0) {
                 EXT_ERROR(
@@ -200,7 +200,7 @@ static void fedidCheckCB(void *ctx,
         oidcSessionSetFedUser(session, fedUserAddRef(fedUser));
         oidcSessionSetFedSocial(session, idpRqtCtx->fedSocial);
 
-        // everyting looks good let's return user to original page
+        // everything looks good let's return user to original page
         idpProfile = oidcSessionGetIdpProfile(session);
         alias = oidcSessionGetAlias(session);
 
@@ -263,6 +263,7 @@ OnErrorExit:
     idpRqtCtxFree(idpRqtCtx);
 }
 
+
 // try to wreq user profile from its federation key
 int fedidCheck(idpRqtCtxT *idpRqtCtx)
 {
@@ -276,8 +277,8 @@ int fedidCheck(idpRqtCtxT *idpRqtCtx)
         goto OnErrorExit;
 
     afb_data_addref(params[0]);  // prevent params to be deleted
-    afb_api_v4_call_hookable(oidcCoreAfbApi(idpRqtCtx->idp->oidc),
-                             API_OIDC_USR_SVC, "social-check", 1, params,
+    fedIdClientCall(oidcCoreAfbApi(idpRqtCtx->idp->oidc),
+                             "social-check", 1, params,
                              fedidCheckCB, idpRqtCtx);
     return 0;
 

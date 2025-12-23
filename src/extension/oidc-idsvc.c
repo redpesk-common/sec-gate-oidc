@@ -34,6 +34,7 @@
 
 #include <fedid-types-glue.h>
 
+#include "fedid-client.h"
 #include "oidc-alias.h"
 #include "oidc-apis.h"
 #include "oidc-core.h"
@@ -55,21 +56,6 @@ static int makeStringData(afb_data_t *data, const char *string, int destroy)
     return afb_create_data_raw(data, AFB_PREDEFINED_TYPE_STRINGZ,
                         string, string == NULL ? 0 : 1 + strlen(string),
                         destroy ? free : NULL, destroy ? (void*)string : NULL);
-}
-
-/*
- * Wrapper for subccalling API fedid
- */
-static void fedIdSubCall(
-                afb_req_t req,
-                const char *verbname,
-                unsigned nparams,
-                afb_data_t const params[],
-                afb_subcall_callback_t callback,
-                void *closure)
-{
-    afb_req_subcall(req, API_OIDC_USR_SVC, verbname, nparams, params,
-                    afb_req_subcall_on_behalf, callback, closure);
 }
 
 /*
@@ -155,7 +141,7 @@ static void userCheckAttr(afb_req_t wreq,
                           afb_data_t const argv[])
 {
     afb_data_array_addref(argc, argv);
-    fedIdSubCall(wreq, "user-check", argc, argv, userCheckAttrCB, NULL);
+    fedIdClientSubCall(wreq, "user-check", argc, argv, userCheckAttrCB, NULL);
 }
 
 /************************************************************************
@@ -265,7 +251,7 @@ static void idpQueryUser(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
                       fedlink->pseudo);
         afb_create_data_raw(&data, AFB_PREDEFINED_TYPE_JSON_C, queryJ, 0,
                             (void *)json_object_put, queryJ);
-        fedIdSubCall(wreq, "social-idps", 1, &data, idpQueryUserCB, NULL);
+        fedIdClientSubCall(wreq, "social-idps", 1, &data, idpQueryUserCB, NULL);
         oidcSessionDropFedIdLink(session);
     }
     else {
@@ -364,7 +350,7 @@ static void userRegister(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
         goto OnErrorExit;
 
     afb_data_addref(params[0]);
-    fedIdSubCall(wreq, "user-create", 2, params, userRegisterCB, NULL);
+    fedIdClientSubCall(wreq, "user-create", 2, params, userRegisterCB, NULL);
     return;
 
 OnErrorExit:
@@ -459,7 +445,7 @@ static void userFederate(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     // check if pseudo/email already present within user federation db
     afb_data_addref(data);
     fedUser = afb_data_ro_pointer(data);
-    fedIdSubCall(wreq, "user-exist", 1, &data, userFederateCB, fedUser);
+    fedIdClientSubCall(wreq, "user-exist", 1, &data, userFederateCB, fedUser);
     return;
 
 OnErrorExit:

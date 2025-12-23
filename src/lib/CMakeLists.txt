@@ -16,6 +16,7 @@
 
 # Define project Targets
 add_library(sgoidc SHARED
+	fedid-client.c
 	oidc-alias.c
 	oidc-apis.c
 	oidc-core.c
@@ -36,6 +37,7 @@ target_link_libraries(sgoidc curl-glue-afb)
 install(TARGETS sgoidc DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(FILES
+		fedid-client.h
 		oidc-alias.h
 		oidc-apis.h
 		oidc-common.h

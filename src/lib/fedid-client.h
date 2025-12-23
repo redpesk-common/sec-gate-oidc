@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015-2021 IoT.bzh Company
- * Author "Fulup Ar Foll"
+ * Author dev-team@iot.bzh
  *
  * $RP_BEGIN_LICENSE$
  * Commercial License Usage
@@ -23,18 +23,38 @@
 
 #pragma once
 
-// few defaults
-#define EXT_HIGHEST_PRIO      100
-#define EXT_URL_MAX_LEN       512
-#define EXT_TOKEN_MAX_LEN     256
-#define EXT_HEADER_MAX_LEN    256
-#define EXT_HTTP_UNAUTHORIZED 401
-#define EXT_HTTP_CONFLICT     409
-#define EXT_HTTP_SERVER_ERROR 500
-#define EXT_SESSION_TIMEOUT   600  // session timeout in seconds
+#include <fedid-types.h>
+#include <libafb/afb-v4.h>
 
-#define HREQ_REDIR_TMPY 0  // temporary redirection
-#define HREQ_REDIR_PERM 1  // permanent redirection
-#define HREQ_QUERY_INCL 1  // include request parameter in redirection
-#define HREQ_QUERY_EXCL 0  // exclude request parameter of redirection
+void fedIdClientSubCall(
+                afb_req_t req,
+                const char *verbname,
+                unsigned nparams,
+                afb_data_t const params[],
+                afb_subcall_callback_t callback,
+                void *closure);
+
+void fedIdClientCall(
+                afb_api_t api,
+                const char *verbname,
+                unsigned nparams,
+                afb_data_t const params[],
+                afb_call_callback_t callback,
+                void *closure);
+
+int fedIdClientCallSync(
+                afb_api_t api,
+                const char *verbname,
+                unsigned nparams,
+                afb_data_t const params[],
+		int *status,
+		unsigned *nresults,
+		afb_data_t results[]);
+
+
+void fedIdClientSocialCheck(
+                afb_api_t api,
+		fedSocialRawT *fedSoc,
+		void (*callback)(void*,int,fedSocialRawT*,fedUserRawT*),
+		void *closure);
 
