@@ -122,7 +122,9 @@ typedef struct oidcDefaultsS
 } oidcDefaultsT;
 
 // request handle store federation attribute during multiple IDP async calls
-typedef struct idpRqtCtxS
+typedef struct idpRqtCtxS idpRqtCtxT;
+
+struct idpRqtCtxS
 {
     int ucount;
     const char *uuid;
@@ -134,7 +136,7 @@ typedef struct idpRqtCtxS
     const oidcProfileT *profile;
     char *token;
     void *userData;
-} idpRqtCtxT;
+};
 
 // idp exported functions
 const oidcProfileT *idpGetFirstProfile(const oidcIdpT *idp,
