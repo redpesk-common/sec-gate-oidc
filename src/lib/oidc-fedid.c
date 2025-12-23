@@ -76,18 +76,15 @@ void fedidsessionReset(oidcSessionT *session, const oidcProfileT *idpProfile)
 
 // if fedkey exists callback receive local store user profile otherwise we
 // should create it
-static void fedidCheckCB(void *ctx,
-                         int status,
-                         unsigned argc,
-                         afb_data_x4_t const argv[],
-                         struct afb_api_v4 *api)
+static void onSocialCheckResult(
+                        void *closure,
+                        int status,
+                        fedSocialRawT *fedSoc,
+                        fedUserRawT *fedUsr)
 {
-    char *errorMsg =
-        "[invalid-profile] Fail to process user profile (fedidCheckCB)";
-    idpRqtCtxT *idpRqtCtx = (idpRqtCtxT *)ctx;
+    idpRqtCtxT *idpRqtCtx = (idpRqtCtxT *)closure;
     char url[EXT_URL_MAX_LEN];
     const char *target;
-    afb_data_x4_t reply[1], argd[argc];
     fedUserRawT *fedUser;
     const oidcProfileT *idpProfile;
     const oidcAliasT *alias;
@@ -123,7 +120,7 @@ static void fedidCheckCB(void *ctx,
 
     idpProfile = oidcSessionGetIdpProfile(session);
 
-    if (argc != 1) {  // fedid is not registered and we are not facing a
+    if (status != 1) {  // fedid is not registered and we are not facing a
         // secondary authentication
         const char *targetUrl;
 
@@ -157,11 +154,7 @@ static void fedidCheckCB(void *ctx,
         }
     }
     else {  // fedid is already registered
-
-        err = afb_data_convert(argv[0], fedUserObjType, &argd[0]);
-        if (err < 0)
-            goto OnErrorExit;
-        fedUser = (fedUserRawT *)afb_data_ro_pointer(argd[0]);
+        fedUser = fedUserAddRef(fedUsr);
 
         // check if federation linking is pending
         const fedSocialRawT *fedSocial;
@@ -180,11 +173,15 @@ static void fedidCheckCB(void *ctx,
             oidcSessionSetFedIdLinkRequest(session, FEDID_LINK_RESET);
 
             // delegate account federation linking to fedid binding
-            params[0] = afb_data_addref(argd[0]);
+            err = afb_create_data_raw(&params[0], fedUserObjType, fedUser,
+                                      0, NULL, NULL);
+            if (err < 0)
+                goto OnErrorExit;
             err = afb_create_data_raw(&params[1], fedSocialObjType, fedSocial,
                                       0, NULL, NULL);
             if (err < 0)
                 goto OnErrorExit;
+            afb_api_t api = oidcCoreAfbApi(idpRqtCtx->idp->oidc);
             err = fedIdClientCallSync(api, "user-federate", 2, params,
                                                 &status, &count, &data);
             if (err < 0 || status != 0) {
@@ -263,25 +260,10 @@ OnErrorExit:
     idpRqtCtxFree(idpRqtCtx);
 }
 
-
 // try to wreq user profile from its federation key
 int fedidCheck(idpRqtCtxT *idpRqtCtx)
 {
-    int err;
-    afb_data_x4_t params[1];
-
-    // fedSocial should remain valid after subcall for fedsocial cookie
-    err = afb_data_create_raw(&params[0], fedSocialObjType,
-                              idpRqtCtx->fedSocial, 0, NULL, NULL);
-    if (err)
-        goto OnErrorExit;
-
-    afb_data_addref(params[0]);  // prevent params to be deleted
-    fedIdClientCall(oidcCoreAfbApi(idpRqtCtx->idp->oidc),
-                             "social-check", 1, params,
-                             fedidCheckCB, idpRqtCtx);
+    afb_api_t api = oidcCoreAfbApi(idpRqtCtx->idp->oidc);
+    fedIdClientSocialCheck(api, idpRqtCtx->fedSocial, onSocialCheckResult, idpRqtCtx);
     return 0;
-
-OnErrorExit:
-    return -1;
 }

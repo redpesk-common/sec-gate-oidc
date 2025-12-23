@@ -58,3 +58,8 @@ void fedIdClientSocialCheck(
 		void (*callback)(void*,int,fedSocialRawT*,fedUserRawT*),
 		void *closure);
 
+void fedIdClientSocialCheck(
+        afb_api_t api,
+        fedSocialRawT *fedSoc,
+        void (*callback)(void*,int,fedSocialRawT*,fedUserRawT*),
+        void *closure);
