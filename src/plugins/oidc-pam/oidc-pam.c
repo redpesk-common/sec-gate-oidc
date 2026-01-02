@@ -144,7 +144,7 @@ static int pamAccessToken(const oidcIdpT *idp,
         fedUser->company = NULL;
         fedUser->email = NULL;
 
-        // retreive groups list and add then to fedSocial labels list
+        // retreive groups list and add them to fedSocial labels list
         err = getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups);
         if (err < 0) {
             EXT_CRITICAL("[pam-auth-gids] opts{'gids':%d} too small",
@@ -246,7 +246,6 @@ OnErrorExit:
 int pamLoginCB(struct afb_hreq *hreq, void *ctx)
 {
     const oidcIdpT *idp = (const oidcIdpT *)ctx;
-    char redirectUrl[EXT_HEADER_MAX_LEN];
     const oidcProfileT *profile = NULL;
     int err, status, targetLOA;
 
@@ -258,12 +257,6 @@ int pamLoginCB(struct afb_hreq *hreq, void *ctx)
 
     targetLOA = oidcSessionGetTargetLOA(session);
 
-    // add afb-binder endpoint to login redirect alias
-    status = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin, redirectUrl,
-                                    sizeof(redirectUrl));
-    if (status < 0)
-        goto OnErrorExit;
-
     // if no code then set state and redirect to IDP
     if (!login || !passwd) {
         char url[EXT_URL_MAX_LEN];
@@ -273,6 +266,13 @@ int pamLoginCB(struct afb_hreq *hreq, void *ctx)
 
         // if loa working and no profile fit exit without trying authentication
         if (!profile)
+            goto OnErrorExit;
+
+        // add afb-binder endpoint to login redirect alias
+        char redirectUrl[EXT_HEADER_MAX_LEN];
+        status = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin, redirectUrl,
+                                        sizeof(redirectUrl));
+        if (status < 0)
             goto OnErrorExit;
 
         const char *params[] = {
