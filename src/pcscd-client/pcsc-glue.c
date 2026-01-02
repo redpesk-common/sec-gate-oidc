@@ -919,7 +919,7 @@ u_int64_t pcscGetCardUuid(pcscHandleT *handle)
     assert(handle->magic == PCSC_HANDLE_MAGIC);
     int err;
 
-    // if card atr not decoded to it now
+    // if card atr not decoded, do it now
     if (!handle->cardId) {
         err = pcscCardCheckAtr(handle);
         if (err)

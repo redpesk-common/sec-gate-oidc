@@ -213,8 +213,8 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
                         goto OnErrorExit;
                     }
                     idpRqtCtx->fedSocial->idp = strdup(idpRqtCtx->idp->uid);
-                    asprintf((char **)&idpRqtCtx->fedSocial->fedkey, "%ld",
-                             uuid);
+                    asprintf((char **)&idpRqtCtx->fedSocial->fedkey, "%llu",
+                             (unsigned long long)uuid);
                     break;
 
                 case PCSC_ACTION_READ:
@@ -225,6 +225,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
                             "[pcsc-cmd-exec] command=%s execution fail "
                             "error=%s",
                             cmd->uid, pcscErrorMsg(handle));
+                        free(data);
                         free(copy);
                         goto OnErrorExit;
                     }
@@ -250,9 +251,11 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
                             "[pcsc-cmd-schema] command=%s no schema mapping "
                             "[pseudo,name,email,company,avatar]",
                             cmd->uid);
+                        free(data);
                         free(copy);
                         goto OnErrorExit;
                     }
+                    free(data); /* not used directly for when copy is shorter */
                     break;
 
                 default:
@@ -287,6 +290,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
                         goto OnErrorExit;
                     }
 
+                    data = malloc(cmd->dlen);
                     err =
                         pcscExecOneCmd(pcscOpts->handle, cmd, (u_int8_t *)data);
                     if (err) {
@@ -298,13 +302,8 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
                         goto OnErrorExit;
                     }
                     // parse attrs string to extract multi-attributes if any
-                    char *copy2, *save2;
-                    copy2 =
-                        strdup(data); /* !!! TODO check origin of data !!! */
-                    if (copy2 == NULL)
-                        goto OnErrorExit;
-                    save2 = NULL;
-                    for (char *attr = strtok_r(copy2, ",", &save2); attr;
+                    char *save2 = NULL;
+                    for (char *attr = strtok_r(data, ",", &save2); attr;
                          attr = strtok_r(NULL, ",", &save2)) {
                         idpRqtCtx->fedSocial->attrs[index++] = strdup(attr);
                         if (index == pcscOpts->labelMax) {
@@ -316,7 +315,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
                             /* !!! TODO and continue to loop ???? */
                         }
                     }
-                    free(copy2);
+                    free(data);
                 }
                 free(copy);
             }
@@ -333,7 +332,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
     // we done idpRqtCtx is cleared by fedidCheck
     return status;
 
-OnErrorExit: {
+OnErrorExit:
     static char errorMsg[] =
         "[pcsc-scard-fail] invalid token/smartcard (check scard/config)";
     EXT_CRITICAL(errorMsg);
@@ -346,7 +345,7 @@ OnErrorExit: {
                             sizeof(errorMsg), NULL, NULL);
         afb_req_v4_reply_hookable(idpRqtCtx->wreq, -1, 1, &reply);
     }
-}
+
     pcscRqtCtx->status = PCSC_STATUS_REFUSED;
     fedSocialUnRef(idpRqtCtx->fedSocial);
     fedUserUnRef(idpRqtCtx->fedUser);
@@ -542,11 +541,11 @@ OnErrorExit:
 static int pcscRegisterConfig(oidcIdpT *idp, json_object *idpJ)
 {
     int err;
+    json_object *pcscConfJ = NULL;
+    int verbosity = 0;
+    const char *ldpath;
     pcscOptsT *pcscOpts = malloc(sizeof(pcscOptsT));
     memcpy(pcscOpts, &dfltOpts, sizeof(pcscOptsT));
-    json_object *pcscConfJ;
-    int verbosity;
-    const char *ldpath;
 
     // check is we have custom options
     json_object *pluginJ = json_object_object_get(idpJ, "plugin");
@@ -565,6 +564,8 @@ static int pcscRegisterConfig(oidcIdpT *idp, json_object *idpJ)
             goto OnErrorExit;
         }
     }
+    else
+        pcscConfJ = json_object_object_get(idpJ, "config");
 
     pcscOpts->config = pcscParseConfig(pcscConfJ, verbosity);
     if (!pcscOpts->config)
