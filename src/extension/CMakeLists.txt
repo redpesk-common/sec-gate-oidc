@@ -20,17 +20,19 @@
 # $RP_END_LICENSE$
 ###########################################################################
 
-add_subdirectory(builtin-idps)
 
 # Define project Targets
 add_library(sec-gate-oidc SHARED
 	oidc-builtin-idps.c
 	oidc-extension-main.c
 	oidc-idsvc.c
+	builtin-idps/idp-github.c
+	builtin-idps/idp-ldap.c
+	builtin-idps/idp-oidc.c
 )
 
-add_dependencies(sec-gate-oidc curl-glue-afb builtin-idps sgoidc)
-target_link_libraries(sec-gate-oidc curl-glue-afb builtin-idps sgoidc)
+add_dependencies(sec-gate-oidc curl-glue-afb sgoidc)
+target_link_libraries(sec-gate-oidc curl-glue-afb sgoidc)
 
 target_include_directories(sec-gate-oidc BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -41,5 +43,4 @@ set_target_properties(sec-gate-oidc
 		SUFFIX "-ext.so"
 )
 install(TARGETS sec-gate-oidc DESTINATION ${APPDIR}/lib)
-
 

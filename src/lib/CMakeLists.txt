@@ -20,6 +20,14 @@
 # $RP_END_LICENSE$
 ###########################################################################
 
+pkg_check_modules(DEPS REQUIRED IMPORTED_TARGET
+	json-c
+	libafb>=5.3.8
+	fedid-types>=2.0.0
+	librp-utils-core
+	librp-utils-json-c
+)
+
 # Define project Targets
 add_library(sgoidc SHARED
 	fedid-client.c
@@ -35,10 +43,11 @@ add_library(sgoidc SHARED
 
 target_include_directories(sgoidc BEFORE PUBLIC
    ${CMAKE_CURRENT_SOURCE_DIR}
+   ${DEPS_INCLUDE_DIRS}
 )
 
 add_dependencies(sgoidc curl-glue-afb)
-target_link_libraries(sgoidc curl-glue-afb)
+target_link_libraries(sgoidc curl-glue-afb PkgConfig::DEPS)
 
 install(TARGETS sgoidc DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

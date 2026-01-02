@@ -32,19 +32,7 @@ set(AFM_APP_DIR ${CMAKE_INSTALL_PREFIX}/redpesk CACHE PATH "Applications directo
 
 set(APPDIR ${AFM_APP_DIR}/sec-gate-oidc CACHE PATH "sec-gate-oidc directory")
 
-pkg_check_modules(mod0 REQUIRED
-	json-c
-	libafb>=5.3.8
-	libcurl>=7.55.0
-	fedid-types>=2.0.0
-	afb-binding>=4.0.2
-	librp-utils-core
-	librp-utils-json-c
-)
-include_directories(${mod0_INCLUDE_DIRS})
-add_compile_options(${mod0_CFLAGS} -fPIC)
-add_link_options(${mod0_LDFLAGS})
-link_libraries(${mod0_LIBRARIES})
+add_compile_options(-fPIC)
 
 configure_file(sec-gate-oidc.pc.in sec-gate-oidc.pc @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/sec-gate-oidc.pc
