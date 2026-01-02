@@ -331,7 +331,7 @@ OnErrorExit:
 static int ldapAccessProfile(const oidcIdpT *idp,
                              const char *login,
                              const char *passwd,
-                             afb_hreq *hreq,
+                             struct afb_hreq *hreq,
                              struct afb_req_v4 *wreq)
 {
     int err;
@@ -448,7 +448,7 @@ OnErrorExit:
 }
 
 // when call with no login/passwd display form otherwise try to log user
-static int ldapLoginCB(afb_hreq *hreq, void *ctx)
+static int ldapLoginCB(struct afb_hreq *hreq, void *ctx)
 {
     oidcIdpT *idp = (oidcIdpT *)ctx;
     char redirectUrl[EXT_HEADER_MAX_LEN];
@@ -551,7 +551,7 @@ OnErrorExit:
     return 1;
 }
 
-static int ldapRegisterAlias(const oidcIdpT *idp, afb_hsrv *hsrv)
+static int ldapRegisterAlias(const oidcIdpT *idp, struct afb_hsrv *hsrv)
 {
     int err;
     EXT_DEBUG("[ldap-register-alias] uid=%s login='%s'", idp->uid,

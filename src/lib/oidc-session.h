@@ -41,8 +41,8 @@ typedef struct
 typedef struct oidcSessionS oidcSessionT;
 
 oidcSessionT *oidcSessionOfAfbSession(struct afb_session *ases);
-oidcSessionT *oidcSessionOfHttpReq(afb_hreq *hreq);
-oidcSessionT *oidcSessionOfReq(afb_req_v4 *wreq);
+oidcSessionT *oidcSessionOfHttpReq(struct afb_hreq *hreq);
+oidcSessionT *oidcSessionOfReq(struct afb_req_v4 *wreq);
 oidcSessionT *oidcSessionOfUUID(const char *uuid);
 
 const char *oidcSessionUUID(const oidcSessionT *session);

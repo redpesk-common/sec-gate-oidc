@@ -43,5 +43,5 @@ typedef struct oidcApisS
 oidcApisT *apisParseConfig(const oidcCoreHdlT *oidc, json_object *apisJ);
 int apisRegister(const oidcCoreHdlT *oidc,
                  oidcApisT *api,
-                 afb_apiset *declare_set,
-                 afb_apiset *call_set);
+                 struct afb_apiset *declare_set,
+                 struct afb_apiset *call_set);

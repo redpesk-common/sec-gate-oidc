@@ -243,7 +243,7 @@ OnErrorExit:
 }
 
 // when call with no login/passwd display form otherwise try to log user
-int pamLoginCB(afb_hreq *hreq, void *ctx)
+int pamLoginCB(struct afb_hreq *hreq, void *ctx)
 {
     const oidcIdpT *idp = (const oidcIdpT *)ctx;
     char redirectUrl[EXT_HEADER_MAX_LEN];
@@ -362,7 +362,7 @@ OnErrorExit:
     return 1;
 }
 
-static int pamRegisterAlias(const oidcIdpT *idp, afb_hsrv *hsrv)
+static int pamRegisterAlias(const oidcIdpT *idp, struct afb_hsrv *hsrv)
 {
     int err;
     EXT_DEBUG("[pam-register-alias] uid=%s login='%s'", idp->uid,

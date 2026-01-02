@@ -59,12 +59,12 @@ static struct afb_api_itf api_frontend_itf = {.process = apisCheckReq};
 // import API client from uri and map corresponding roles into apis hashtable
 int apisRegister(const oidcCoreHdlT *oidc,
                  oidcApisT *api,
-                 afb_apiset *declare_set,
-                 afb_apiset *call_set)
+                 struct afb_apiset *declare_set,
+                 struct afb_apiset *call_set)
 {
     int err, index;
     struct afb_api_item api_item;
-    afb_apiset *public_set;
+    struct afb_apiset *public_set;
 
     // if API is not runnning within the binder register client API
     if (api->uri[0] != '@') {

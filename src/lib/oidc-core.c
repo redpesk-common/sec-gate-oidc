@@ -64,7 +64,7 @@ struct oidcCoreHdlS
     httpPoolT *httpPool;
     const char *fedapi;
     oidcApisT *apisHash;
-    afb_api_v4 *apiv4;
+    struct afb_api_v4 *apiv4;
     oidGlobalsT globals;
 };
 
@@ -78,7 +78,7 @@ const oidGlobalsT *oidcCoreGlobals(const oidcCoreHdlT *oidc)
     return &oidc->globals;
 }
 
-afb_api_v4 *oidcCoreAfbApi(const oidcCoreHdlT *oidc)
+struct afb_api_v4 *oidcCoreAfbApi(const oidcCoreHdlT *oidc)
 {
     return oidc->apiv4;
 }
@@ -98,7 +98,7 @@ const char *oidcCoreAfbApiName(const oidcCoreHdlT *oidc)
     return oidc->api;
 }
 
-void oidcCoreSetAfbApi(oidcCoreHdlT *oidc, afb_api_v4 *apiv4)
+void oidcCoreSetAfbApi(oidcCoreHdlT *oidc, struct afb_api_v4 *apiv4)
 {
     oidc->apiv4 = apiv4;
 }
@@ -262,7 +262,7 @@ OnErrorExit:
 }
 
 // Declare HTTP hooks
-int oidcCoreDeclareHTTP(oidcCoreHdlT *oidc, afb_hsrv *hsrv)
+int oidcCoreDeclareHTTP(oidcCoreHdlT *oidc, struct afb_hsrv *hsrv)
 {
     int err;
     const oidcIdpT *idpiter;
@@ -368,7 +368,7 @@ int oidcCoreGetFilteredIdpList(const oidcCoreHdlT *oidc,
     return index;
 }
 
-int oidcCoreRedirectLogin(const oidcCoreHdlT *oidc, afb_hreq *hreq)
+int oidcCoreRedirectLogin(const oidcCoreHdlT *oidc, struct afb_hreq *hreq)
 {
     int rc;
     char url[EXT_URL_MAX_LEN];

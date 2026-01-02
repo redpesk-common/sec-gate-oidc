@@ -357,7 +357,7 @@ OnErrorExit: {
 static int pcscScardGet(const oidcIdpT *idp,
                         const oidcProfileT *profile,
                         ulong pin,
-                        afb_hreq *hreq,
+                        struct afb_hreq *hreq,
                         struct afb_req_v4 *wreq)
 {
     pcscOptsT *pcscOpts = (pcscOptsT *)idp->ctx;
@@ -452,7 +452,7 @@ OnErrorExit:
 }
 
 // when call with no login/passwd display form otherwise try to log user
-int pcscLoginCB(afb_hreq *hreq, void *ctx)
+int pcscLoginCB(struct afb_hreq *hreq, void *ctx)
 {
     const oidcIdpT *idp = (const oidcIdpT *)ctx;
     const oidcProfileT *profile = NULL;
@@ -519,7 +519,7 @@ OnErrorExit:
     return 1;
 }
 
-static int pcscRegisterAlias(const oidcIdpT *idp, afb_hsrv *hsrv)
+static int pcscRegisterAlias(const oidcIdpT *idp, struct afb_hsrv *hsrv)
 {
     int err;
     EXT_DEBUG("[pcsc-register-alias] uid=%s login='%s'", idp->uid,

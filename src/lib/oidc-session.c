@@ -44,7 +44,7 @@ struct oidcSessionS
     const fedSocialRawT *social;
     int fedidLinkRequest;
     fedidLinkT fedlink;
-    afb_event_t event;
+    struct afb_evt *event;
     void *data;
     struct timespec now;
     struct timespec nextCheck;
@@ -92,13 +92,13 @@ oidcSessionT *oidcSessionOfAfbSession(struct afb_session *ases)
     return session;
 }
 
-oidcSessionT *oidcSessionOfHttpReq(afb_hreq *hreq)
+oidcSessionT *oidcSessionOfHttpReq(struct afb_hreq *hreq)
 {
     struct afb_session *ases = hreq->comreq.session;
     return oidcSessionOfAfbSession(ases);
 }
 
-oidcSessionT *oidcSessionOfReq(afb_req_v4 *wreq)
+oidcSessionT *oidcSessionOfReq(struct afb_req_v4 *wreq)
 {
     struct afb_session *ases = afb_req_v4_get_common(wreq)->session;
     return oidcSessionOfAfbSession(ases);

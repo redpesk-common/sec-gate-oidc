@@ -92,7 +92,7 @@ static void onSocialCheckResult(
     const oidcAliasT *alias;
     oidcSessionT *session = NULL;
     const char *redirect;
-    afb_hreq *hreq = NULL;
+    struct afb_hreq *hreq = NULL;
     struct afb_req_v4 *wreq = NULL;
     int err;
 

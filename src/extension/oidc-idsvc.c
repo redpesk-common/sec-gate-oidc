@@ -682,14 +682,14 @@ static afb_verb_t idsvcVerbs[] = {
 
 #define IDSVC_INFO "internal oidc idp api"
 
-int idsvcDeclareApi(afb_api_v4 **api,
+int idsvcDeclareApi(struct afb_api_v4 **api,
                     const char *apiname,
                     const oidcCoreHdlT *oidc,
-                    afb_apiset *declare_set,
-                    afb_apiset *call_set)
+                    struct afb_apiset *declare_set,
+                    struct afb_apiset *call_set)
 {
     int rc;
-    afb_apiset *public_set;
+    struct afb_apiset *public_set;
     char apiwsname[EXT_URL_MAX_LEN];
 
     // register fedid type

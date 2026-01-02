@@ -33,8 +33,6 @@
 
 #include "pcsc-glue.h"
 
-#include <libafb/misc/afb-verbose.h>
-
 #include <assert.h>
 #include <errno.h>
 #include <pthread.h>
@@ -47,6 +45,8 @@
 
 #include <pcsclite.h>
 #include <winscard.h>
+
+#include <rp-utils/rp-verbose.h>
 
 typedef struct
 {
@@ -183,7 +183,7 @@ static long pcscSendCmd(pcscHandleT *handle,
     return rv;
 
 OnErrorExit:
-    EXT_DEBUG("[pcsc-transmit-error] uid=%s action=%s error=%s (pcscSendCmd)\n",
+    RP_DEBUG("[pcsc-transmit-error] uid=%s action=%s error=%s (pcscSendCmd)\n",
               cmdUid, action, handle->error);
     return rv;
 }
@@ -429,7 +429,7 @@ int pcscReadBlock(pcscHandleT *handle,
 OnErrorExit:
     if (handle->verbose)
         fprintf(stderr, " error=%s\n", handle->error);
-    EXT_DEBUG("[pcsc-readblk-fail] cmd=%s action:read err=%s", uid,
+    RP_DEBUG("[pcsc-readblk-fail] cmd=%s action:read err=%s", uid,
               handle->error);
     return -1;
 }
@@ -483,7 +483,7 @@ int pcsWriteBlock(pcscHandleT *handle,
     return 0;
 
 OnErrorExit:
-    EXT_DEBUG("[pcsc-writeblk-fail] cmd=%s action=write err=%s", uid,
+    RP_DEBUG("[pcsc-writeblk-fail] cmd=%s action=write err=%s", uid,
               handle->error);
     return -1;
 }
@@ -500,7 +500,7 @@ int pcscCardCheckAtr(pcscHandleT *handle)
 
     // make sure reader as a card
     if (!handle->hCard) {
-        EXT_ERROR(
+        RP_ERROR(
             "[pcsc-reader-status] should 1st use pcscReaderCheck to reader=%s "
             "presence",
             handle->readerName);
@@ -521,7 +521,7 @@ int pcscCardCheckAtr(pcscHandleT *handle)
     return 0;
 
 OnErrorExit:
-    EXT_ERROR(
+    RP_ERROR(
         "[pcsc-sccard-atr] Fail get smart card atr reader=%s. "
         "(pcscCardCheckAtr=%s)",
         handle->readerName, pcsc_stringify_error(rv));
@@ -584,7 +584,7 @@ int pcscReaderCheck(pcscHandleT *handle, int ticks)
         handle->pioSendPci = SCARD_PCI_T1;
         break;
     default:
-        EXT_CRITICAL(
+        RP_CRITICAL(
             "[pcsc-sccard-check] SCARD_PCI Unknown protocol (SCardConnect)");
         goto OnErrorExit;
     }
@@ -593,7 +593,7 @@ int pcscReaderCheck(pcscHandleT *handle, int ticks)
 
 OnErrorExit:
     handle->error = pcsc_stringify_error(rv);
-    EXT_ERROR(
+    RP_ERROR(
         "[pcsc-sccard-check] Fail get connect smart card reader=%s. "
         "(SCardConnect=%s)",
         handle->readerName, pcsc_stringify_error(rv));
@@ -612,7 +612,7 @@ static void *pcscMonitorThread(void *ptr)
     SCARD_READERSTATE rgReaderStates;
     rgReaderStates.szReader = handle->readerName;  // reader ID to test
     rgReaderStates.dwCurrentState = SCARD_STATE_UNAWARE;
-    EXT_DEBUG("[pcsc-thread-monitor] starting new thread tid=0x%lx",
+    RP_DEBUG("[pcsc-thread-monitor] starting new thread tid=0x%lx",
               pthread_self());
 
     // loop forever until reader is disconnected
@@ -653,7 +653,7 @@ static void *pcscMonitorThread(void *ptr)
                         handle->pioSendPci = SCARD_PCI_T1;
                         break;
                     default:
-                        EXT_CRITICAL(
+                        RP_CRITICAL(
                             "[pcsc-sccard-check] SCARD_PCI Unknown protocol "
                             "(SCardConnect)");
                         goto OnErrorExit;
@@ -682,14 +682,14 @@ static void *pcscMonitorThread(void *ptr)
     }
 
 OnRequestExit:
-    EXT_DEBUG("[pcsc-thread-monitor] card-remove exit tid=0x%lx",
+    RP_DEBUG("[pcsc-thread-monitor] card-remove exit tid=0x%lx",
               pthread_self());
     free(threadCtx);
     handle->tid = 0;
     return NULL;
 
 OnCancelExit:
-    EXT_DEBUG("[pcsc-thread-monitor] session-cancel exit tid=0x%lx",
+    RP_DEBUG("[pcsc-thread-monitor] session-cancel exit tid=0x%lx",
               pthread_self());
     free(threadCtx);
     handle->tid = 0;
@@ -697,7 +697,7 @@ OnCancelExit:
 
 OnErrorExit:
     handle->error = pcsc_stringify_error(rv);
-    EXT_ERROR(
+    RP_ERROR(
         "[pcsc-thread-monitor] Reader not avaliable tid=0x%lx exited err=%s",
         pthread_self(), handle->error);
     free(threadCtx);
@@ -733,7 +733,7 @@ ulong pcscMonitorReader(pcscHandleT *handle,
     return (ulong)threadCtx->tid;
 
 OnErrorExit:
-    EXT_ERROR(
+    RP_ERROR(
         "[pcsc-sccard-monitor] Fail monitoring reader=%s. (pcscMonitorReader "
         "err=%s)",
         handle->uid, strerror(errno));
@@ -747,12 +747,12 @@ int pcscMonitorWait(pcscHandleT *handle, pcscMonitorActionE action, ulong tid)
 
     switch (action) {
     case PCSC_MONITOR_WAIT:
-        EXT_DEBUG("[pcsc-thread-join] tid=0x%lx (pcscMonitorWait)", tid);
+        RP_DEBUG("[pcsc-thread-join] tid=0x%lx (pcscMonitorWait)", tid);
         pthread_join(tid, NULL);  // infinit wait for monitor to quit
         break;
 
     case PCSC_MONITOR_CANCEL:
-        EXT_DEBUG("[pcsc-thread-cancel] tid=0x%lx (pcscMonitorWait)", tid);
+        RP_DEBUG("[pcsc-thread-cancel] tid=0x%lx (pcscMonitorWait)", tid);
         SCardCancel(handle->hContext);
         break;
 
@@ -764,7 +764,7 @@ int pcscMonitorWait(pcscHandleT *handle, pcscMonitorActionE action, ulong tid)
 
 OnErrorExit:
     handle->error = strerror(errno);
-    EXT_ERROR(
+    RP_ERROR(
         "[pcsc-sccard-monitor] Unknown action on monitor reader=%s. "
         "(pcscMonitorWait err=%s)",
         handle->readerName, strerror(errno));
@@ -789,7 +789,7 @@ int pcscDisconnect(pcscHandleT *handle)
     return 0;
 
 OnErrorExit:
-    EXT_ERROR("[pcsc-disconnect-fail] fail to free pcsc handle err=%s",
+    RP_ERROR("[pcsc-disconnect-fail] fail to free pcsc handle err=%s",
               pcsc_stringify_error(rv));
     return -1;
 }
@@ -805,7 +805,7 @@ pcscHandleT *pcscList(const char **readerList, ulong *readerMax)
     rv = SCardEstablishContext(SCARD_SCOPE_SYSTEM, NULL, NULL,
                                &handle->hContext);
     if (rv != SCARD_S_SUCCESS) {
-        EXT_CRITICAL(
+        RP_CRITICAL(
             "[pcsc-init-fail] to found pcscd ressource manager [check pcscd "
             "-d]. (SCardEstablisscardCtx=%s)",
             pcsc_stringify_error(rv));
@@ -817,7 +817,7 @@ pcscHandleT *pcscList(const char **readerList, ulong *readerMax)
     rv = SCardListReaders(handle->hContext, NULL, (LPSTR)&readerListStr,
                           &readerLiStatusLen);
     if (rv != SCARD_S_SUCCESS) {
-        EXT_CRITICAL(
+        RP_CRITICAL(
             "[pcsc-reader-scan] Fail to list pcscd reader [check pcsc-ccid "
             "supported reader]. (SCardListReaders=%s)",
             pcsc_stringify_error(rv));
@@ -827,7 +827,7 @@ pcscHandleT *pcscList(const char **readerList, ulong *readerMax)
     int readerCount = 0;
     for (char *ptr = readerListStr; *ptr != '\0'; ptr += strlen(ptr) + 1) {
         if (readerCount == *readerMax) {
-            EXT_CRITICAL(
+            RP_CRITICAL(
                 "[pcsc-reader-scan] too many readers increase 'maxdev=%ld' "
                 "(remaining ignored)",
                 *readerMax);
@@ -858,7 +858,7 @@ pcscHandleT *pcscConnect(const char *uid, const char *readerName)
     if (readerName) {
         handle->readerId = -1;
         for (int idx = 0; idx < readerCount; idx++) {
-            EXT_DEBUG("reader[%d]=%s", idx, readerList[idx]);
+            RP_DEBUG("reader[%d]=%s", idx, readerList[idx]);
             if (strcasestr(readerList[idx], readerName)) {
                 handle->readerId = idx;
                 handle->readerName = strdup(readerList[idx]);
@@ -866,11 +866,11 @@ pcscHandleT *pcscConnect(const char *uid, const char *readerName)
             }
         }
         if (handle->readerId < 0) {
-            EXT_CRITICAL("[pcsc-reader-unknown] reader=%s", handle->readerName);
+            RP_CRITICAL("[pcsc-reader-unknown] reader=%s", handle->readerName);
             if (handle->verbose) {
-                EXT_NOTICE("-- reader list count=%ld", readerCount);
+                RP_NOTICE("-- reader list count=%ld", readerCount);
                 for (int jdx = 0; jdx < readerCount - 1; jdx++) {
-                    EXT_NOTICE(" -- reader[%d]=%s", jdx, readerList[jdx]);
+                    RP_NOTICE(" -- reader[%d]=%s", jdx, readerList[jdx]);
                 }
             }
             goto OnErrorExit;
@@ -909,7 +909,7 @@ int pcscSetOpt(pcscHandleT *handle, pcscOptsE option, ulong value)
     return 0;
 
 OnErrorExit:
-    EXT_ERROR("[pcsc-opt-unknown] Invalid option (pcscSetOpt)");
+    RP_ERROR("[pcsc-opt-unknown] Invalid option (pcscSetOpt)");
     return -1;
 }
 
@@ -976,7 +976,7 @@ static size_t pcscMifareTrailer(pcscHandleT *handle,
     return dlen;
 
 OnErrorExit:
-    EXT_ERROR("[pcsc-trailer-fail] cmd=Mifare action=MkTrailer err=%s",
+    RP_ERROR("[pcsc-trailer-fail] cmd=Mifare action=MkTrailer err=%s",
               handle->error);
     return 0;
 }

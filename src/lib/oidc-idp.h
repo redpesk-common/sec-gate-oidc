@@ -131,7 +131,7 @@ struct idpRqtCtxS
     int ucount;
     const char *uuid;
     const oidcIdpT *idp;
-    afb_hreq *hreq;
+    struct afb_hreq *hreq;
     struct afb_req_v4 *wreq;
     fedSocialRawT *fedSocial;
     fedUserRawT *fedUser;
@@ -155,7 +155,7 @@ int idpRegisterApis(const oidcCoreHdlT *oidc,
                     const oidcIdpT *idp,
                     struct afb_apiset *declare_set,
                     struct afb_apiset *call_set);
-int idpRegisterAlias(const oidcCoreHdlT *oidc, const oidcIdpT *idp, afb_hsrv *hsrv);
+int idpRegisterAlias(const oidcCoreHdlT *oidc, const oidcIdpT *idp, struct afb_hsrv *hsrv);
 
 int idpPluginRegister(const idpPluginT *pluginCbs);
 void idpRqtCtxFree(idpRqtCtxT *rqtCtx);

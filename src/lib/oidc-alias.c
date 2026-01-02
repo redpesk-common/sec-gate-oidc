@@ -59,7 +59,7 @@ static int aliasCheckAttrs(oidcSessionT *session, oidcAliasT *alias)
 };
 
 // create aliasFrom cookie and redirect to common login page
-static int aliasRedirectLogin(afb_hreq *hreq,
+static int aliasRedirectLogin(struct afb_hreq *hreq,
                               oidcAliasT *alias,
                               oidcSessionT *session)
 {
@@ -68,7 +68,7 @@ static int aliasRedirectLogin(afb_hreq *hreq,
 }
 
 // create aliasFrom cookie and redirect to idp profile page
-static int aliasRedirectTimeout(afb_hreq *hreq,
+static int aliasRedirectTimeout(struct afb_hreq *hreq,
                                 oidcAliasT *alias,
                                 oidcSessionT *session)
 {
@@ -121,7 +121,7 @@ static int aliasRedirectTimeout(afb_hreq *hreq,
 /**
  * check that the client has the required LOA
  */
-static int aliasCheckReq(afb_hreq *hreq, void *ctx)
+static int aliasCheckReq(struct afb_hreq *hreq, void *ctx)
 {
     oidcAliasT *alias = (oidcAliasT *)ctx;
     const oidcProfileT *idpProfile;
@@ -174,7 +174,7 @@ static int aliasCheckReq(afb_hreq *hreq, void *ctx)
 /**
  * Register one alias, described by 'alias', to the HTTP server 'hsrv'
  */
-int aliasRegisterOne(const oidcAliasT *alias, afb_hsrv *hsrv)
+int aliasRegisterOne(const oidcAliasT *alias, struct afb_hsrv *hsrv)
 {
     const char *rootdir;
     int rc;

@@ -25,7 +25,8 @@
 
 #pragma once
 
-#include "oidc-common.h"
+#include <libafb/afb-core.h>
+#include <libafb/afb-http.h>
 
 #include <json-c/json.h>
 
@@ -52,11 +53,11 @@ struct oidGlobalsS
 
 const char *oidcCoreUID(const oidcCoreHdlT *oidc);
 const oidGlobalsT *oidcCoreGlobals(const oidcCoreHdlT *oidc);
-afb_api_v4 *oidcCoreAfbApi(const oidcCoreHdlT *oidc);
+struct afb_api_v4 *oidcCoreAfbApi(const oidcCoreHdlT *oidc);
 httpPoolT *oidcCoreHTTPPool(const oidcCoreHdlT *oidc);
 const char *oidcCoreFedIdURI(const oidcCoreHdlT *oidc);
 const char *oidcCoreAfbApiName(const oidcCoreHdlT *oidc);
-void oidcCoreSetAfbApi(oidcCoreHdlT *oidc, afb_api_v4 *apiv4);
+void oidcCoreSetAfbApi(oidcCoreHdlT *oidc, struct afb_api_v4 *apiv4);
 
 int oidcCoreParseConfig(oidcCoreHdlT **poidc,
                         struct json_object *oidcJ,
@@ -64,7 +65,7 @@ int oidcCoreParseConfig(oidcCoreHdlT **poidc,
 int oidcCoreDeclareApis(oidcCoreHdlT *oidc,
                         struct afb_apiset *declare_set,
                         struct afb_apiset *call_set);
-int oidcCoreDeclareHTTP(oidcCoreHdlT *oidc, afb_hsrv *hsrv);
+int oidcCoreDeclareHTTP(oidcCoreHdlT *oidc, struct afb_hsrv *hsrv);
 
 json_object *oidcCoreGetProfilsForLOA(const oidcCoreHdlT *oidc,
                                       int loa,
@@ -76,4 +77,4 @@ int oidcCoreGetFilteredIdpList(const oidcCoreHdlT *oidc,
                                int nrDest,
                                const char *excludedUID);
 
-int oidcCoreRedirectLogin(const oidcCoreHdlT *oidc, afb_hreq *hreq);
+int oidcCoreRedirectLogin(const oidcCoreHdlT *oidc, struct afb_hreq *hreq);

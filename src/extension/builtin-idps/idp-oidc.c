@@ -413,7 +413,7 @@ OnErrorExit:
     return HTTP_HANDLE_FREE;
 }
 
-static int oidcAccessToken(afb_hreq *hreq,
+static int oidcAccessToken(struct afb_hreq *hreq,
                            oidcIdpT *idp,
                            const char *redirectUrl,
                            const char *code,
@@ -499,7 +499,7 @@ OnErrorExit:
 }
 
 // this check idp code and either wreq profile or redirect to idp login page
-static int oidcLoginCB(afb_hreq *hreq, void *ctx)
+static int oidcLoginCB(struct afb_hreq *hreq, void *ctx)
 {
     oidcIdpT *idp = (oidcIdpT *)ctx;
     char redirectUrl[EXT_HEADER_MAX_LEN];
@@ -591,7 +591,7 @@ OnErrorExit:
 
 // this check idp code and either wreq profile or redirect to idp login page
 // reference https://openid.net/specs/openid-connect-backchannel-1_0.html
-static int oidcLogoutCB(afb_hreq *hreq, void *ctx)
+static int oidcLogoutCB(struct afb_hreq *hreq, void *ctx)
 {
     oidcIdpT *idp = (oidcIdpT *)ctx;
     oidcSchemaT *schema = (oidcSchemaT *)idp->userData;
@@ -635,7 +635,7 @@ OnErrorExit:
     return 1;
 }
 
-static int oidcRegisterAlias(const oidcIdpT *idp, afb_hsrv *hsrv)
+static int oidcRegisterAlias(const oidcIdpT *idp, struct afb_hsrv *hsrv)
 {
     int err;
     EXT_DEBUG("[oidc-register-alias] uid=%s login='%s'", idp->uid,

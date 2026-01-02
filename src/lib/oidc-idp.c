@@ -472,7 +472,7 @@ OnErrorExit:
 }
 
 // register aliases of IDPs
-int idpRegisterAlias(const oidcCoreHdlT *oidc, const oidcIdpT *idp, afb_hsrv *hsrv)
+int idpRegisterAlias(const oidcCoreHdlT *oidc, const oidcIdpT *idp, struct afb_hsrv *hsrv)
 {
     int err;
 

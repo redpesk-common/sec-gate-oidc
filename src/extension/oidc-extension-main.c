@@ -71,7 +71,7 @@ int AfbExtensionDeclareV1(void *ctx,
 {
     oidcCoreHdlT *oidc = (oidcCoreHdlT *)ctx;
     const char *apiName, *fedidUri;
-    afb_api_v4 *apiv4;
+    struct afb_api_v4 *apiv4;
     int rc = 0;
 
     EXT_INFO("Extension %s got to declare", AfbExtensionManifest.name);
@@ -106,7 +106,7 @@ int AfbExtensionDeclareV1(void *ctx,
 }
 
 // Declare HTTP hooks
-int AfbExtensionHTTPV1(void *ctx, afb_hsrv *hsrv)
+int AfbExtensionHTTPV1(void *ctx, struct afb_hsrv *hsrv)
 {
     oidcCoreHdlT *oidc = (oidcCoreHdlT *)ctx;
 

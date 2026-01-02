@@ -26,28 +26,17 @@
 #pragma once
 
 #include <libafb/libafb-config.h>
-// #define AFB_BINDING_NO_ROOT 1
-
 #include <libafb/misc/afb-verbose.h>
 
 // redefine debug/log to avoid conflict
 #ifndef EXT_EMERGENCY
-#define EXT_EMERGENCY(...) \
-    _LIBAFB_VERBOSE_(afb_Log_Level_Emergency, __VA_ARGS__)
-#define EXT_ALERT(...)    _LIBAFB_VERBOSE_(afb_Log_Level_Alert, __VA_ARGS__)
-#define EXT_CRITICAL(...) _LIBAFB_VERBOSE_(afb_Log_Level_Critical, __VA_ARGS__)
-#define EXT_ERROR(...)    _LIBAFB_VERBOSE_(afb_Log_Level_Error, __VA_ARGS__)
-#define EXT_WARNING(...)  _LIBAFB_VERBOSE_(afb_Log_Level_Warning, __VA_ARGS__)
-#define EXT_NOTICE(...)   _LIBAFB_VERBOSE_(afb_Log_Level_Notice, __VA_ARGS__)
-#define EXT_INFO(...)     _LIBAFB_VERBOSE_(afb_Log_Level_Info, __VA_ARGS__)
-#define EXT_DEBUG(...)    _LIBAFB_VERBOSE_(afb_Log_Level_Debug, __VA_ARGS__)
+#define EXT_EMERGENCY(...) LIBAFB_EMERGENCY(__VA_ARGS__)
+#define EXT_ALERT(...)     LIBAFB_ALERT(__VA_ARGS__)
+#define EXT_CRITICAL(...)  LIBAFB_CRITICAL(__VA_ARGS__)
+#define EXT_ERROR(...)     LIBAFB_ERROR(__VA_ARGS__)
+#define EXT_WARNING(...)   LIBAFB_WARNING(__VA_ARGS__)
+#define EXT_NOTICE(...)    LIBAFB_NOTICE(__VA_ARGS__)
+#define EXT_INFO(...)      LIBAFB_INFO(__VA_ARGS__)
+#define EXT_DEBUG(...)     LIBAFB_DEBUG(__VA_ARGS__)
 #endif
 
-// make our live simpler
-typedef struct afb_hsrv afb_hsrv;
-typedef struct afb_hreq afb_hreq;
-typedef struct afb_apiset afb_apiset;
-typedef struct afb_verb_v4 afb_verb_v4;
-typedef struct afb_api_v4 afb_api_v4;
-typedef struct afb_req_v4 afb_req_v4;
-typedef struct afb_data afb_data;

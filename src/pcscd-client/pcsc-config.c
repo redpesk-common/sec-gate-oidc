@@ -26,15 +26,16 @@
 #define _GNU_SOURCE
 
 #include "pcsc-config.h"
-#include <libafb/misc/afb-verbose.h>
 
 #include <assert.h>
-#include <rp-utils/rp-jsonc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#include <rp-utils/rp-verbose.h>
+#include <rp-utils/rp-jsonc.h>
 
 typedef struct
 {
@@ -132,7 +133,7 @@ static int pcscParseOneData(json_object *dataJ, u_int8_t **data, ulong *dlen)
     return 0;
 
 OnErrorExit:
-    EXT_CRITICAL(
+    RP_CRITICAL(
         "[pcsc-onevalue-fail] key/cmd data should be asci/string or array of "
         "hexa/string (pcscParseOneData)");
     return -1;
@@ -149,7 +150,7 @@ static int pcscParseOneKey(pcscConfigT *config,
     err = rp_jsonc_unpack(keyJ, "{ss,s?i,so !}", "uid", &key->uid, "idx",
                           &key->kidx, "value", &valueJ);
     if (err) {
-        EXT_CRITICAL(
+        RP_CRITICAL(
             "[pcsc-onekey-fail] json supported keys:[uid,idx,value] "
             "(pcscParseOneKey)");
         goto OnErrorExit;
@@ -181,7 +182,7 @@ static int pcscParseOneTrailer(pcscConfigT *config,
     err = rp_jsonc_unpack(trailerJ, "{ss,ss,so !}", "keyA", &keyA, "keyB",
                           &keyB, "acls", &valueJ);
     if (err) {
-        EXT_CRITICAL(
+        RP_CRITICAL(
             "[pcsc-onetrailer-fail] json mandatory keys:[keyA,keyA,acls] "
             "(pcscParseOneKey)");
         goto OnErrorExit;
@@ -190,7 +191,7 @@ static int pcscParseOneTrailer(pcscConfigT *config,
     response->keyA = pcscKeyByUid(config, keyA);
     response->keyB = pcscKeyByUid(config, keyB);
     if (!response->keyA || !response->keyB) {
-        EXT_CRITICAL("[pcsc-onetrailer-fail] KeyA=%s keyB=%s not found", keyA,
+        RP_CRITICAL("[pcsc-onetrailer-fail] KeyA=%s keyB=%s not found", keyA,
                      keyB);
         goto OnErrorExit;
     }
@@ -225,7 +226,7 @@ static int pcscParseOneCmd(pcscConfigT *config,
                           "data", &dataJ, "trailer", &trailerJ, "group",
                           &cmd->group);
     if (err) {
-        EXT_CRITICAL(
+        RP_CRITICAL(
             "[pcsc-onecmd-fail] json supported "
             "keys:[uid,action,blk,key,data,len] (pcscParseOneCmd)");
         goto OnErrorExit;
@@ -235,7 +236,7 @@ static int pcscParseOneCmd(pcscConfigT *config,
     switch (cmd->action) {
     case PCSC_ACTION_READ:
         if (!cmd->dlen || dataJ) {
-            EXT_CRITICAL(
+            RP_CRITICAL(
                 "[pcsc-onecmd-fail] uid=%s action=%s len:mandatory "
                 "data:forbiden (pcscParseOneCmd)",
                 cmd->uid, cmdAction);
@@ -254,7 +255,7 @@ static int pcscParseOneCmd(pcscConfigT *config,
 
     case PCSC_ACTION_WRITE:
         if (!dataJ) {
-            EXT_CRITICAL(
+            RP_CRITICAL(
                 "[pcsc-onecmd-fail] uid=%s action=%s data:mandatory "
                 "(pcscParseOneCmd)",
                 cmd->uid, cmdAction);
@@ -267,7 +268,7 @@ static int pcscParseOneCmd(pcscConfigT *config,
 
     case PCSC_ACTION_TRAILER:
         if (dataJ || cmd->dlen || !trailerJ) {
-            EXT_CRITICAL(
+            RP_CRITICAL(
                 "[pcsc-onecmd-fail] uid=%s action=%s trailer mandary len+data "
                 "forbiden (pcscParseOneCmd)",
                 cmd->uid, cmdAction);
@@ -280,7 +281,7 @@ static int pcscParseOneCmd(pcscConfigT *config,
         break;
 
     default:
-        EXT_CRITICAL(
+        RP_CRITICAL(
             "[pcsc-onecmd-fail] uid=%s action=%s unknown (pcscParseOneCmd)",
             cmd->uid, cmdAction);
         goto OnErrorExit;
@@ -290,7 +291,7 @@ static int pcscParseOneCmd(pcscConfigT *config,
     if (keyUid) {
         cmd->key = pcscKeyByUid(config, keyUid);
         if (!cmd->key) {
-            EXT_CRITICAL(
+            RP_CRITICAL(
                 "[pcsc-onecmd-fail] cmd=%s keys=%s non found within defined "
                 "keys] (pcscParseOneCmd)",
                 cmd->uid, keyUid);
@@ -320,7 +321,7 @@ pcscConfigT *pcscParseConfig(json_object *configJ, const int verbosity)
                           &config->verbose, "timeout", &config->timeout, "cmds",
                           &cmdsJ, "keys", &keysJ);
     if (err) {
-        EXT_CRITICAL(
+        RP_CRITICAL(
             "[pcsc-config-fail] config json supported "
             "keys:[into,reader,cmds,keys] (pcscParseConfig)");
         goto OnErrorExit;
@@ -330,7 +331,7 @@ pcscConfigT *pcscParseConfig(json_object *configJ, const int verbosity)
         config->uid = config->reader;
 
     if (keysJ && !cmdsJ) {
-        EXT_CRITICAL(
+        RP_CRITICAL(
             "[pcsc-config-fail] key 'cmds' mandatory when 'keys' present "
             "(pcscParseConfig)");
         goto OnErrorExit;
@@ -362,7 +363,7 @@ pcscConfigT *pcscParseConfig(json_object *configJ, const int verbosity)
         break;
 
     default:
-        EXT_CRITICAL("[pcsc-config-fail] keys should be  (pcscParseConfig)");
+        RP_CRITICAL("[pcsc-config-fail] keys should be  (pcscParseConfig)");
         goto OnErrorExit;
     }
 
@@ -393,7 +394,7 @@ pcscConfigT *pcscParseConfig(json_object *configJ, const int verbosity)
         break;
 
     default:
-        EXT_CRITICAL(
+        RP_CRITICAL(
             "[pcsc-config-fail] cmds should be json object or array of object "
             "(pcscParseConfig)");
         goto OnErrorExit;

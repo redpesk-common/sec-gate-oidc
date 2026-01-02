@@ -275,7 +275,7 @@ OnErrorExit:
     return HTTP_HANDLE_FREE;
 }
 
-static int githubAccessToken(afb_hreq *hreq,
+static int githubAccessToken(struct afb_hreq *hreq,
                              const oidcIdpT *idp,
                              const char *redirectUrl,
                              const char *code,
@@ -329,7 +329,7 @@ OnErrorExit:
 }
 
 // this check idp code and either wreq profile or redirect to idp login page
-static int githubLoginCB(afb_hreq *hreq, void *ctx)
+static int githubLoginCB(struct afb_hreq *hreq, void *ctx)
 {
     const oidcIdpT *idp = (const oidcIdpT *)ctx;
     char redirectUrl[EXT_HEADER_MAX_LEN];
@@ -414,7 +414,7 @@ OnErrorExit:
     return 1;
 }
 
-static int githubRegisterAlias(const oidcIdpT *idp, afb_hsrv *hsrv)
+static int githubRegisterAlias(const oidcIdpT *idp, struct afb_hsrv *hsrv)
 {
     int rc;
 
