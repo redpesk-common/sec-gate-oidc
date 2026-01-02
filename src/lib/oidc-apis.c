@@ -1,6 +1,8 @@
 /*
- * Copyright (C) 2015-2021 IoT.bzh Company
- * Author "Fulup Ar Foll"
+ * Copyright (C) 2015-2026 IoT.bzh Company
+ * Author: "Fulup Ar Foll" <fulup@iot.bzh>
+ * Author: <jose.bollo@iot.bzh>
+ * Author: <dev-team@iot.bzh>
  *
  * $RP_BEGIN_LICENSE$
  * Commercial License Usage

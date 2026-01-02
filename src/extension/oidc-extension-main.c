@@ -1,6 +1,8 @@
 /*
- * Copyright (C) 2015-2021 IoT.bzh Company
- * Author "Fulup Ar Foll"
+ * Copyright (C) 2015-2026 IoT.bzh Company
+ * Author: "Fulup Ar Foll" <fulup@iot.bzh>
+ * Author: <jose.bollo@iot.bzh>
+ * Author: <dev-team@iot.bzh>
  *
  * $RP_BEGIN_LICENSE$
  * Commercial License Usage
@@ -74,7 +76,7 @@ int AfbExtensionDeclareV1(void *ctx,
 
     EXT_INFO("Extension %s got to declare", AfbExtensionManifest.name);
 
-    // TODO: asking oidcCore for inputs is not verry good,
+    // TODO: asking oidcCore for inputs is not very good,
     // TODO: also, internals of oidcCore are depending on fedid stuff
     // TODO: so situation should be made cleaner.
     // TODO: A way is:

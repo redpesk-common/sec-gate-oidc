@@ -1,6 +1,8 @@
 /*
- * Copyright (C) 2021 "IoT.bzh"
- * Author "Fulup Ar Foll" <fulup@iot.bzh>
+ * Copyright (C) 2021-2026 IoT.bzh Company
+ * Author: "Fulup Ar Foll" <fulup@iot.bzh>
+ * Author: <jose.bollo@iot.bzh>
+ * Author: <dev-team@iot.bzh>
  *
  * Use of this efd code is governed by an MIT-style
  * license that can be found in the LICENSE file or at

@@ -1,5 +1,5 @@
 ###########################################################################
-# Copyright 2015-2025 IoT.bzh
+# Copyright 2015-2025 IoT.bzh Company
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
