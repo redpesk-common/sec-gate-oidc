@@ -95,12 +95,16 @@ int AfbExtensionDeclareV1(void *ctx,
     if (rc >= 0) {
         apiName = oidcCoreAfbApiName(oidc);
         rc = idsvcDeclareApi(&apiv4, apiName, oidc, declare_set, call_set);
-        if (rc >= 0)
+        if (rc >= 0) {
             oidcCoreSetAfbApi(oidc, apiv4);
+            // declare other verbs
+            rc = oidcCoreDeclareVerbs(oidc, apiv4);
+            if (rc >= 0) {
+                // declare other apis
+                rc = oidcCoreDeclareApis(oidc, declare_set, call_set);
+            }
+        }
     }
-    // declare other services
-    if (rc >= 0)
-        rc = oidcCoreDeclareApis(oidc, declare_set, call_set);
 
     return rc;
 }

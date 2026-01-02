@@ -232,6 +232,17 @@ OnErrorExit:
     return -1;
 }
 
+// Declares the verbs
+int oidcCoreDeclareVerbs(oidcCoreHdlT *oidc, struct afb_api_v4 *sgApi)
+{
+    int rc = 0;
+    const oidcIdpT *idpiter = oidc->idps;
+
+    while (rc >= 0 && idpiter->uid != NULL)
+        rc = idpRegisterVerbs(oidc, idpiter++, sgApi);
+    return rc;
+}
+
 // Declares the apis
 int oidcCoreDeclareApis(oidcCoreHdlT *oidc,
                         struct afb_apiset *declare_set,

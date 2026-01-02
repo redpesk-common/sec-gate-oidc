@@ -62,6 +62,8 @@ void oidcCoreSetAfbApi(oidcCoreHdlT *oidc, struct afb_api_v4 *apiv4);
 int oidcCoreParseConfig(oidcCoreHdlT **poidc,
                         struct json_object *oidcJ,
                         char const *uid);
+int oidcCoreDeclareVerbs(oidcCoreHdlT *oidc,
+                         struct afb_api_v4 *sgApi);
 int oidcCoreDeclareApis(oidcCoreHdlT *oidc,
                         struct afb_apiset *declare_set,
                         struct afb_apiset *call_set);

@@ -32,6 +32,8 @@ struct idpPluginS
     const char *uid;
     const char *info;
     int (*registerConfig)(oidcIdpT *idp, json_object *idpJ);
+    int (*registerVerbs)(const oidcIdpT *idp,
+                         struct afb_api_v4 *sgApi);
     int (*registerApis)(const oidcIdpT *idp,
                         struct afb_apiset *declare_set,
                         struct afb_apiset *call_set);

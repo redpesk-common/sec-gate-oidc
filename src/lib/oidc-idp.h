@@ -151,6 +151,9 @@ int idpParseOidcConfig(oidcIdpT *idp,
                        json_object *configJ,
                        oidcDefaultsT *defaults,
                        void *ctx);
+int idpRegisterVerbs(const oidcCoreHdlT *oidc,
+                    const oidcIdpT *idp,
+		    struct afb_api_v4 *sgApi);
 int idpRegisterApis(const oidcCoreHdlT *oidc,
                     const oidcIdpT *idp,
                     struct afb_apiset *declare_set,

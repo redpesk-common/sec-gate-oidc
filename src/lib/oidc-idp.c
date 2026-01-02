@@ -493,6 +493,28 @@ int idpRegisterAlias(const oidcCoreHdlT *oidc, const oidcIdpT *idp, struct afb_h
 }
 
 // register IDP login and authentication callback endpoint
+int idpRegisterVerbs(const oidcCoreHdlT *oidc,
+                    const oidcIdpT *idp,
+		    struct afb_api_v4 *sgApi)
+{
+    int err;
+
+    // declares an API?
+    if (idp->plugin->registerVerbs == NULL)
+        return 0;
+
+    // call idp's api register callback
+    EXT_DEBUG("[oidc-idp] idp %s regstering verbs, plugin %s", idp->uid,
+              idp->plugin->uid);
+    err = idp->plugin->registerVerbs(idp, sgApi);
+    if (err)
+        EXT_ERROR(
+            "[oidc-idp] failed to register verbs, idp/plugin: %s/%s",
+            idp->uid, idp->plugin->uid);
+    return err;
+}
+
+// register IDP login and authentication callback endpoint
 int idpRegisterApis(const oidcCoreHdlT *oidc,
                     const oidcIdpT *idp,
                     struct afb_apiset *declare_set,
@@ -505,13 +527,12 @@ int idpRegisterApis(const oidcCoreHdlT *oidc,
         return 0;
 
     // call idp's api register callback
-    EXT_DEBUG("[idp-register-apis] idp/plugin uids: %s/%s", idp->uid,
+    EXT_DEBUG("[oidc-idp] idp %s registering apis, plugin %s", idp->uid,
               idp->plugin->uid);
     err = idp->plugin->registerApis(idp, declare_set, call_set);
     if (err)
         EXT_ERROR(
-            "[idp-register-apis] failed to register idp api, idp/plugin uids: "
-            "%s/%s",
+            "[oidc-idp] failed to registeri apis, idp/plugin: %s/%s",
             idp->uid, idp->plugin->uid);
     return err;
 }

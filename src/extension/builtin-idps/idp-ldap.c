@@ -533,14 +533,12 @@ OnErrorExit:
     return 1;
 }
 
-static int ldapRegisterApis(const oidcIdpT *idp,
-                            struct afb_apiset *declare_set,
-                            struct afb_apiset *call_set)
+static int ldapRegisterVerbs(const oidcIdpT *idp, struct afb_api_v4 *sgApi)
 {
     int err;
 
     // add a dedicate verb to check login/passwd from websocket
-    err = afb_api_add_verb(oidcCoreAfbApi(idp->oidc), idp->uid, idp->info,
+    err = afb_api_add_verb(sgApi, idp->uid, idp->info,
                            checkLoginVerb, (void*)idp, NULL, 0, 0);
     if (err)
         goto OnErrorExit;
@@ -628,4 +626,4 @@ const idpPluginT ldapPluginDesc = {.uid = "ldap",
                                    .info = "ldap internal users",
                                    .registerConfig = ldapRegsterConfig,
                                    .registerAlias = ldapRegisterAlias,
-                                   .registerApis = ldapRegisterApis};
+                                   .registerVerbs = ldapRegisterVerbs};

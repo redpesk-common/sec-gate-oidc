@@ -341,16 +341,14 @@ OnErrorExit:
     return 1;
 }
 
-int pamRegisterApis(const oidcIdpT *idp,
-                    struct afb_apiset *declare_set,
-                    struct afb_apiset *call_set)
+int pamRegisterVerbs(const oidcIdpT *idp, struct afb_api_v4 *sgApi)
 {
     int err;
 
     // add a dedicate verb to check login/passwd from websocket
     // err= afb_api_add_verb(idp->oidc->apiv4, idp->uid, idp->info,
     // checkLoginVerb, idp, NULL, 0, 0);
-    err = afb_api_v4_add_verb_hookable(oidcCoreAfbApi(idp->oidc), idp->uid,
+    err = afb_api_v4_add_verb_hookable(sgApi, idp->uid,
                                        idp->info, checkLoginVerb, (void*)idp, NULL, 0,
                                        0);
     if (err)
@@ -428,7 +426,7 @@ static const idpPluginT idpPamAuth = {
     .info = "use Linux pam login to check user/passwd",
     .ctx = "login",
     .registerConfig = pamRegisterConfig,
-    .registerApis = pamRegisterApis,
+    .registerVerbs = pamRegisterVerbs,
     .registerAlias = pamRegisterAlias};
 
 // Plugin init call at config.json parsing time
