@@ -246,92 +246,46 @@ OnErrorExit:
 int pamLoginCB(struct afb_hreq *hreq, void *ctx)
 {
     const oidcIdpT *idp = (const oidcIdpT *)ctx;
-    const oidcProfileT *profile = NULL;
-    int err, status, targetLOA;
+    int err, status;
 
     // check if wreq as a code
     const char *login = afb_hreq_get_argument(hreq, "login");
     const char *passwd = afb_hreq_get_argument(hreq, "passwd");
-    const char *scope = afb_hreq_get_argument(hreq, "scope");
     oidcSessionT *session = oidcSessionOfHttpReq(hreq);
-
-    targetLOA = oidcSessionGetTargetLOA(session);
 
     // if no code then set state and redirect to IDP
     if (!login || !passwd) {
-        char url[EXT_URL_MAX_LEN];
-
-        // search for a scope fiting wreqing loa
-        profile = idpGetFirstProfile(idp, targetLOA, scope);
-
-        // if loa working and no profile fit exit without trying authentication
-        if (!profile)
-            goto OnErrorExit;
-
-        // add afb-binder endpoint to login redirect alias
-        char redirectUrl[EXT_HEADER_MAX_LEN];
-        status = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin, redirectUrl,
-                                        sizeof(redirectUrl));
-        if (status < 0)
-            goto OnErrorExit;
-
-        const char *params[] = {
-            "state",
-            oidcSessionUUID(session),
-            "scope",
-            profile->scope,
-            "redirect_uri",
-            redirectUrl,
-#if FORCELANG
-            "language",
-            setlocale(LC_CTYPE, ""),
-#endif
-            NULL  // terminator
-        };
-
-        // store working profile to retreive attached loa and role filter if
-        // login succeded
-        oidcSessionSetIdpProfile(session, profile);
-
-        // build wreq and send it
-        size_t sz = rp_escape_url_to(NULL, idp->wellknown->tokenid, params, url,
-                                     sizeof url);
-        if (sz >= sizeof url)
-            goto OnErrorExit;
-
-        EXT_DEBUG("[pam-redirect-url] %s (pamLoginCB)", url);
-        afb_hreq_redirect_to(hreq, url, HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
+        return idpRedirectLogin(idp, hreq, session, idp->wellknown->tokenid,
+                                idp->statics->aliasLogin, NULL, NULL, NULL);
     }
-    else {
-        // we have a code check state to assert that the response was generated
-        // by us then wreq authentication token
-        const char *state = afb_hreq_get_argument(hreq, "state");
-        if (!state || strcmp(state, oidcSessionUUID(session)))
-            goto OnErrorExit;
 
-        EXT_DEBUG("[pam-auth-code] login=%s (pamLoginCB)", login);
-        profile = oidcSessionGetIdpProfile(session);
-        if (!profile)
-            goto OnErrorExit;
+    // we have a code check state to assert that the response was generated
+    // by us then wreq authentication token
+    const char *state = afb_hreq_get_argument(hreq, "state");
+    if (!state || strcmp(state, oidcSessionUUID(session)))
+        goto OnErrorExit;
 
-        // Check received login/passwd
-        fedUserRawT *fedUser;
-        fedSocialRawT *fedSocial;
-        err = pamAccessToken(idp, profile, login, passwd, &fedSocial, &fedUser);
-        if (err)
-            goto OnErrorExit;
+    EXT_DEBUG("[pam-auth-code] login=%s (pamLoginCB)", login);
+    const oidcProfileT *profile = oidcSessionGetIdpProfile(session);
+    if (profile == NULL)
+        goto OnErrorExit;
 
-        // check if federated id is already present or not
-        idpRqtCtxT *idpRqtCtx = calloc(1, sizeof(idpRqtCtxT));
-        idpRqtCtx->idp = idp;
-        idpRqtCtx->fedSocial = fedSocial;
-        idpRqtCtx->fedUser = fedUser;
-        idpRqtCtx->hreq = hreq;
-        err = fedidCheck(idpRqtCtx);
-        if (err) {
-            goto OnErrorExit;
-        }
-    }
+    // Check received login/passwd
+    fedUserRawT *fedUser;
+    fedSocialRawT *fedSocial;
+    err = pamAccessToken(idp, profile, login, passwd, &fedSocial, &fedUser);
+    if (err)
+        goto OnErrorExit;
+
+    // check if federated id is already present or not
+    idpRqtCtxT *idpRqtCtx = calloc(1, sizeof(idpRqtCtxT));
+    idpRqtCtx->idp = idp;
+    idpRqtCtx->fedSocial = fedSocial;
+    idpRqtCtx->fedUser = fedUser;
+    idpRqtCtx->hreq = hreq;
+    err = fedidCheck(idpRqtCtx);
+    if (err)
+        goto OnErrorExit;
 
     return 1;  // we're done
 

@@ -333,14 +333,19 @@ static int githubLoginCB(struct afb_hreq *hreq, void *ctx)
 {
     const oidcIdpT *idp = (const oidcIdpT *)ctx;
     char redirectUrl[EXT_HEADER_MAX_LEN];
-    const oidcProfileT *profile = NULL;
-    int err, status, targetLOA;
+    int err, status;
 
     // check if wreq as a code
     const char *code = afb_hreq_get_argument(hreq, "code");
     oidcSessionT *session = oidcSessionOfHttpReq(hreq);
+
+    // if no code then set state and redirect to IDP
+    if (code == NULL) {
+        return idpRedirectLogin(idp, hreq, session, idp->wellknown->authorize,
+                                idp->statics->aliasLogin, idp->credentials->clientId,
+                                "code", NULL);
+    }
     const char *uuid = oidcSessionUUID(session);
-    targetLOA = oidcSessionGetTargetLOA(session);
 
     // add afb-binder endpoint to login redirect alias
     status = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin, redirectUrl,
@@ -348,55 +353,6 @@ static int githubLoginCB(struct afb_hreq *hreq, void *ctx)
     if (status < 0)
         goto OnErrorExit;
 
-    // if no code then set state and redirect to IDP
-    if (!code) {
-        char url[EXT_URL_MAX_LEN];
-        const char *scope = afb_hreq_get_argument(hreq, "scope");
-
-        // search for a scope fiting wreqing loa
-        profile = idpGetFirstProfile(idp, targetLOA, scope);
-
-        // if loa working and no profile fit exit without trying authentication
-        if (!profile) {
-            EXT_WARNING("[idp-gihub] no profile for LOA %d SCOPE %s", targetLOA, scope);
-            afb_hreq_reply_error(hreq, EXT_HTTP_UNAUTHORIZED);
-            return 1;
-        }
-
-        // store working profile to retrieve attached loa and role filter if
-        // login succeded
-        oidcSessionSetIdpProfile(session, profile);
-
-        const char *params[] = {
-            "client_id",
-            idp->credentials->clientId,
-            "response_type",
-            "code",
-            "state",
-            uuid,
-            "scope",
-            profile->scope,
-            "redirect_uri",
-            redirectUrl,
-#if FORCELANG
-            "language",
-            setlocale(LC_CTYPE, ""),
-#endif
-            NULL  // terminator
-        };
-
-        // build wreq and send it
-        size_t sz = rp_escape_url_to(NULL, idp->wellknown->authorize, params,
-                                     url, sizeof url);
-        if (sz >= sizeof url) {
-            EXT_WARNING("[idp-github] Authorize URL too long");
-            goto OnErrorExit;
-        }
-
-        EXT_DEBUG("[idp-github] redirect to %s", url);
-        afb_hreq_redirect_to(hreq, url, HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
-        return 1;
-    }
     // check question/response state match
     const char *oidcState = afb_hreq_get_argument(hreq, "state");
     if (strcmp(oidcState, uuid)) {

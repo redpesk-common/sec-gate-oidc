@@ -451,79 +451,33 @@ OnErrorExit:
 static int ldapLoginCB(struct afb_hreq *hreq, void *ctx)
 {
     oidcIdpT *idp = (oidcIdpT *)ctx;
-    char redirectUrl[EXT_HEADER_MAX_LEN];
-    const oidcProfileT *profile = NULL;
-    int err, status, targetLOA;
+    int err, status;
 
     // check if wreq as a code
     const char *login = afb_hreq_get_argument(hreq, "login");
     const char *passwd = afb_hreq_get_argument(hreq, "passwd");
-    const char *scope = afb_hreq_get_argument(hreq, "scope");
     oidcSessionT *session = oidcSessionOfHttpReq(hreq);
-
-    targetLOA = oidcSessionGetTargetLOA(session);
-
-    // add afb-binder endpoint to login redirect alias
-    status = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin, redirectUrl,
-                                    sizeof(redirectUrl));
-    if (status < 0)
-        goto OnErrorExit;
 
     // if no code then set state and redirect to IDP
     if (!login || !passwd) {
-        char url[EXT_URL_MAX_LEN];
-
-        // search for a scope fiting wreqing loa
-        profile = idpGetFirstProfile(idp, targetLOA, scope);
-
-        // if loa working and no profile fit exit without trying authentication
-        if (!profile)
-            goto OnErrorExit;
-
-        // store working profile to retreive attached loa and role filter if
-        // login succeded
-        oidcSessionSetIdpProfile(session, profile);
-
-        const char *params[] = {
-            "state",
-            oidcSessionUUID(session),
-            "scope",
-            profile->scope,
-            "redirect_uri",
-            redirectUrl,
-#if FORCELANG
-            "language",
-            setlocale(LC_CTYPE, ""),
-#endif
-            NULL  // terminator
-        };
-
-        // build wreq and send it
-        size_t sz = rp_escape_url_to(NULL, idp->wellknown->tokenid, params, url,
-                                     sizeof url);
-        if (sz >= sizeof url)
-            goto OnErrorExit;
-
-        EXT_DEBUG("[ldap-redirect-url] %s (ldapLoginCB)", url);
-        afb_hreq_redirect_to(hreq, url, HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
+        return idpRedirectLogin(idp, hreq, session, idp->wellknown->tokenid,
+                            idp->statics->aliasLogin, NULL, NULL, NULL);
     }
-    else {
-        // we have a code check state to assert that the response was generated
-        // by us then wreq authentication token
-        const char *state = afb_hreq_get_argument(hreq, "state");
-        if (!state || strcmp(state, oidcSessionUUID(session)))
-            goto OnErrorExit;
 
-        EXT_DEBUG("[ldap-auth-code] login=%s (ldapLoginCB)", login);
-        profile = oidcSessionGetIdpProfile(session);
-        if (!profile)
-            goto OnErrorExit;
+    // we have a code check state to assert that the response was generated
+    // by us then wreq authentication token
+    const char *state = afb_hreq_get_argument(hreq, "state");
+    if (!state || strcmp(state, oidcSessionUUID(session)))
+        goto OnErrorExit;
 
-        // Check received login/passwd
-        err = ldapAccessProfile(idp, login, passwd, hreq, NULL /*wreq */);
-        if (err)
-            goto OnErrorExit;
-    }
+    EXT_DEBUG("[ldap-auth-code] login=%s (ldapLoginCB)", login);
+    if (oidcSessionGetIdpProfile(session) == NULL)
+        goto OnErrorExit;
+
+    // Check received login/passwd
+    err = ldapAccessProfile(idp, login, passwd, hreq, NULL /*wreq */);
+    if (err)
+        goto OnErrorExit;
 
     return 1;  // we're done
 

@@ -503,14 +503,18 @@ static int oidcLoginCB(struct afb_hreq *hreq, void *ctx)
 {
     oidcIdpT *idp = (oidcIdpT *)ctx;
     char redirectUrl[EXT_HEADER_MAX_LEN];
-    const oidcProfileT *profile = NULL;
-    int err, status, targetLOA;
+    int err, status;
 
     // check if wreq as a code
-    const char *code = afb_hreq_get_argument(hreq, "code");
     oidcSessionT *session = oidcSessionOfHttpReq(hreq);
     const char *uuid = oidcSessionUUID(session);
-    targetLOA = oidcSessionGetTargetLOA(session);
+    const char *code = afb_hreq_get_argument(hreq, "code");
+    if (code == NULL) {
+        // if no code then set state and redirect to IDP
+        return idpRedirectLogin(idp, hreq, session, idp->wellknown->authorize,
+                                idp->statics->aliasLogin, idp->credentials->clientId,
+                                idp->wellknown->respondLabel, uuid);
+    }
 
     // add afb-binder endpoint to login redirect alias
     status = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin, redirectUrl,
@@ -518,70 +522,24 @@ static int oidcLoginCB(struct afb_hreq *hreq, void *ctx)
     if (status < 0)
         goto OnErrorExit;
 
-    // if no code then set state and redirect to IDP
-    if (!code) {
-        char url[EXT_URL_MAX_LEN];
-        const char *scope = afb_hreq_get_argument(hreq, "scope");
-
-        // search for a scope fiting wreqing loa
-        profile = idpGetFirstProfile(idp, targetLOA, scope);
-
-        // if loa working and no profile fit exit without trying authentication
-        if (!profile)
-            goto OnErrorExit;
-
-        // store working profile to retreive attached loa and role filter if
-        // login succeeded
-        oidcSessionSetIdpProfile(session, profile);
-
-        const char *params[] = {
-            "client_id",
-            idp->credentials->clientId,
-            "response_type",
-            idp->wellknown->respondLabel,
-            "state",
-            uuid,
-            "nonce",
-            uuid,
-            "scope",
-            profile->scope,
-            "redirect_uri",
-            redirectUrl,
-#if FORCELANG
-            "language",
-            setlocale(LC_CTYPE, ""),
-#endif
-            NULL  // terminator
-        };
-
-        // build wreq and send it
-        size_t sz = rp_escape_url_to(NULL, idp->wellknown->authorize, params,
-                                     url, sizeof url);
-        if (sz >= sizeof url)
-            goto OnErrorExit;
-
-        EXT_DEBUG("[oidc-redirect-url] %s (oidcRegisterAlias)", url);
-        afb_hreq_redirect_to(hreq, url, HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
+    // use state to retreive original wreq session uuid and restore original
+    // session before wreqing token
+    const char *oidcState = afb_hreq_get_argument(hreq, "state");
+    if (strcmp(oidcState, uuid)) {
+        EXT_DEBUG(
+            "[oidc-auth-code] missmatch uuid/state state=%s uuid=%s "
+            "(oidcRegisterAlias)",
+            oidcState, uuid);
+        goto OnErrorExit;
     }
-    else {
-        // use state to retreive original wreq session uuid and restore original
-        // session before wreqing token
-        const char *oidcState = afb_hreq_get_argument(hreq, "state");
-        if (strcmp(oidcState, uuid)) {
-            EXT_DEBUG(
-                "[oidc-auth-code] missmatch uuid/state state=%s uuid=%s "
-                "(oidcRegisterAlias)",
-                oidcState, uuid);
-            goto OnErrorExit;
-        }
 
-        EXT_DEBUG("[oidc-auth-code] state=%s code=%s (oidcRegisterAlias)",
-                  oidcState, code);
-        // wreq authentication token from tempry code
-        err = oidcAccessToken(hreq, idp, redirectUrl, code, session);
-        if (err)
-            goto OnErrorExit;
-    }
+    EXT_DEBUG("[oidc-auth-code] state=%s code=%s (oidcRegisterAlias)",
+              oidcState, code);
+    // wreq authentication token from tempry code
+    err = oidcAccessToken(hreq, idp, redirectUrl, code, session);
+    if (err)
+        goto OnErrorExit;
+
     return 1;  // we're done (0 would search for an html page)
 
 OnErrorExit:

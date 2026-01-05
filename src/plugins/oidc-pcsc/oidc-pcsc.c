@@ -454,48 +454,10 @@ OnErrorExit:
 int pcscLoginCB(struct afb_hreq *hreq, void *ctx)
 {
     const oidcIdpT *idp = (const oidcIdpT *)ctx;
-    const oidcProfileT *profile = NULL;
-    int err, targetLOA;
-
-    // Initial redirect redirect user on web page to enter login
-    char url[EXT_URL_MAX_LEN];
-
     oidcSessionT *session = oidcSessionOfHttpReq(hreq);
-    targetLOA = oidcSessionGetTargetLOA(session);
 
-    // search a working loa scope
-    const char *scope = afb_hreq_get_argument(hreq, "scope");
-    // search for a scope fiting wreqing loa
-    profile = idpGetFirstProfile(idp, targetLOA, scope);
-
-    // if loa working and no profile fit exit without trying authentication
-    if (!profile)
-        goto OnErrorExit;
-    oidcSessionSetIdpProfile(session, profile);
-
-    const char *params[] = {
-        "state",    oidcSessionUUID(session), "scope", profile->scope,
-#if FORCELANG
-        "language", setlocale(LC_CTYPE, ""),
-#endif
-        NULL  // terminator
-    };
-
-    // build wreq and send it
-    size_t sz = rp_escape_url_to(NULL, idp->wellknown->tokenid, params, url,
-                                 sizeof url);
-    if (sz >= sizeof url)
-        goto OnErrorExit;
-
-    EXT_DEBUG("[pcsc-redirect-url] %s (pcscLoginCB)", url);
-    afb_hreq_redirect_to(hreq, url, HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
-
-    return 1;  // we're done
-
-OnErrorExit:
-    afb_hreq_redirect_to(hreq, oidcCoreGlobals(idp->oidc)->loginUrl,
-                         HREQ_QUERY_INCL, HREQ_REDIR_TMPY);
-    return 1;
+    return idpRedirectLogin(idp, hreq, session, idp->wellknown->tokenid,
+                            NULL, NULL, NULL, NULL);
 }
 
 int pcscRegisterVerbs(const oidcIdpT *idp, struct afb_api_v4 *sgApi)
