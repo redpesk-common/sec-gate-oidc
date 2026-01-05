@@ -184,7 +184,7 @@ static long pcscSendCmd(pcscHandleT *handle,
 
 OnErrorExit:
     RP_DEBUG("[pcsc-transmit-error] uid=%s action=%s error=%s (pcscSendCmd)\n",
-              cmdUid, action, handle->error);
+             cmdUid, action, handle->error);
     return rv;
 }
 
@@ -430,7 +430,7 @@ OnErrorExit:
     if (handle->verbose)
         fprintf(stderr, " error=%s\n", handle->error);
     RP_DEBUG("[pcsc-readblk-fail] cmd=%s action:read err=%s", uid,
-              handle->error);
+             handle->error);
     return -1;
 }
 
@@ -484,7 +484,7 @@ int pcsWriteBlock(pcscHandleT *handle,
 
 OnErrorExit:
     RP_DEBUG("[pcsc-writeblk-fail] cmd=%s action=write err=%s", uid,
-              handle->error);
+             handle->error);
     return -1;
 }
 
@@ -613,7 +613,7 @@ static void *pcscMonitorThread(void *ptr)
     rgReaderStates.szReader = handle->readerName;  // reader ID to test
     rgReaderStates.dwCurrentState = SCARD_STATE_UNAWARE;
     RP_DEBUG("[pcsc-thread-monitor] starting new thread tid=0x%lx",
-              pthread_self());
+             pthread_self());
 
     // loop forever until reader is disconnected
     while (1) {
@@ -683,14 +683,14 @@ static void *pcscMonitorThread(void *ptr)
 
 OnRequestExit:
     RP_DEBUG("[pcsc-thread-monitor] card-remove exit tid=0x%lx",
-              pthread_self());
+             pthread_self());
     free(threadCtx);
     handle->tid = 0;
     return NULL;
 
 OnCancelExit:
     RP_DEBUG("[pcsc-thread-monitor] session-cancel exit tid=0x%lx",
-              pthread_self());
+             pthread_self());
     free(threadCtx);
     handle->tid = 0;
     return NULL;
@@ -790,7 +790,7 @@ int pcscDisconnect(pcscHandleT *handle)
 
 OnErrorExit:
     RP_ERROR("[pcsc-disconnect-fail] fail to free pcsc handle err=%s",
-              pcsc_stringify_error(rv));
+             pcsc_stringify_error(rv));
     return -1;
 }
 
@@ -977,7 +977,7 @@ static size_t pcscMifareTrailer(pcscHandleT *handle,
 
 OnErrorExit:
     RP_ERROR("[pcsc-trailer-fail] cmd=Mifare action=MkTrailer err=%s",
-              handle->error);
+             handle->error);
     return 0;
 }
 

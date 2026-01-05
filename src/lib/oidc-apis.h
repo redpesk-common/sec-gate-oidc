@@ -28,20 +28,19 @@
 #include <json-c/json.h>
 #include "oidc-core.h"
 
-typedef struct oidcApisS
-{
-    const char *uid;
-    const char *uri;
-    const char *info;
+typedef struct oidcApisS {
+    const char* uid;
+    const char* uri;
+    const char* info;
     int loa;
     int lazy;
-    const char **roles;
-    const oidcCoreHdlT *oidc;
-    struct afb_apiset *apiset;
+    const char** roles;
+    const oidcCoreHdlT* oidc;
+    struct afb_apiset* apiset;
 } oidcApisT;
 
-oidcApisT *apisParseConfig(const oidcCoreHdlT *oidc, json_object *apisJ);
-int apisRegister(const oidcCoreHdlT *oidc,
-                 oidcApisT *api,
-                 struct afb_apiset *declare_set,
-                 struct afb_apiset *call_set);
+oidcApisT* apisParseConfig(const oidcCoreHdlT* oidc, json_object* apisJ);
+int apisRegister(const oidcCoreHdlT* oidc,
+                 oidcApisT* api,
+                 struct afb_apiset* declare_set,
+                 struct afb_apiset* call_set);

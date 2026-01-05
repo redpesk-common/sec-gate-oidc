@@ -41,8 +41,8 @@
 #include "oidc-alias.h"
 #include "oidc-core.h"
 #include "oidc-fedid.h"
-#include "oidc-session.h"
 #include "oidc-idp-plugin.h"
+#include "oidc-session.h"
 
 // session timeout, reset LOA
 void fedidsessionReset(oidcSessionT *session, const oidcProfileT *idpProfile)
@@ -78,11 +78,10 @@ void fedidsessionReset(oidcSessionT *session, const oidcProfileT *idpProfile)
 
 // if fedkey exists callback receive local store user profile otherwise we
 // should create it
-static void onSocialCheckResult(
-                        void *closure,
-                        int status,
-                        fedSocialRawT *fedSoc,
-                        fedUserRawT *fedUsr)
+static void onSocialCheckResult(void *closure,
+                                int status,
+                                fedSocialRawT *fedSoc,
+                                fedUserRawT *fedUsr)
 {
     idpRqtCtxT *idpRqtCtx = (idpRqtCtxT *)closure;
     char url[EXT_URL_MAX_LEN];
@@ -175,8 +174,8 @@ static void onSocialCheckResult(
             oidcSessionSetFedIdLinkRequest(session, FEDID_LINK_RESET);
 
             // delegate account federation linking to fedid binding
-            err = afb_create_data_raw(&params[0], fedUserObjType, fedUser,
-                                      0, NULL, NULL);
+            err = afb_create_data_raw(&params[0], fedUserObjType, fedUser, 0,
+                                      NULL, NULL);
             if (err < 0)
                 goto OnErrorExit;
             err = afb_create_data_raw(&params[1], fedSocialObjType, fedSocial,
@@ -184,8 +183,8 @@ static void onSocialCheckResult(
             if (err < 0)
                 goto OnErrorExit;
             afb_api_t api = oidcCoreAfbApi(idpRqtCtx->idp->oidc);
-            err = fedIdClientCallSync(api, "user-federate", 2, params,
-                                                &status, &count, &data);
+            err = fedIdClientCallSync(api, "user-federate", 2, params, &status,
+                                      &count, &data);
             if (err < 0 || status != 0) {
                 EXT_ERROR(
                     "[fedid-link-account] fail to link account pseudo=%s "
@@ -266,6 +265,7 @@ OnErrorExit:
 int fedidCheck(idpRqtCtxT *idpRqtCtx)
 {
     afb_api_t api = oidcCoreAfbApi(idpRqtCtx->idp->oidc);
-    fedIdClientSocialCheck(api, idpRqtCtx->fedSocial, onSocialCheckResult, idpRqtCtx);
+    fedIdClientSocialCheck(api, idpRqtCtx->fedSocial, onSocialCheckResult,
+                           idpRqtCtx);
     return 0;
 }

@@ -34,8 +34,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <rp-utils/rp-verbose.h>
 #include <rp-utils/rp-jsonc.h>
+#include <rp-utils/rp-verbose.h>
 
 typedef struct
 {
@@ -192,7 +192,7 @@ static int pcscParseOneTrailer(pcscConfigT *config,
     response->keyB = pcscKeyByUid(config, keyB);
     if (!response->keyA || !response->keyB) {
         RP_CRITICAL("[pcsc-onetrailer-fail] KeyA=%s keyB=%s not found", keyA,
-                     keyB);
+                    keyB);
         goto OnErrorExit;
     }
     // value should be an asci string or an array of hexa valueB

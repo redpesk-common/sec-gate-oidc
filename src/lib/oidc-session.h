@@ -25,63 +25,62 @@
 
 #pragma once
 
-#include "oidc-common.h"
 #include "oidc-alias.h"
+#include "oidc-common.h"
 #include "oidc-idp.h"
 
-typedef struct
-{
-    char *pseudo;
-    char *email;
+typedef struct {
+    char* pseudo;
+    char* email;
 } fedidLinkT;
 
 #define FEDID_LINK_REQUESTED -1
-#define FEDID_LINK_RESET     0
+#define FEDID_LINK_RESET 0
 
 typedef struct oidcSessionS oidcSessionT;
 
-oidcSessionT *oidcSessionOfAfbSession(struct afb_session *ases);
-oidcSessionT *oidcSessionOfHttpReq(struct afb_hreq *hreq);
-oidcSessionT *oidcSessionOfReq(struct afb_req_v4 *wreq);
-oidcSessionT *oidcSessionOfUUID(const char *uuid);
+oidcSessionT* oidcSessionOfAfbSession(struct afb_session* ases);
+oidcSessionT* oidcSessionOfHttpReq(struct afb_hreq* hreq);
+oidcSessionT* oidcSessionOfReq(struct afb_req_v4* wreq);
+oidcSessionT* oidcSessionOfUUID(const char* uuid);
 
-const char *oidcSessionUUID(const oidcSessionT *session);
+const char* oidcSessionUUID(const oidcSessionT* session);
 
-int oidcSessionIsValid(oidcSessionT *session);
-void oidcSessionValidate(oidcSessionT *session, long seconds);
-void oidcSessionAutoValidate(oidcSessionT *session);
+int oidcSessionIsValid(oidcSessionT* session);
+void oidcSessionValidate(oidcSessionT* session, long seconds);
+void oidcSessionAutoValidate(oidcSessionT* session);
 
-int oidcSessionShouldCheck(oidcSessionT *session);
-void oidcSessionSetNextCheck(oidcSessionT *session, long millisec);
+int oidcSessionShouldCheck(oidcSessionT* session);
+void oidcSessionSetNextCheck(oidcSessionT* session, long millisec);
 
-int oidcSessionGetTargetLOA(oidcSessionT *session);
-int oidcSessionGetLOA(oidcSessionT *session);
-void oidcSessionSetLOA(oidcSessionT *session, int LOA);
+int oidcSessionGetTargetLOA(oidcSessionT* session);
+int oidcSessionGetLOA(oidcSessionT* session);
+void oidcSessionSetLOA(oidcSessionT* session, int LOA);
 
-const oidcAliasT *oidcSessionGetAlias(oidcSessionT *session);
-void oidcSessionSetAlias(oidcSessionT *session, const oidcAliasT *alias);
+const oidcAliasT* oidcSessionGetAlias(oidcSessionT* session);
+void oidcSessionSetAlias(oidcSessionT* session, const oidcAliasT* alias);
 
-const oidcProfileT *oidcSessionGetIdpProfile(oidcSessionT *session);
-void oidcSessionSetIdpProfile(oidcSessionT *session,
-                              const oidcProfileT *profile);
+const oidcProfileT* oidcSessionGetIdpProfile(oidcSessionT* session);
+void oidcSessionSetIdpProfile(oidcSessionT* session,
+                              const oidcProfileT* profile);
 
-int oidcSessionSetFedIdLink(oidcSessionT *session,
-                            const char *pseudo,
-                            const char *email);
-const fedidLinkT *oidcSessionGetFedIdLink(oidcSessionT *session);
-void oidcSessionDropFedIdLink(oidcSessionT *session);
-void oidcSessionSetFedIdLinkRequest(oidcSessionT *session, int request);
-int oidcSessionGetFedIdLinkRequest(oidcSessionT *session);
+int oidcSessionSetFedIdLink(oidcSessionT* session,
+                            const char* pseudo,
+                            const char* email);
+const fedidLinkT* oidcSessionGetFedIdLink(oidcSessionT* session);
+void oidcSessionDropFedIdLink(oidcSessionT* session);
+void oidcSessionSetFedIdLinkRequest(oidcSessionT* session, int request);
+int oidcSessionGetFedIdLinkRequest(oidcSessionT* session);
 
 int oidcSessionEventSubscribe(afb_req_t wreq);
-int oidcSessionEventPush(oidcSessionT *session, const char *desc, ...);
+int oidcSessionEventPush(oidcSessionT* session, const char* desc, ...);
 
-const fedSocialRawT *oidcSessionGetFedSocial(oidcSessionT *session);
-void oidcSessionSetFedSocial(oidcSessionT *session, fedSocialRawT *fedSocial);
-int oidcSessionHasAttribute(oidcSessionT *session, const char *value);
+const fedSocialRawT* oidcSessionGetFedSocial(oidcSessionT* session);
+void oidcSessionSetFedSocial(oidcSessionT* session, fedSocialRawT* fedSocial);
+int oidcSessionHasAttribute(oidcSessionT* session, const char* value);
 
-const fedUserRawT *oidcSessionGetUser(oidcSessionT *session);
-void oidcSessionSetFedUser(oidcSessionT *session, fedUserRawT *fedUser);
+const fedUserRawT* oidcSessionGetUser(oidcSessionT* session);
+void oidcSessionSetFedUser(oidcSessionT* session, fedUserRawT* fedUser);
 
-void *oidcSessionGetOpaqueData(oidcSessionT *session);
-void oidcSessionSetOpaqueData(oidcSessionT *session, void *data);
+void* oidcSessionGetOpaqueData(oidcSessionT* session);
+void oidcSessionSetOpaqueData(oidcSessionT* session, void* data);

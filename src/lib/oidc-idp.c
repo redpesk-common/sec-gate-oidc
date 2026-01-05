@@ -28,8 +28,8 @@
 #include <string.h>
 
 #include <rp-utils/rp-enum-map.h>
-#include <rp-utils/rp-jsonc.h>
 #include <rp-utils/rp-escape.h>
+#include <rp-utils/rp-jsonc.h>
 
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
@@ -374,7 +374,9 @@ OnErrorExit:
 }
 
 // parse one idp configuration
-static int idpParseOne(const oidcCoreHdlT *oidc, json_object *idpJ, oidcIdpT *idp)
+static int idpParseOne(const oidcCoreHdlT *oidc,
+                       json_object *idpJ,
+                       oidcIdpT *idp)
 {
     int err;
     const char *uid, *type;
@@ -473,7 +475,9 @@ OnErrorExit:
 }
 
 // register aliases of IDPs
-int idpRegisterAlias(const oidcCoreHdlT *oidc, const oidcIdpT *idp, struct afb_hsrv *hsrv)
+int idpRegisterAlias(const oidcCoreHdlT *oidc,
+                     const oidcIdpT *idp,
+                     struct afb_hsrv *hsrv)
 {
     int err;
 
@@ -495,8 +499,8 @@ int idpRegisterAlias(const oidcCoreHdlT *oidc, const oidcIdpT *idp, struct afb_h
 
 // register IDP login and authentication callback endpoint
 int idpRegisterVerbs(const oidcCoreHdlT *oidc,
-                    const oidcIdpT *idp,
-		    struct afb_api_v4 *sgApi)
+                     const oidcIdpT *idp,
+                     struct afb_api_v4 *sgApi)
 {
     int err;
 
@@ -509,9 +513,8 @@ int idpRegisterVerbs(const oidcCoreHdlT *oidc,
               idp->plugin->uid);
     err = idp->plugin->registerVerbs(idp, sgApi);
     if (err)
-        EXT_ERROR(
-            "[oidc-idp] failed to register verbs, idp/plugin: %s/%s",
-            idp->uid, idp->plugin->uid);
+        EXT_ERROR("[oidc-idp] failed to register verbs, idp/plugin: %s/%s",
+                  idp->uid, idp->plugin->uid);
     return err;
 }
 
@@ -532,22 +535,20 @@ int idpRegisterApis(const oidcCoreHdlT *oidc,
               idp->plugin->uid);
     err = idp->plugin->registerApis(idp, declare_set, call_set);
     if (err)
-        EXT_ERROR(
-            "[oidc-idp] failed to registeri apis, idp/plugin: %s/%s",
-            idp->uid, idp->plugin->uid);
+        EXT_ERROR("[oidc-idp] failed to registeri apis, idp/plugin: %s/%s",
+                  idp->uid, idp->plugin->uid);
     return err;
 }
 
-int idpRedirectLogin(
-        const oidcIdpT *idp,
-        struct afb_hreq *hreq,
-        oidcSessionT *session,
-        const char *destPath,
-        const char *redirPath,
-        const char *clientId,
-        const char *responseType,
-        const char *nonce
-) {
+int idpRedirectLogin(const oidcIdpT *idp,
+                     struct afb_hreq *hreq,
+                     oidcSessionT *session,
+                     const char *destPath,
+                     const char *redirPath,
+                     const char *clientId,
+                     const char *responseType,
+                     const char *nonce)
+{
     char url[EXT_URL_MAX_LEN];
     char redirectUrl[EXT_HEADER_MAX_LEN];
     const char *params[21];
@@ -571,7 +572,8 @@ int idpRedirectLogin(
 
     // prepare redirection URI
     if (redirPath != NULL) {
-        rc = afb_hreq_make_here_url(hreq, redirPath, redirectUrl, sizeof redirectUrl);
+        rc = afb_hreq_make_here_url(hreq, redirPath, redirectUrl,
+                                    sizeof redirectUrl);
         if (rc < 0 || rc >= (int)sizeof(redirectUrl)) {
             EXT_ERROR("Redirect too long");
             goto error;
@@ -627,20 +629,11 @@ error:
     return 1;
 }
 
-
-int idpStdRedirectLogin(
-        const oidcIdpT *idp,
-        struct afb_hreq *hreq
-) {
+int idpStdRedirectLogin(const oidcIdpT *idp, struct afb_hreq *hreq)
+{
     oidcSessionT *session = oidcSessionOfHttpReq(hreq);
     return idpRedirectLogin(
-        idp,
-        hreq,
-        session,
-        idp->wellknown->authorize,
-        idp->statics->aliasLogin,
-        idp->credentials->clientId,
-        idp->wellknown->respondLabel,
+        idp, hreq, session, idp->wellknown->authorize, idp->statics->aliasLogin,
+        idp->credentials->clientId, idp->wellknown->respondLabel,
         oidcSessionUUID(session));
 }
-

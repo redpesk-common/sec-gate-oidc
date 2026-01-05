@@ -28,40 +28,36 @@
 #include <fedid-types.h>
 #include <libafb/afb-v4.h>
 
-void fedIdClientSubCall(
-                afb_req_t req,
-                const char *verbname,
-                unsigned nparams,
-                afb_data_t const params[],
-                afb_subcall_callback_t callback,
-                void *closure);
+void fedIdClientSubCall(afb_req_t req,
+                        const char* verbname,
+                        unsigned nparams,
+                        afb_data_t const params[],
+                        afb_subcall_callback_t callback,
+                        void* closure);
 
-void fedIdClientCall(
-                afb_api_t api,
-                const char *verbname,
-                unsigned nparams,
-                afb_data_t const params[],
-                afb_call_callback_t callback,
-                void *closure);
+void fedIdClientCall(afb_api_t api,
+                     const char* verbname,
+                     unsigned nparams,
+                     afb_data_t const params[],
+                     afb_call_callback_t callback,
+                     void* closure);
 
-int fedIdClientCallSync(
-                afb_api_t api,
-                const char *verbname,
-                unsigned nparams,
-                afb_data_t const params[],
-		int *status,
-		unsigned *nresults,
-		afb_data_t results[]);
-
+int fedIdClientCallSync(afb_api_t api,
+                        const char* verbname,
+                        unsigned nparams,
+                        afb_data_t const params[],
+                        int* status,
+                        unsigned* nresults,
+                        afb_data_t results[]);
 
 void fedIdClientSocialCheck(
-                afb_api_t api,
-		fedSocialRawT *fedSoc,
-		void (*callback)(void*,int,fedSocialRawT*,fedUserRawT*),
-		void *closure);
+    afb_api_t api,
+    fedSocialRawT* fedSoc,
+    void (*callback)(void*, int, fedSocialRawT*, fedUserRawT*),
+    void* closure);
 
 void fedIdClientSocialCheck(
-        afb_api_t api,
-        fedSocialRawT *fedSoc,
-        void (*callback)(void*,int,fedSocialRawT*,fedUserRawT*),
-        void *closure);
+    afb_api_t api,
+    fedSocialRawT* fedSoc,
+    void (*callback)(void*, int, fedSocialRawT*, fedUserRawT*),
+    void* closure);

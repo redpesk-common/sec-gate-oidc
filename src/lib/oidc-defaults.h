@@ -26,17 +26,16 @@
 #pragma once
 
 // few defaults
-#define EXT_HIGHEST_PRIO      100
-#define EXT_URL_MAX_LEN       512
-#define EXT_TOKEN_MAX_LEN     256
-#define EXT_HEADER_MAX_LEN    256
+#define EXT_HIGHEST_PRIO 100
+#define EXT_URL_MAX_LEN 512
+#define EXT_TOKEN_MAX_LEN 256
+#define EXT_HEADER_MAX_LEN 256
 #define EXT_HTTP_UNAUTHORIZED 401
-#define EXT_HTTP_CONFLICT     409
+#define EXT_HTTP_CONFLICT 409
 #define EXT_HTTP_SERVER_ERROR 500
-#define EXT_SESSION_TIMEOUT   600  // session timeout in seconds
+#define EXT_SESSION_TIMEOUT 600  // session timeout in seconds
 
 #define HREQ_REDIR_TMPY 0  // temporary redirection
 #define HREQ_REDIR_PERM 1  // permanent redirection
 #define HREQ_QUERY_INCL 1  // include request parameter in redirection
 #define HREQ_QUERY_EXCL 0  // exclude request parameter of redirection
-

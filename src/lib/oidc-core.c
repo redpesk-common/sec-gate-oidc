@@ -329,7 +329,7 @@ json_object *oidcCoreGetProfilsForLOA(const oidcCoreHdlT *oidc,
                     break;
             }
             if (!*iter)
-                continue; // not in list
+                continue;  // not in list
         }
 
         // search for requested LOA within idp existing profile
@@ -391,11 +391,9 @@ int oidcCoreRedirectLogin(const oidcCoreHdlT *oidc, struct afb_hreq *hreq)
 #if FORCELANG
     int rc;
     char url[EXT_URL_MAX_LEN];
-    const char *params[] = {
-        "language", setlocale(LC_CTYPE, ""),
-        NULL};
-    size_t sz = rp_escape_url_to(NULL, oidc->globals.loginUrl, params, url,
-                                 sizeof url);
+    const char *params[] = {"language", setlocale(LC_CTYPE, ""), NULL};
+    size_t sz =
+        rp_escape_url_to(NULL, oidc->globals.loginUrl, params, url, sizeof url);
     if (sz < sizeof url)
         redirurl = url;
 #endif

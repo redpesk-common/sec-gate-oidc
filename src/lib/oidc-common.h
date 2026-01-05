@@ -31,12 +31,11 @@
 // redefine debug/log to avoid conflict
 #ifndef EXT_EMERGENCY
 #define EXT_EMERGENCY(...) LIBAFB_EMERGENCY(__VA_ARGS__)
-#define EXT_ALERT(...)     LIBAFB_ALERT(__VA_ARGS__)
-#define EXT_CRITICAL(...)  LIBAFB_CRITICAL(__VA_ARGS__)
-#define EXT_ERROR(...)     LIBAFB_ERROR(__VA_ARGS__)
-#define EXT_WARNING(...)   LIBAFB_WARNING(__VA_ARGS__)
-#define EXT_NOTICE(...)    LIBAFB_NOTICE(__VA_ARGS__)
-#define EXT_INFO(...)      LIBAFB_INFO(__VA_ARGS__)
-#define EXT_DEBUG(...)     LIBAFB_DEBUG(__VA_ARGS__)
+#define EXT_ALERT(...) LIBAFB_ALERT(__VA_ARGS__)
+#define EXT_CRITICAL(...) LIBAFB_CRITICAL(__VA_ARGS__)
+#define EXT_ERROR(...) LIBAFB_ERROR(__VA_ARGS__)
+#define EXT_WARNING(...) LIBAFB_WARNING(__VA_ARGS__)
+#define EXT_NOTICE(...) LIBAFB_NOTICE(__VA_ARGS__)
+#define EXT_INFO(...) LIBAFB_INFO(__VA_ARGS__)
+#define EXT_DEBUG(...) LIBAFB_DEBUG(__VA_ARGS__)
 #endif
-

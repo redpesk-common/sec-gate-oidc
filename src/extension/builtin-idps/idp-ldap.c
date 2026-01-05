@@ -461,7 +461,7 @@ static int ldapLoginCB(struct afb_hreq *hreq, void *ctx)
     // if no code then set state and redirect to IDP
     if (!login || !passwd) {
         return idpRedirectLogin(idp, hreq, session, idp->wellknown->tokenid,
-                            idp->statics->aliasLogin, NULL, NULL, NULL);
+                                idp->statics->aliasLogin, NULL, NULL, NULL);
     }
 
     // we have a code check state to assert that the response was generated
@@ -492,8 +492,8 @@ static int ldapRegisterVerbs(const oidcIdpT *idp, struct afb_api_v4 *sgApi)
     int err;
 
     // add a dedicate verb to check login/passwd from websocket
-    err = afb_api_add_verb(sgApi, idp->uid, idp->info,
-                           checkLoginVerb, (void*)idp, NULL, 0, 0);
+    err = afb_api_add_verb(sgApi, idp->uid, idp->info, checkLoginVerb,
+                           (void *)idp, NULL, 0, 0);
     if (err)
         goto OnErrorExit;
 

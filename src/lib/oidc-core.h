@@ -40,44 +40,42 @@ typedef struct oidcSessionS oidcSessionT;
 typedef struct oidGlobalsS oidGlobalsT;
 typedef struct oidcCoreHdlS oidcCoreHdlT;
 
-struct oidGlobalsS
-{
-    const char *loginUrl;
-    const char *errorUrl;
-    const char *registerUrl;
-    const char *fedlinkUrl;
-    const char *homeUrl;
+struct oidGlobalsS {
+    const char* loginUrl;
+    const char* errorUrl;
+    const char* registerUrl;
+    const char* fedlinkUrl;
+    const char* homeUrl;
     unsigned long tCache;
     unsigned long sTimeout;
     int debug;
 };
 
-const char *oidcCoreUID(const oidcCoreHdlT *oidc);
-const oidGlobalsT *oidcCoreGlobals(const oidcCoreHdlT *oidc);
-struct afb_api_v4 *oidcCoreAfbApi(const oidcCoreHdlT *oidc);
-httpPoolT *oidcCoreHTTPPool(const oidcCoreHdlT *oidc);
-const char *oidcCoreFedIdURI(const oidcCoreHdlT *oidc);
-const char *oidcCoreAfbApiName(const oidcCoreHdlT *oidc);
-void oidcCoreSetAfbApi(oidcCoreHdlT *oidc, struct afb_api_v4 *apiv4);
+const char* oidcCoreUID(const oidcCoreHdlT* oidc);
+const oidGlobalsT* oidcCoreGlobals(const oidcCoreHdlT* oidc);
+struct afb_api_v4* oidcCoreAfbApi(const oidcCoreHdlT* oidc);
+httpPoolT* oidcCoreHTTPPool(const oidcCoreHdlT* oidc);
+const char* oidcCoreFedIdURI(const oidcCoreHdlT* oidc);
+const char* oidcCoreAfbApiName(const oidcCoreHdlT* oidc);
+void oidcCoreSetAfbApi(oidcCoreHdlT* oidc, struct afb_api_v4* apiv4);
 
-int oidcCoreParseConfig(oidcCoreHdlT **poidc,
-                        struct json_object *oidcJ,
-                        char const *uid);
-int oidcCoreDeclareVerbs(oidcCoreHdlT *oidc,
-                         struct afb_api_v4 *sgApi);
-int oidcCoreDeclareApis(oidcCoreHdlT *oidc,
-                        struct afb_apiset *declare_set,
-                        struct afb_apiset *call_set);
-int oidcCoreDeclareHTTP(oidcCoreHdlT *oidc, struct afb_hsrv *hsrv);
+int oidcCoreParseConfig(oidcCoreHdlT** poidc,
+                        struct json_object* oidcJ,
+                        char const* uid);
+int oidcCoreDeclareVerbs(oidcCoreHdlT* oidc, struct afb_api_v4* sgApi);
+int oidcCoreDeclareApis(oidcCoreHdlT* oidc,
+                        struct afb_apiset* declare_set,
+                        struct afb_apiset* call_set);
+int oidcCoreDeclareHTTP(oidcCoreHdlT* oidc, struct afb_hsrv* hsrv);
 
-json_object *oidcCoreGetProfilsForLOA(const oidcCoreHdlT *oidc,
+json_object* oidcCoreGetProfilsForLOA(const oidcCoreHdlT* oidc,
                                       int loa,
-                                      const char **idps,
+                                      const char** idps,
                                       int noslave);
 
-int oidcCoreGetFilteredIdpList(const oidcCoreHdlT *oidc,
-                               const char **dest,
+int oidcCoreGetFilteredIdpList(const oidcCoreHdlT* oidc,
+                               const char** dest,
                                int nrDest,
-                               const char *excludedUID);
+                               const char* excludedUID);
 
-int oidcCoreRedirectLogin(const oidcCoreHdlT *oidc, struct afb_hreq *hreq);
+int oidcCoreRedirectLogin(const oidcCoreHdlT* oidc, struct afb_hreq* hreq);

@@ -35,41 +35,39 @@
 /*
  * Wrapper for subccalling API fedid
  */
-void fedIdClientSubCall(
-                afb_req_t req,
-                const char *verbname,
-                unsigned nparams,
-                afb_data_t const params[],
-                afb_subcall_callback_t callback,
-                void *closure)
+void fedIdClientSubCall(afb_req_t req,
+                        const char *verbname,
+                        unsigned nparams,
+                        afb_data_t const params[],
+                        afb_subcall_callback_t callback,
+                        void *closure)
 {
     afb_req_subcall(req, API_OIDC_USR_SVC, verbname, nparams, params,
                     afb_req_subcall_on_behalf, callback, closure);
 }
 
-void fedIdClientCall(
-                afb_api_t api,
-                const char *verbname,
-                unsigned nparams,
-                afb_data_t const params[],
-                afb_call_callback_t callback,
-                void *closure)
+void fedIdClientCall(afb_api_t api,
+                     const char *verbname,
+                     unsigned nparams,
+                     afb_data_t const params[],
+                     afb_call_callback_t callback,
+                     void *closure)
 {
     afb_api_v4_call_hookable(api, API_OIDC_USR_SVC, verbname, nparams, params,
                              callback, closure);
 }
 
-int fedIdClientCallSync(
-                afb_api_t api,
-                const char *verbname,
-                unsigned nparams,
-                afb_data_t const params[],
-        int *status,
-        unsigned *nresults,
-        afb_data_t results[])
+int fedIdClientCallSync(afb_api_t api,
+                        const char *verbname,
+                        unsigned nparams,
+                        afb_data_t const params[],
+                        int *status,
+                        unsigned *nresults,
+                        afb_data_t results[])
 {
-    return afb_api_v4_call_sync_hookable(api, API_OIDC_USR_SVC, verbname, nparams, params,
-                             status, nresults, results);
+    return afb_api_v4_call_sync_hookable(api, API_OIDC_USR_SVC, verbname,
+                                         nparams, params, status, nresults,
+                                         results);
 }
 
 /****************************************************************
@@ -82,16 +80,15 @@ struct social_check_data
     /* the fedsocial to be checked */
     fedSocialRawT *fedSoc;
     /* the callback receiving the result */
-    void (*callback)(void*,int,fedSocialRawT*,fedUserRawT*);
+    void (*callback)(void *, int, fedSocialRawT *, fedUserRawT *);
     /* closure for the callback */
     void *closure;
 };
 
 /* calls the callback */
-static void social_check_reply(
-                        struct social_check_data *scd,
-                        int status,
-                        fedUserRawT *fedUsr)
+static void social_check_reply(struct social_check_data *scd,
+                               int status,
+                               fedUserRawT *fedUsr)
 {
     // call it
     scd->callback(scd->closure, status, scd->fedSoc, fedUsr);
@@ -103,12 +100,11 @@ static void social_check_reply(
 }
 
 /* verb call callback */
-static void social_check_cb(
-                        void *closure,
-                        int status,
-                        unsigned argc,
-                        afb_data_x4_t const argv[],
-                        struct afb_api_v4 *api)
+static void social_check_cb(void *closure,
+                            int status,
+                            unsigned argc,
+                            afb_data_x4_t const argv[],
+                            struct afb_api_v4 *api)
 {
     struct social_check_data *scd = closure;
     fedUserRawT *fedUsr = NULL;
@@ -133,10 +129,10 @@ static void social_check_cb(
 
 // fedSoc should remain valid after subcall for fedsocial cookie
 void fedIdClientSocialCheck(
-        afb_api_t api,
-        fedSocialRawT *fedSoc,
-        void (*callback)(void*,int,fedSocialRawT*,fedUserRawT*),
-        void *closure)
+    afb_api_t api,
+    fedSocialRawT *fedSoc,
+    void (*callback)(void *, int, fedSocialRawT *, fedUserRawT *),
+    void *closure)
 {
     int rc;
     afb_data_x4_t data;
@@ -152,12 +148,13 @@ void fedIdClientSocialCheck(
         scd->closure = closure;
 
         /* wrap the fedSoc in a data */
-        rc = afb_data_create_raw(&data, fedSocialObjType, fedSoc, 0, NULL, NULL);
+        rc =
+            afb_data_create_raw(&data, fedSocialObjType, fedSoc, 0, NULL, NULL);
         if (rc < 0)
             social_check_reply(scd, AFB_ERRNO_OUT_OF_MEMORY, NULL);
         else
             /* call fedid binding */
-            fedIdClientCall(api, "social-check", 1, &data, social_check_cb, scd);
+            fedIdClientCall(api, "social-check", 1, &data, social_check_cb,
+                            scd);
     }
 }
-

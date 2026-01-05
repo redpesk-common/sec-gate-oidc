@@ -35,4 +35,4 @@
 #define OIDC_MAX_ARG_LABEL 64
 #endif
 
-char *utilsExpandJson(const char *src, json_object *keysJ);
+char* utilsExpandJson(const char* src, json_object* keysJ);

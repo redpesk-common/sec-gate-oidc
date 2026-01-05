@@ -55,9 +55,10 @@
  */
 static int makeStringData(afb_data_t *data, const char *string, int destroy)
 {
-    return afb_create_data_raw(data, AFB_PREDEFINED_TYPE_STRINGZ,
-                        string, string == NULL ? 0 : 1 + strlen(string),
-                        destroy ? free : NULL, destroy ? (void*)string : NULL);
+    return afb_create_data_raw(data, AFB_PREDEFINED_TYPE_STRINGZ, string,
+                               string == NULL ? 0 : 1 + strlen(string),
+                               destroy ? free : NULL,
+                               destroy ? (void *)string : NULL);
 }
 
 /*
@@ -172,13 +173,14 @@ static json_object *idpQueryList(afb_req_t wreq, const char **idps)
     oidcSessionT *session = oidcSessionOfReq(wreq);
     const oidcAliasT *alias = oidcSessionGetAlias(session);
 
-
     // build IDP list with corresponding scope for requested LOA
-    idpsJ = oidcCoreGetProfilsForLOA(oidc, 0, idps, 1); // TODO values of loa and noslave?
+    idpsJ = oidcCoreGetProfilsForLOA(oidc, 0, idps,
+                                     1);  // TODO values of loa and noslave?
     if (alias)
         rp_jsonc_pack(&aliasJ, "{ss ss* ss si}", "uid", alias->uid, "info",
                       alias->info, "url", alias->url, "loa", alias->loa);
-    if (0 > rp_jsonc_pack(&responseJ, "{so so*}", "idps", idpsJ, "alias", aliasJ)) {
+    if (0 >
+        rp_jsonc_pack(&responseJ, "{so so*}", "idps", idpsJ, "alias", aliasJ)) {
         json_object_put(idpsJ);
         json_object_put(aliasJ);
     }
@@ -198,7 +200,7 @@ static void idpQueryUserReply(afb_req_t wreq, const char **idps)
     // create the replied data
     if (rc >= 0)
         rc = afb_create_data_raw(&data, AFB_PREDEFINED_TYPE_JSON_C, obj, 0,
-                              (void *)json_object_put, obj);
+                                 (void *)json_object_put, obj);
 
     // send the reply
     if (rc >= 0)
@@ -225,7 +227,8 @@ static void idpQueryUserCB(void *ctx,
         afb_data_array_addref(argc, argv);
         afb_req_reply(wreq, status, argc, argv);
     }
-    else if (argc != 1 || 0 > afb_data_convert(argv[0], fedUserIdpsObjType, &data)) {
+    else if (argc != 1 ||
+             0 > afb_data_convert(argv[0], fedUserIdpsObjType, &data)) {
         // unexpected result
         EXT_NOTICE("[oidc-idsvc] idp-query-user got strange thing from fedid");
         afb_req_reply(wreq, AFB_ERRNO_INTERNAL_ERROR, 0, NULL);
@@ -262,7 +265,8 @@ static void idpQueryUser(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
         const oidcProfileT *profile = oidcSessionGetIdpProfile(session);
         const char *idpId = profile != NULL ? profile->idp->uid : NULL;
         const char *idps[MAX_OIDC_IDPS + 1];
-        int count = oidcCoreGetFilteredIdpList(oidc, idps, MAX_OIDC_IDPS + 1, idpId);
+        int count =
+            oidcCoreGetFilteredIdpList(oidc, idps, MAX_OIDC_IDPS + 1, idpId);
         if (count > MAX_OIDC_IDPS) {
             EXT_WARNING("[oidc-idsvc] too many idps, truncates to %d firsts",
                         MAX_OIDC_IDPS);
@@ -341,13 +345,15 @@ static void userRegister(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 
     // get first argument and check it as being a fedUser value
     status = AFB_ERRNO_INVALID_REQUEST;
-    if (argc != 1 || 0 > afb_req_param_convert(wreq, 0, fedUserObjType, &params[0]))
+    if (argc != 1 ||
+        0 > afb_req_param_convert(wreq, 0, fedUserObjType, &params[0]))
         goto OnErrorExit;
 
     // user is new let's register it within fedid DB (do not free fedSocial
     // after call)
     status = AFB_ERRNO_INTERNAL_ERROR;
-    err = afb_create_data_raw(&params[1], fedSocialObjType, fedSocial, 0, NULL, NULL);
+    err = afb_create_data_raw(&params[1], fedSocialObjType, fedSocial, 0, NULL,
+                              NULL);
     if (err < 0)
         goto OnErrorExit;
 

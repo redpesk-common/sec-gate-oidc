@@ -27,25 +27,23 @@
 
 #include "oidc-idp.h"
 
-struct idpPluginS
-{
-    const char *uid;
-    const char *info;
-    int (*registerConfig)(oidcIdpT *idp, json_object *idpJ);
-    int (*registerVerbs)(const oidcIdpT *idp,
-                         struct afb_api_v4 *sgApi);
-    int (*registerApis)(const oidcIdpT *idp,
-                        struct afb_apiset *declare_set,
-                        struct afb_apiset *call_set);
-    int (*registerAlias)(const oidcIdpT *idp, struct afb_hsrv *hsrv);
-    void (*resetSession)(const oidcProfileT *idpProfile, void *ctx);
-    void *ctx;
+struct idpPluginS {
+    const char* uid;
+    const char* info;
+    int (*registerConfig)(oidcIdpT* idp, json_object* idpJ);
+    int (*registerVerbs)(const oidcIdpT* idp, struct afb_api_v4* sgApi);
+    int (*registerApis)(const oidcIdpT* idp,
+                        struct afb_apiset* declare_set,
+                        struct afb_apiset* call_set);
+    int (*registerAlias)(const oidcIdpT* idp, struct afb_hsrv* hsrv);
+    void (*resetSession)(const oidcProfileT* idpProfile, void* ctx);
+    void* ctx;
 };
 
 // idp callback definition
-typedef int (*oidcPluginInitCbT)(const oidcCoreHdlT *oidc);
+typedef int (*oidcPluginInitCbT)(const oidcCoreHdlT* oidc);
 
-const idpPluginT *idpPluginFind(const char *type);
-int idpPluginRegister(const idpPluginT *plugin);
-int idpPluginParseOne(const oidcCoreHdlT *oidc, json_object *pluginJ);
-int idpPluginsParseConfig(const oidcCoreHdlT *oidc, json_object *pluginsJ);
+const idpPluginT* idpPluginFind(const char* type);
+int idpPluginRegister(const idpPluginT* plugin);
+int idpPluginParseOne(const oidcCoreHdlT* oidc, json_object* pluginJ);
+int idpPluginsParseConfig(const oidcCoreHdlT* oidc, json_object* pluginsJ);

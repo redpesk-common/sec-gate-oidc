@@ -512,7 +512,8 @@ static int oidcLoginCB(struct afb_hreq *hreq, void *ctx)
     if (code == NULL) {
         // if no code then set state and redirect to IDP
         return idpRedirectLogin(idp, hreq, session, idp->wellknown->authorize,
-                                idp->statics->aliasLogin, idp->credentials->clientId,
+                                idp->statics->aliasLogin,
+                                idp->credentials->clientId,
                                 idp->wellknown->respondLabel, uuid);
     }
 

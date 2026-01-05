@@ -145,8 +145,8 @@ static void githubGetAttrsByToken(idpRqtCtxT *rqtCtx, const char *orgApiUrl)
     int err = httpSendGet(oidcCoreHTTPPool(idp->oidc), orgApiUrl, &dfltOpts,
                           authToken, githubAttrsGetByTokenCB, rqtCtx);
     if (err)
-        EXT_ERROR("[idp-github] curl -H 'Authorization: %s' %s\n",
-                  tokenVal, orgApiUrl);
+        EXT_ERROR("[idp-github] curl -H 'Authorization: %s' %s\n", tokenVal,
+                  orgApiUrl);
     return;
 }
 
@@ -342,8 +342,8 @@ static int githubLoginCB(struct afb_hreq *hreq, void *ctx)
     // if no code then set state and redirect to IDP
     if (code == NULL) {
         return idpRedirectLogin(idp, hreq, session, idp->wellknown->authorize,
-                                idp->statics->aliasLogin, idp->credentials->clientId,
-                                "code", NULL);
+                                idp->statics->aliasLogin,
+                                idp->credentials->clientId, "code", NULL);
     }
     const char *uuid = oidcSessionUUID(session);
 
@@ -356,7 +356,8 @@ static int githubLoginCB(struct afb_hreq *hreq, void *ctx)
     // check question/response state match
     const char *oidcState = afb_hreq_get_argument(hreq, "state");
     if (strcmp(oidcState, uuid)) {
-        EXT_WARNING("[idp-github] state mismatch recv=%s expect=%s", oidcState, uuid);
+        EXT_WARNING("[idp-github] state mismatch recv=%s expect=%s", oidcState,
+                    uuid);
         goto OnErrorExit;
     }
 
@@ -378,11 +379,12 @@ static int githubRegisterAlias(const oidcIdpT *idp, struct afb_hsrv *hsrv)
               idp->statics->aliasLogin);
 
     rc = afb_hsrv_add_handler(hsrv, idp->statics->aliasLogin, githubLoginCB,
-                               (void *)idp, EXT_HIGHEST_PRIO);
+                              (void *)idp, EXT_HIGHEST_PRIO);
     if (rc)
         return 0;
 
-    EXT_ERROR("[idp-github] fail to register alias=%s", idp->statics->aliasLogin);
+    EXT_ERROR("[idp-github] fail to register alias=%s",
+              idp->statics->aliasLogin);
     return -1;
 }
 

@@ -26,8 +26,8 @@
 
 #include <sys/types.h>
 
-#define PCSC_HANDLE_MAGIC   852963147
-#define PCSC_DFLT_TIMEOUT   60  // default reader change status in seconds
+#define PCSC_HANDLE_MAGIC 852963147
+#define PCSC_DFLT_TIMEOUT 60  // default reader change status in seconds
 #define PCSC_READER_DEV_MAX 8
 #define PCSC_MIFARE_STATUS_LEN \
     2  // number of byte added to read buffer for Mifare status
@@ -59,59 +59,57 @@ typedef enum {
     PCSC_MONITOR_KILL,
 } pcscMonitorActionE;
 
-typedef struct
-{
-    const char *uid;
-    u_int8_t *kval;
+typedef struct {
+    const char* uid;
+    u_int8_t* kval;
     u_int8_t klen;
     u_int8_t kidx;
 } pcscKeyT;
 
-typedef struct
-{
-    u_int8_t *acls;
+typedef struct {
+    u_int8_t* acls;
     u_int8_t alen;
-    pcscKeyT *keyA;
-    pcscKeyT *keyB;
+    pcscKeyT* keyA;
+    pcscKeyT* keyB;
 } pcscTrailerT;
 
 typedef struct pcscHandleS pcscHandleT;  // opaque handle for client apps
-typedef int (*pcscStatusCbT)(pcscHandleT *handle, ulong state, void *ctx);
+typedef int (*pcscStatusCbT)(pcscHandleT* handle, ulong state, void* ctx);
 
-pcscHandleT *pcscConnect(const char *uid, const char *readerName);
-int pcscDisconnect(pcscHandleT *handle);
-int pcscSetOpt(pcscHandleT *handle, pcscOptsE opt, ulong value);
-const char *pcscReaderName(pcscHandleT *handle);
-const char *pcscErrorMsg(pcscHandleT *handle);
-u_int64_t pcscGetCardUuid(pcscHandleT *handle);
+pcscHandleT* pcscConnect(const char* uid, const char* readerName);
+int pcscDisconnect(pcscHandleT* handle);
+int pcscSetOpt(pcscHandleT* handle, pcscOptsE opt, ulong value);
+const char* pcscReaderName(pcscHandleT* handle);
+const char* pcscErrorMsg(pcscHandleT* handle);
+u_int64_t pcscGetCardUuid(pcscHandleT* handle);
 
-int pcscReaderCheck(pcscHandleT *handle, int ticks);
-ulong pcscMonitorReader(pcscHandleT *handle, pcscStatusCbT callback, void *ctx);
-int pcscMonitorWait(pcscHandleT *handle, pcscMonitorActionE action, ulong tid);
-pcscHandleT *pcscList(const char **readerList, ulong *readerMax);
+int pcscReaderCheck(pcscHandleT* handle, int ticks);
+ulong pcscMonitorReader(pcscHandleT* handle, pcscStatusCbT callback, void* ctx);
+int pcscMonitorWait(pcscHandleT* handle, pcscMonitorActionE action, ulong tid);
+pcscHandleT* pcscList(const char** readerList, ulong* readerMax);
 
-const pcscKeyT *pcscNewKey(const char *uid, u_int8_t *value, size_t len);
-int pcscReadUuid(pcscHandleT *handle,
-                 const char *uid,
-                 u_int8_t *data,
-                 ulong *dlen);
-int pcsWriteTrailer(pcscHandleT *handle,
-                    const char *uid,
+const pcscKeyT* pcscNewKey(const char* uid, u_int8_t* value, size_t len);
+int pcscReadUuid(pcscHandleT* handle,
+                 const char* uid,
+                 u_int8_t* data,
+                 ulong* dlen);
+int pcsWriteTrailer(pcscHandleT* handle,
+                    const char* uid,
                     u_int8_t secIdx,
                     u_int8_t blkIdx,
-                    const pcscKeyT *key,
-                    const pcscTrailerT *trailer);
-int pcsWriteBlock(pcscHandleT *handle,
-                  const char *uid,
+                    const pcscKeyT* key,
+                    const pcscTrailerT* trailer);
+int pcsWriteBlock(pcscHandleT* handle,
+                  const char* uid,
                   u_int8_t secIdx,
                   u_int8_t blkIdx,
-                  u_int8_t *dataBuf,
+                  u_int8_t* dataBuf,
                   ulong dataLen,
-                  const pcscKeyT *key);
-int pcscReadBlock(pcscHandleT *handle,
-                  const char *uid,
+                  const pcscKeyT* key);
+int pcscReadBlock(pcscHandleT* handle,
+                  const char* uid,
                   u_int8_t secIdx,
                   u_int8_t blkIdx,
-                  u_int8_t *data,
+                  u_int8_t* data,
                   ulong dataLen,
-                  const pcscKeyT *key);
+                  const pcscKeyT* key);

@@ -51,128 +51,120 @@ typedef enum {
     IDP_RESPOND_TYPE_ID_TOKEN_TOKEN,
 } oidcRespondTypeT;
 
-typedef struct oidcWellknownS
-{
-    const char *discovery;
-    const char *tokenid;
-    const char *authorize;
-    const char *userinfo;
-    const char *jwks;
+typedef struct oidcWellknownS {
+    const char* discovery;
+    const char* tokenid;
+    const char* authorize;
+    const char* userinfo;
+    const char* jwks;
     oidcAuthMethodT authMethod;
     oidcRespondTypeT respondType;
-    const char *respondLabel;
-    const char *authLabel;
-    const char *errorLabel;
+    const char* respondLabel;
+    const char* authLabel;
+    const char* errorLabel;
     int lazy;
 } oidcWellknownT;
 
-typedef struct oidcCredentialsS
-{
+typedef struct oidcCredentialsS {
     int timeout;  // connection timeout to authority in seconds
-    const char *clientId;
-    const char *secret;
+    const char* clientId;
+    const char* secret;
 } oidcCredentialsT;
 
-typedef struct oidcProfileS
-{
-    const char *uid;
-    const char *info;
-    const char *scope;
-    const char *attrs;
+typedef struct oidcProfileS {
+    const char* uid;
+    const char* info;
+    const char* scope;
+    const char* attrs;
     int loa;
     int group;
     int slave;
     unsigned long tCache;
     unsigned long sTimeout;
-    oidcIdpT *idp;
+    oidcIdpT* idp;
 } oidcProfileT;
 
-typedef struct oidcStaticsS
-{
+typedef struct oidcStaticsS {
     int loa;
     ulong sTimeout;
-    const char *aliasLogo;
-    const char *aliasLogin;
-    const char *aliasLogout;
+    const char* aliasLogo;
+    const char* aliasLogin;
+    const char* aliasLogout;
 } oidcStaticsT;
 
-struct oidcIdpS
-{
+struct oidcIdpS {
     int magic;
-    const char *uid;
-    const char *info;
-    const char *type;
-    const oidcCredentialsT *credentials;
-    const oidcWellknownT *wellknown;
-    const httpKeyValT *headers;
-    const oidcProfileT *scopes;
-    const oidcStaticsT *statics;
-    const oidcProfileT *profiles;
-    void *ctx;
-    const idpPluginT *plugin;
-    const oidcCoreHdlT *oidc;
-    void *userData;
+    const char* uid;
+    const char* info;
+    const char* type;
+    const oidcCredentialsT* credentials;
+    const oidcWellknownT* wellknown;
+    const httpKeyValT* headers;
+    const oidcProfileT* scopes;
+    const oidcStaticsT* statics;
+    const oidcProfileT* profiles;
+    void* ctx;
+    const idpPluginT* plugin;
+    const oidcCoreHdlT* oidc;
+    void* userData;
 };
 
-typedef struct oidcDefaultsS
-{
-    const oidcCredentialsT *credentials;
-    const oidcStaticsT *statics;
-    const oidcWellknownT *wellknown;
-    const oidcProfileT *profiles;
-    const httpKeyValT *headers;
+typedef struct oidcDefaultsS {
+    const oidcCredentialsT* credentials;
+    const oidcStaticsT* statics;
+    const oidcWellknownT* wellknown;
+    const oidcProfileT* profiles;
+    const httpKeyValT* headers;
 } oidcDefaultsT;
 
 // request handle store federation attribute during multiple IDP async calls
 typedef struct idpRqtCtxS idpRqtCtxT;
 
-struct idpRqtCtxS
-{
+struct idpRqtCtxS {
     int ucount;
-    const char *uuid;
-    const oidcIdpT *idp;
-    struct afb_hreq *hreq;
-    struct afb_req_v4 *wreq;
-    fedSocialRawT *fedSocial;
-    fedUserRawT *fedUser;
-    const oidcProfileT *profile;
-    char *token;
-    void *userData;
+    const char* uuid;
+    const oidcIdpT* idp;
+    struct afb_hreq* hreq;
+    struct afb_req_v4* wreq;
+    fedSocialRawT* fedSocial;
+    fedUserRawT* fedUser;
+    const oidcProfileT* profile;
+    char* token;
+    void* userData;
 };
 
 // idp exported functions
-const oidcProfileT *idpGetFirstProfile(const oidcIdpT *idp,
+const oidcProfileT* idpGetFirstProfile(const oidcIdpT* idp,
                                        int targetLOA,
-                                       const char *scope);
+                                       const char* scope);
 
-int idpPluginsParseConfig(const oidcCoreHdlT *oidc, json_object *pluginsJ);
-oidcIdpT *idpParseConfig(const oidcCoreHdlT *oidc, json_object *idpsJ);
-int idpParseOidcConfig(oidcIdpT *idp,
-                       json_object *configJ,
-                       oidcDefaultsT *defaults,
-                       void *ctx);
-int idpRegisterVerbs(const oidcCoreHdlT *oidc,
-                    const oidcIdpT *idp,
-		    struct afb_api_v4 *sgApi);
-int idpRegisterApis(const oidcCoreHdlT *oidc,
-                    const oidcIdpT *idp,
-                    struct afb_apiset *declare_set,
-                    struct afb_apiset *call_set);
-int idpRegisterAlias(const oidcCoreHdlT *oidc, const oidcIdpT *idp, struct afb_hsrv *hsrv);
+int idpPluginsParseConfig(const oidcCoreHdlT* oidc, json_object* pluginsJ);
+oidcIdpT* idpParseConfig(const oidcCoreHdlT* oidc, json_object* idpsJ);
+int idpParseOidcConfig(oidcIdpT* idp,
+                       json_object* configJ,
+                       oidcDefaultsT* defaults,
+                       void* ctx);
+int idpRegisterVerbs(const oidcCoreHdlT* oidc,
+                     const oidcIdpT* idp,
+                     struct afb_api_v4* sgApi);
+int idpRegisterApis(const oidcCoreHdlT* oidc,
+                    const oidcIdpT* idp,
+                    struct afb_apiset* declare_set,
+                    struct afb_apiset* call_set);
+int idpRegisterAlias(const oidcCoreHdlT* oidc,
+                     const oidcIdpT* idp,
+                     struct afb_hsrv* hsrv);
 
-int idpPluginRegister(const idpPluginT *pluginCbs);
-void idpRqtCtxFree(idpRqtCtxT *rqtCtx);
+int idpPluginRegister(const idpPluginT* pluginCbs);
+void idpRqtCtxFree(idpRqtCtxT* rqtCtx);
 
-int idpStdRedirectLogin(
-        const oidcIdpT *idp,
-        struct afb_hreq *hreq);
+int idpStdRedirectLogin(const oidcIdpT* idp, struct afb_hreq* hreq);
 
-int idpRedirectLogin(
-        const oidcIdpT *idp,
-        struct afb_hreq *hreq,
-        oidcSessionT *session,
-        const char *destPath,
-        const char *redirPath,
-        const char *clientId,
-        const char *responseType,
-        const char *nonce);
+int idpRedirectLogin(const oidcIdpT* idp,
+                     struct afb_hreq* hreq,
+                     oidcSessionT* session,
+                     const char* destPath,
+                     const char* redirPath,
+                     const char* clientId,
+                     const char* responseType,
+                     const char* nonce);

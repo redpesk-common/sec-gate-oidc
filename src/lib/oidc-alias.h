@@ -29,18 +29,17 @@
 
 #include "oidc-core.h"
 
-typedef struct oidcAliasesS
-{
-    const char *uid;
-    const char *info;
+typedef struct oidcAliasesS {
+    const char* uid;
+    const char* info;
     int loa;
     int priority;
-    const char *url;
-    const char *path;
-    const char **roles;
-    const oidcCoreHdlT *oidc;
+    const char* url;
+    const char* path;
+    const char** roles;
+    const oidcCoreHdlT* oidc;
     unsigned long tCache;
 } oidcAliasT;
 
-oidcAliasT *aliasParseConfig(const oidcCoreHdlT *oidc, json_object *aliasesJ);
-int aliasRegisterOne(const oidcAliasT *alias, struct afb_hsrv *hsrv);
+oidcAliasT* aliasParseConfig(const oidcCoreHdlT* oidc, json_object* aliasesJ);
+int aliasRegisterOne(const oidcAliasT* alias, struct afb_hsrv* hsrv);

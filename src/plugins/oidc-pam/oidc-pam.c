@@ -302,9 +302,8 @@ int pamRegisterVerbs(const oidcIdpT *idp, struct afb_api_v4 *sgApi)
     // add a dedicate verb to check login/passwd from websocket
     // err= afb_api_add_verb(idp->oidc->apiv4, idp->uid, idp->info,
     // checkLoginVerb, idp, NULL, 0, 0);
-    err = afb_api_v4_add_verb_hookable(sgApi, idp->uid,
-                                       idp->info, checkLoginVerb, (void*)idp, NULL, 0,
-                                       0);
+    err = afb_api_v4_add_verb_hookable(sgApi, idp->uid, idp->info,
+                                       checkLoginVerb, (void *)idp, NULL, 0, 0);
     if (err)
         goto OnErrorExit;
 

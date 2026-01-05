@@ -117,7 +117,9 @@ OnErrorExit:
 }
 
 // parse one API configuration
-static int apisParseOne(const oidcCoreHdlT *oidc, json_object *apiJ, oidcApisT *api)
+static int apisParseOne(const oidcCoreHdlT *oidc,
+                        json_object *apiJ,
+                        oidcApisT *api)
 {
     int rc, idx, count;
     const char **roles;
