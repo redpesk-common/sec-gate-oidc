@@ -88,7 +88,7 @@ cat << EOC > $CONF
             "uri": "ldap://fusion.ovh.iot",
             "login": "uid=%login%,ou=People,dc=lorient,dc=iot",
             "groups": "ou=groups,dc=lorient,dc=iot?dn?sub?(memberUid=%login%)",
-            "people": "ou=people,dc=lorient,dc=iot?uid,gecos,mail?sub?(cn=%login%)"
+            "people": "ou=people,dc=lorient,dc=iot?uid,gecos,mail?sub?(uid=%login%)"
           },
           "wellknown": {
             "tokenid": "/sgate/ldap/login.html"
