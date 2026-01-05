@@ -162,3 +162,17 @@ int idpRegisterAlias(const oidcCoreHdlT *oidc, const oidcIdpT *idp, struct afb_h
 
 int idpPluginRegister(const idpPluginT *pluginCbs);
 void idpRqtCtxFree(idpRqtCtxT *rqtCtx);
+
+int idpStdRedirectLogin(
+        const oidcIdpT *idp,
+        struct afb_hreq *hreq);
+
+int idpRedirectLogin(
+        const oidcIdpT *idp,
+        struct afb_hreq *hreq,
+        oidcSessionT *session,
+        const char *destPath,
+        const char *redirPath,
+        const char *clientId,
+        const char *responseType,
+        const char *nonce);

@@ -29,6 +29,7 @@
 
 #include <rp-utils/rp-enum-map.h>
 #include <rp-utils/rp-jsonc.h>
+#include <rp-utils/rp-escape.h>
 
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
@@ -536,3 +537,110 @@ int idpRegisterApis(const oidcCoreHdlT *oidc,
             idp->uid, idp->plugin->uid);
     return err;
 }
+
+int idpRedirectLogin(
+        const oidcIdpT *idp,
+        struct afb_hreq *hreq,
+        oidcSessionT *session,
+        const char *destPath,
+        const char *redirPath,
+        const char *clientId,
+        const char *responseType,
+        const char *nonce
+) {
+    char url[EXT_URL_MAX_LEN];
+    char redirectUrl[EXT_HEADER_MAX_LEN];
+    const char *params[21];
+
+    int rc, ipar, targetLOA;
+    const char *scope;
+    const oidcProfileT *profile;
+
+    // get target LOA and expected scope (if any)
+    scope = afb_hreq_get_argument(hreq, "scope");
+    targetLOA = oidcSessionGetTargetLOA(session);
+
+    // search a profile for the target LOA and expected scope
+    profile = idpGetFirstProfile(idp, targetLOA, scope);
+    if (!profile) {
+        // no profile foun exit without trying authentication
+        EXT_WARNING("no profile found for LOA %d SCOPE %s", targetLOA, scope);
+        afb_hreq_reply_error(hreq, EXT_HTTP_UNAUTHORIZED);
+        return 1;
+    }
+
+    // prepare redirection URI
+    if (redirPath != NULL) {
+        rc = afb_hreq_make_here_url(hreq, redirPath, redirectUrl, sizeof redirectUrl);
+        if (rc < 0 || rc >= (int)sizeof(redirectUrl)) {
+            EXT_ERROR("Redirect too long");
+            goto error;
+        }
+    }
+
+    // prepare arguments encoding
+    ipar = 0;
+    params[ipar++] = "state";
+    params[ipar++] = oidcSessionUUID(session);
+    params[ipar++] = "scope";
+    params[ipar++] = profile->scope;
+    if (redirPath != NULL) {
+        params[ipar++] = "redirect_uri";
+        params[ipar++] = redirectUrl;
+    }
+    if (clientId != NULL) {
+        params[ipar++] = "client_id";
+        params[ipar++] = clientId;
+    }
+    if (responseType != NULL) {
+        params[ipar++] = "response_type";
+        params[ipar++] = responseType;
+    }
+    if (nonce != NULL) {
+        params[ipar++] = "nonce";
+        params[ipar++] = nonce;
+    }
+#if FORCELANG
+    params[ipar++] = "language";
+    params[ipar++] = setlocale(LC_CTYPE, "");
+#endif
+    params[ipar] = NULL;
+
+    // build the URL
+    rc = (int)rp_escape_url_to(NULL, destPath, params, url, sizeof url);
+    if (rc >= (int)sizeof url) {
+        EXT_ERROR("Redirect too long");
+        goto error;
+    }
+
+    // setup session profile
+    oidcSessionSetIdpProfile(session, profile);
+
+    // send the redirect now
+    EXT_DEBUG("redirect to %s", url);
+    afb_hreq_redirect_to(hreq, url, HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
+    return 1;
+
+error:
+    // internal error
+    afb_hreq_reply_error(hreq, EXT_HTTP_SERVER_ERROR);
+    return 1;
+}
+
+
+int idpStdRedirectLogin(
+        const oidcIdpT *idp,
+        struct afb_hreq *hreq
+) {
+    oidcSessionT *session = oidcSessionOfHttpReq(hreq);
+    return idpRedirectLogin(
+        idp,
+        hreq,
+        session,
+        idp->wellknown->authorize,
+        idp->statics->aliasLogin,
+        idp->credentials->clientId,
+        idp->wellknown->respondLabel,
+        oidcSessionUUID(session));
+}
+
