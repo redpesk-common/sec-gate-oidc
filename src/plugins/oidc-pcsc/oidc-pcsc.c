@@ -183,7 +183,9 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
         if (pcscRqtCtx->status == PCSC_STATUS_WAITING) {
             // reserve federation and social user structure
             idpRqtCtx->fedSocial = calloc(1, sizeof(fedSocialRawT));
+            idpRqtCtx->fedSocial->refcount = 1;
             idpRqtCtx->fedUser = calloc(1, sizeof(fedUserRawT));
+            idpRqtCtx->fedUser->refcount = 1;
             u_int64_t uuid;
             char *data = NULL;
 

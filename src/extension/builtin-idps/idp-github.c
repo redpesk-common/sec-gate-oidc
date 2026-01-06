@@ -78,13 +78,20 @@ static httpOptsT dfltOpts = {
     // .verbose=1
 };
 
-// duplicate key value if not null
-static char *json_object_dup_key_value(json_object *objJ, const char *key)
+// string key value if exist
+static const char *get_object_string(json_object *objJ, const char *key)
 {
     json_object *valJ;
     if (!json_object_object_get_ex(objJ, key, &valJ) || valJ == NULL)
         return NULL;
-    return strdup(json_object_get_string(valJ));
+    return json_object_get_string(valJ);
+}
+
+// duplicate key value if not null
+static char *json_object_dup_key_value(json_object *objJ, const char *key)
+{
+    const char *str = get_object_string(objJ, key);
+    return str == NULL ? NULL : strdup(str);
 }
 
 // call when IDP respond to user profile wreq
@@ -171,17 +178,15 @@ static httpRqtActionT githubUserGetByTokenCB(const httpRqtT *httpRqt)
         goto OnErrorExit;
 
     // build social fedkey from idp->uid+github->id
-    fedSocial = calloc(1, sizeof(fedSocialRawT));
-    fedSocial->fedkey = json_object_dup_key_value(profileJ, "id");
-    fedSocial->idp = strdup(idp->uid);
-    rqtCtx->fedSocial = fedSocial;
+    fedSocial = fedSocialCreate(idp->uid, get_object_string(profileJ, "id"), 0);
+    fedUser = fedUserCreate(get_object_string(profileJ, "login"),
+                            get_object_string(profileJ, "email"),
+                            get_object_string(profileJ, "name"),
+                            get_object_string(profileJ, "avatar_url"),
+                            get_object_string(profileJ, "company"),
+                            0);
 
-    fedUser = calloc(1, sizeof(fedUserRawT));
-    fedUser->pseudo = json_object_dup_key_value(profileJ, "login");
-    fedUser->avatar = json_object_dup_key_value(profileJ, "avatar_url");
-    fedUser->name = json_object_dup_key_value(profileJ, "name");
-    fedUser->company = json_object_dup_key_value(profileJ, "company");
-    fedUser->email = json_object_dup_key_value(profileJ, "email");
+    rqtCtx->fedSocial = fedSocial;
     rqtCtx->fedUser = fedUser;
 
     // user is ok, let's map user organisation onto security attributes

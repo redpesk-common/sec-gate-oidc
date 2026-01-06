@@ -40,8 +40,8 @@ struct oidcSessionS
     const char *uuid;
     const oidcAliasT *alias;
     const oidcProfileT *profile;
-    const fedUserRawT *user;
-    const fedSocialRawT *social;
+    fedUserRawT *user;
+    fedSocialRawT *social;
     int fedidLinkRequest;
     fedidLinkT fedlink;
     struct afb_evt *event;
@@ -258,6 +258,7 @@ const fedSocialRawT *oidcSessionGetFedSocial(oidcSessionT *session)
 
 void oidcSessionSetFedSocial(oidcSessionT *session, fedSocialRawT *fedSocial)
 {
+    fedSocialUnRef(session->social);
     session->social = fedSocial;
 }
 
@@ -286,6 +287,7 @@ const fedUserRawT *oidcSessionGetUser(oidcSessionT *session)
 
 void oidcSessionSetFedUser(oidcSessionT *session, fedUserRawT *fedUser)
 {
+    fedUserUnRef(session->user);
     session->user = fedUser;
 }
 

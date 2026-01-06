@@ -127,13 +127,20 @@ static const oidcStaticsT dfltstatics = {
     .aliasLogout = NULL,
     .sTimeout = 600};
 
-// duplicate key value if not null
-static char *json_object_dup_key_value(json_object *objJ, const char *key)
+// string key value if exist
+static const char *get_object_string(json_object *objJ, const char *key)
 {
     json_object *valJ;
     if (!json_object_object_get_ex(objJ, key, &valJ) || valJ == NULL)
         return NULL;
-    return strdup(json_object_get_string(valJ));
+    return json_object_get_string(valJ);
+}
+
+// duplicate key value if not null
+static char *json_object_dup_key_value(json_object *objJ, const char *key)
+{
+    const char *str = get_object_string(objJ, key);
+    return str == NULL ? NULL : strdup(str);
 }
 
 // signature to be check with GNUTLS to be added by JOSE)
@@ -193,10 +200,7 @@ static int oidcUserFederateId(idpRqtCtxT *rqtCtx, json_object *profileJ)
         return -1;
 
     // build social fedkey from idp->uid+oidc->id
-    fedSocial = calloc(1, sizeof(fedSocialRawT));
-    fedSocial->fedkey = json_object_dup_key_value(profileJ, schema->fedid);
-    fedSocial->idpsid = json_object_dup_key_value(profileJ, schema->idpsid);
-    fedSocial->idp = strdup(idp->uid);
+    fedSocial = fedSocialCreate(idp->uid, get_object_string(profileJ, schema->fedid), 0);
     rqtCtx->fedSocial = fedSocial;
 
     // check groups as security attributs
@@ -214,12 +218,12 @@ static int oidcUserFederateId(idpRqtCtxT *rqtCtx, json_object *profileJ)
         }
     }
 
-    fedUser = calloc(1, sizeof(fedUserRawT));
-    fedUser->pseudo = json_object_dup_key_value(profileJ, schema->pseudo);
-    fedUser->avatar = json_object_dup_key_value(profileJ, schema->avatar);
-    fedUser->name = json_object_dup_key_value(profileJ, schema->name);
-    fedUser->company = json_object_dup_key_value(profileJ, schema->company);
-    fedUser->email = json_object_dup_key_value(profileJ, schema->email);
+    fedUser = fedUserCreate(get_object_string(profileJ, schema->pseudo),
+                            get_object_string(profileJ, schema->email),
+                            get_object_string(profileJ, schema->name),
+                            get_object_string(profileJ, schema->avatar),
+                            get_object_string(profileJ, schema->company),
+                            0);
     rqtCtx->fedUser = fedUser;
 
     err = fedidCheck(rqtCtx);
@@ -229,8 +233,8 @@ static int oidcUserFederateId(idpRqtCtxT *rqtCtx, json_object *profileJ)
     return 0;
 
 OnErrorExit:
-    free(fedSocial);
-    free(fedUser);
+    fedSocialUnRef(fedSocial);
+    fedUserUnRef(fedUser);
     return -1;
 }
 
@@ -383,7 +387,7 @@ static httpRqtActionT oidcAccessTokenCB(const httpRqtT *httpRqt)
         // if logout registered then keep track of SID
         if (rqtCtx->idp->statics->aliasLogout) {
             sidMapT *sidMap = calloc(1, sizeof(sidMapT));
-            sidMap->sid = rqtCtx->fedSocial->idpsid;
+            sidMap->sid = json_object_dup_key_value(fedIdJ, schema->idpsid);
             sidMap->uuid = rqtCtx->uuid;
             HASH_ADD_STR(sidHead, uuid, sidMap);
             if (!sidMap)

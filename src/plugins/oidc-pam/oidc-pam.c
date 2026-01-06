@@ -131,18 +131,9 @@ static int pamAccessToken(const oidcIdpT *idp,
             goto OnErrorExit;
 
         // build social fedkey from idp->uid+github->id
-        fedSocialRawT *fedSocial = calloc(1, sizeof(fedSocialRawT));
-        char *fedId;
-        asprintf(&fedId, "id:%d", pw->pw_uid);
-        fedSocial->fedkey = fedId;
-        fedSocial->idp = strdup(idp->uid);
-
-        fedUserRawT *fedUser = calloc(1, sizeof(fedUserRawT));
-        fedUser->pseudo = strdup(pw->pw_name);
-        fedUser->avatar = strdup(dfltOpts.avatarAlias);
-        fedUser->name = strdup(pw->pw_gecos);
-        fedUser->company = NULL;
-        fedUser->email = NULL;
+        fedSocialRawT *fedSocial = fedSocialCreate(idp->uid, pw->pw_name, 0);
+        fedUserRawT *fedUser = fedUserCreate(pw->pw_name, NULL, pw->pw_gecos,
+                                             dfltOpts.avatarAlias, NULL, 0);
 
         // retreive groups list and add them to fedSocial labels list
         err = getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups);

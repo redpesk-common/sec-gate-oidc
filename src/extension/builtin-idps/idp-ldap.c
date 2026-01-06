@@ -229,9 +229,9 @@ static httpRqtActionT ldapAccessProfileCB(const httpRqtT *httpRqt)
     afb_data_t reply;
 
     // reserve federation and social user structure
-    idpRqtCtx->fedSocial = calloc(1, sizeof(fedSocialRawT));
+    idpRqtCtx->fedSocial = fedSocialCreate(idpRqtCtx->idp->uid, NULL, 0);
     idpRqtCtx->fedUser = calloc(1, sizeof(fedUserRawT));
-    idpRqtCtx->fedSocial->idp = strdup(idpRqtCtx->idp->uid);
+    idpRqtCtx->fedUser->refcount = 1;
 
     // something when wrong
     if (httpRqt->status < 0)

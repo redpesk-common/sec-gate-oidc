@@ -434,7 +434,6 @@ static void userFederate(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 {
     char *errorMsg = "[user-federate-fail] invalid/missing query arguments";
     afb_event_t evtCookie;
-    const oidcProfileT *profile;
     const fedSocialRawT *fedSocial;
     fedUserRawT *fedUser;
     json_object *responseJ;
@@ -668,8 +667,7 @@ static afb_verb_t idsvcVerbs[] = {
      .verb = "session-reset",
      .callback = sessionReset,
      .info = "reset current session [set loa=0]"
-    },
-    {
+    }, {
      .verb = "usr-register",
      .callback = userRegister,
      .info = "register federated user profile into local fedid store"

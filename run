@@ -8,10 +8,10 @@
 : ${RUN:=}
 : ${DB:=$PREF/fedid-local.sqlite}
 
-#RUN="gdb -arg"
+RUN="gdb -ex run -arg"
 #RUN=valgrind
 
-#rm $DB
+rm $DB
 
 cat << EOC > $CONF
 {
