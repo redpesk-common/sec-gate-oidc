@@ -63,7 +63,7 @@ typedef struct {
 // buffers
 typedef struct httpBufferS {
     size_t length;
-    char* buffer;
+    const char* buffer;
 } httpBufferT;
 
 // http request handle
@@ -79,7 +79,7 @@ typedef struct httpRqtS {
 } httpRqtT;
 
 typedef struct httpRqtHndlS httpRqtHndlT;
-typedef httpRqtActionT (*httpRqtCbT)(httpRqtT* httpRqt);
+typedef httpRqtActionT (*httpRqtCbT)(const httpRqtT* httpRqt);
 
 // mainloop glue API interface
 typedef void* (*evtMainLoopCbT)();

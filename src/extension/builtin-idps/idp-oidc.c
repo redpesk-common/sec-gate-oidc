@@ -237,7 +237,7 @@ OnErrorExit:
 // call when IDP respond to user profile wreq
 // reference:
 // https://docs.oidc.com/en/rest/reference/users#get-the-authenticated-user
-static httpRqtActionT oidcUserGetByTokenCB(httpRqtT *httpRqt)
+static httpRqtActionT oidcUserGetByTokenCB(const httpRqtT *httpRqt)
 {
     idpRqtCtxT *rqtCtx = (idpRqtCtxT *)httpRqt->userData;
     int err;
@@ -347,7 +347,7 @@ OnErrorExit:
 }
 
 // call when oidc return a valid access_token
-static httpRqtActionT oidcAccessTokenCB(httpRqtT *httpRqt)
+static httpRqtActionT oidcAccessTokenCB(const httpRqtT *httpRqt)
 {
     char *tokenVal, *tokenType, *tokenId = NULL;
     idpRqtCtxT *rqtCtx = (idpRqtCtxT *)httpRqt->userData;
@@ -622,7 +622,7 @@ OnErrorExit:
 }
 
 // request IDP wellknown endpoint and retreive config
-static httpRqtActionT oidcDiscoJwksCB(httpRqtT *httpRqt)
+static httpRqtActionT oidcDiscoJwksCB(const httpRqtT *httpRqt)
 {
     oidcSchemaT *schema = (oidcSchemaT *)httpRqt->userData;
     int err;
@@ -650,7 +650,7 @@ OnErrorExit:
 }
 
 // request IDP wellknown endpoint and retreive config
-static httpRqtActionT oidcDiscoveryCB(httpRqtT *httpRqt)
+static httpRqtActionT oidcDiscoveryCB(const httpRqtT *httpRqt)
 {
     oidcIdpT *idp = (oidcIdpT *)httpRqt->userData;
     oidcSchemaT *schema = (oidcSchemaT *)idp->userData;

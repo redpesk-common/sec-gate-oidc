@@ -90,7 +90,7 @@ static char *json_object_dup_key_value(json_object *objJ, const char *key)
 // call when IDP respond to user profile wreq
 // reference:
 // https://docs.github.com/en/rest/reference/users#get-the-authenticated-user
-static httpRqtActionT githubAttrsGetByTokenCB(httpRqtT *httpRqt)
+static httpRqtActionT githubAttrsGetByTokenCB(const httpRqtT *httpRqt)
 {
     idpRqtCtxT *rqtCtx = (idpRqtCtxT *)httpRqt->userData;
     int err;
@@ -153,7 +153,7 @@ static void githubGetAttrsByToken(idpRqtCtxT *rqtCtx, const char *orgApiUrl)
 // call when IDP respond to user profile wreq
 // reference:
 // https://docs.github.com/en/rest/reference/users#get-the-authenticated-user
-static httpRqtActionT githubUserGetByTokenCB(httpRqtT *httpRqt)
+static httpRqtActionT githubUserGetByTokenCB(const httpRqtT *httpRqt)
 {
     idpRqtCtxT *rqtCtx = (idpRqtCtxT *)httpRqt->userData;
     const oidcIdpT *idp = rqtCtx->idp;
@@ -241,7 +241,7 @@ OnErrorExit:
 }
 
 // call when github return a valid access_token
-static httpRqtActionT githubAccessTokenCB(httpRqtT *httpRqt)
+static httpRqtActionT githubAccessTokenCB(const httpRqtT *httpRqt)
 {
     idpRqtCtxT *rqtCtx = (idpRqtCtxT *)httpRqt->userData;
 

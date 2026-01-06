@@ -51,6 +51,7 @@ typedef struct httpRqtHndlS
 } httpRqtHndlT;
 
 static uint8_t curl_initialised = 0;
+static const char nulchar = 0;
 
 #define INIT                               \
     if (!curl_initialised) {               \
@@ -99,7 +100,7 @@ static size_t writeBuffer(void *data,
 {
     size_t size = blkSize * blkCount;
     if (size > 0) {
-        char *buf = realloc(buffer->buffer, buffer->length + size + 1);
+        char *buf = realloc((void*)buffer->buffer, buffer->length + size + 1);
         if (buf == NULL)
             return 0;
 
@@ -150,13 +151,19 @@ static void freeHttpRqtHndl(httpRqtHndlT *hndl)
     }
     curl_easy_cleanup(hndl->easy);
     curl_slist_free_all(hndl->headers);
-    free(hndl->httpRqt.body.buffer);
-    free(hndl->httpRqt.headers.buffer);
+    if (hndl->httpRqt.body.buffer != &nulchar)
+        free((void*)hndl->httpRqt.body.buffer);
+    if (hndl->httpRqt.headers.buffer != &nulchar)
+        free((void*)hndl->httpRqt.headers.buffer);
     free(hndl);
 }
 
 static void rqtDone(httpRqtHndlT *hndl, CURL *easy, CURLcode status)
 {
+    // first get end time
+    clock_gettime(CLOCK_MONOTONIC, &hndl->httpRqt.stopTime);
+
+    // process end status
     if (status != CURLE_OK) {
         char *url, *message;
         int len;
@@ -167,7 +174,8 @@ static void rqtDone(httpRqtHndlT *hndl, CURL *easy, CURLcode status)
         if (hndl->verbose)
             fprintf(stderr, "%s\n", message);
         hndl->httpRqt.status = -(int)status;
-        free(hndl->httpRqt.body.buffer);
+        if (hndl->httpRqt.body.buffer != &nulchar)
+            free((void*)hndl->httpRqt.body.buffer);
         hndl->httpRqt.body.buffer = message;
         hndl->httpRqt.body.length = (size_t)len;
     }
@@ -190,8 +198,13 @@ static void rqtDone(httpRqtHndlT *hndl, CURL *easy, CURLcode status)
                           &hndl->httpRqt.contentType);
     }
 
+    // ensure no NULL texts
+    if (hndl->httpRqt.body.buffer == NULL)
+        hndl->httpRqt.body.buffer = &nulchar;
+    if (hndl->httpRqt.headers.buffer == NULL)
+        hndl->httpRqt.headers.buffer = &nulchar;
+
     // compute request elapsed time
-    clock_gettime(CLOCK_MONOTONIC, &hndl->httpRqt.stopTime);
     hndl->httpRqt.msTime =
         (hndl->httpRqt.stopTime.tv_nsec - hndl->httpRqt.startTime.tv_nsec) /
             1000000 +
@@ -205,6 +218,7 @@ static void rqtDone(httpRqtHndlT *hndl, CURL *easy, CURLcode status)
                 (int)hndl->httpRqt.body.length, hndl->httpRqt.body.buffer);
     }
     // call request callback (note: callback should free hndl)
+
     httpRqtActionT action = hndl->rqtCallback(&hndl->httpRqt);
     if (action == HTTP_HANDLE_FREE)
         freeHttpRqtHndl(hndl);

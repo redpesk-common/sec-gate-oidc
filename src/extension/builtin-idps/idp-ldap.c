@@ -107,7 +107,7 @@ static void ldapRqtCtxFree(ldapRqtCtxT *ldapRqtCtx)
         json_object_put(ldapRqtCtx->loginJ);
 }
 
-static httpRqtActionT ldapAccessAttrsCB(httpRqtT *httpRqt)
+static httpRqtActionT ldapAccessAttrsCB(const httpRqtT *httpRqt)
 {
     idpRqtCtxT *idpRqtCtx = (idpRqtCtxT *)httpRqt->userData;
     ldapRqtCtxT *ldapRqtCtx = (ldapRqtCtxT *)idpRqtCtx->userData;
@@ -125,41 +125,39 @@ static httpRqtActionT ldapAccessAttrsCB(httpRqtT *httpRqt)
     // DN: cn=matomo,ou=Groups,dc=vannes,dc=iot
 
     // token not json
-    static const char token[] = "DN: ";
+    static char DNString[] = "DN: ";
+    static int DNLen = sizeof(DNString) - 1;
+    static char cnString[] = "cn=";
+    static int cnLen = sizeof(cnString) - 1;
+
+    int idx = 0;
+    const char *iter = strcasestr(httpRqt->body.buffer, DNString);
     idpRqtCtx->fedSocial->attrs = calloc(ldapOpts->gidsMax + 1, sizeof(char *));
-    char *savptr, *ptr = strtok_r(httpRqt->body.buffer, token, &savptr);
-    int idx;
-    for (idx = 0; ptr != NULL; idx++) {
-        static char cnString[] = "cn=";
-        static int cnLen = sizeof(cnString) - 1;
-        char *value = strcasestr(ptr, cnString);
-        if (value) {
-            // groups over gidsMax are ignored
+    while(iter) {
+        const char *line = iter + DNLen;
+        const char *niter = strcasestr(line, DNString);
+        const char *entry = strcasestr(line, cnString);
+        if (niter == NULL || entry < niter) {
+            const char *start = entry + cnLen;
+            const char *end = start;
+            while (*end != 0 && *end != ',' && *end != '\n')
+                end++;
             if (idx == ldapOpts->gidsMax) {
-                EXT_ERROR(
-                    "[ldap-fail-groups] ldap->maxgids=%d too small (remaining "
-                    "groups ignored)",
-                    ldapOpts->gidsMax);
-                idpRqtCtx->fedSocial->attrs[idx] = NULL;
-                break;
+                EXT_INFO(
+                    "[idp-ldap] maxgids=%d too small, ignoring group %.*s",
+                    ldapOpts->gidsMax, (int)(end-start), start);
             }
-            // extract groupname from LDIF cn=fulup,ou=Groups,dc=vannes,dc=iot\n
-            for (int jdx = cnLen; value[jdx]; jdx++) {
-                if (value[jdx] == ',' || value[jdx] == '\n') {
-                    idpRqtCtx->fedSocial->attrs[idx] =
-                        strndup(&value[cnLen], jdx - cnLen);
-                    break;
-                }
+            else {
+                unsigned len = (unsigned)(end - start);
+                idpRqtCtx->fedSocial->attrs[idx++] = strndup(start, len);
             }
         }
-        // move to next cn= (next group)
-        ptr = strtok_r(NULL, token, &savptr);
+        iter = niter;
     }
 
     // reduse groups attrs size to what ever is needed
-    idpRqtCtx->fedSocial->attrs[idx + 1] = NULL;
     idpRqtCtx->fedSocial->attrs =
-        realloc(idpRqtCtx->fedSocial->attrs, sizeof(char *) * (idx + 2));
+        realloc(idpRqtCtx->fedSocial->attrs, sizeof(char *) * (idx + 1));
 
     // query federation ldap groups are handle asynchronously
     err = fedidCheck(idpRqtCtx);
@@ -217,7 +215,7 @@ OnErrorExit:
 }
 
 // call after user authenticate
-static httpRqtActionT ldapAccessProfileCB(httpRqtT *httpRqt)
+static httpRqtActionT ldapAccessProfileCB(const httpRqtT *httpRqt)
 {
     static char errorMsg[] =
         "[ldap-fail-user-profile] Fail to get user profile from ldap "
