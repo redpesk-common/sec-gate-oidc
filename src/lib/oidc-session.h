@@ -63,6 +63,9 @@ void oidcSessionSetAlias(oidcSessionT* session, const oidcAliasT* alias);
 const oidcProfileT* oidcSessionGetTargetProfile(oidcSessionT* session);
 void oidcSessionSetTargetProfile(oidcSessionT* session,
                                  const oidcProfileT* profile);
+const oidcProfileT* oidcSessionGetActualProfile(oidcSessionT* session);
+void oidcSessionSetActualProfile(oidcSessionT* session,
+                                 const oidcProfileT* profile);
 
 int oidcSessionSetFedIdLink(oidcSessionT* session,
                             const char* pseudo,
