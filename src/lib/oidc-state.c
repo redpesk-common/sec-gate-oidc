@@ -76,3 +76,76 @@ void fedidsessionReset(oidcSessionT *session, const oidcProfileT *idpProfile)
     }
 }
 
+oidcStateT *oidcStateAddRef(oidcStateT *state)
+{
+    if (state != NULL)
+        state->ucount++;
+    return state;
+}
+
+void oidcStateUnRef(oidcStateT *state)
+{
+    if (state != NULL && state->ucount-- == 0) {
+        oidcSessionUnRef(state->session);
+        free(state);
+    }
+}
+
+static oidcStateT *createState(
+                struct afb_hreq* hreq,
+                struct afb_req_v4* wreq,
+                oidcSessionT *session,
+                const oidcProfileT* profile,
+                const oidcIdpT *idp)
+{
+    oidcStateT *state;
+
+    /* provide session if required */
+    if (session == NULL) {
+        session = hreq != NULL ? oidcSessionOfHttpReq(hreq)
+                               : wreq != NULL ? oidcSessionOfReq(wreq) : NULL;
+        if (session == NULL) {
+            EXT_ERROR("can't get session");
+            return NULL;
+        }
+    }
+
+    if (profile == NULL) {
+        profile = oidcSessionGetTargetProfile(session);
+        if (profile == NULL) {
+            EXT_ERROR("can't get target profile");
+            return NULL;
+        }
+    }
+
+    if (idp == NULL)
+        idp = profile->idp;
+
+    state = calloc(1, sizeof *state);
+    if (state == NULL)
+        EXT_ERROR("allocation failed");
+    else {
+        state->ucount = 1;
+        state->session = oidcSessionAddRef(session);
+        state->profile = profile;
+        state->idp = idp;
+        state->hreq = hreq;
+        state->wreq = wreq;
+//        state->uuid;
+//        state->fedSocial;
+//        state->fedUser;
+//        state->token;
+//        state->userData;
+    }
+    return state;
+}
+
+oidcStateT *oidcStateCreateForHttpReq(
+                struct afb_hreq* hreq,
+                oidcSessionT *session,
+                const oidcProfileT* profile,
+                const oidcIdpT *idp)
+{
+    return createState(hreq, NULL, session, profile, idp);
+}
+

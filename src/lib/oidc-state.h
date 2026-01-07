@@ -32,23 +32,34 @@
 
 
 // request handle store federation attribute during multiple IDP async calls
-typedef struct idpRqtCtxS idpRqtCtxT;
+typedef struct oidcStateS idpRqtCtxT;
+typedef struct oidcStateS oidcStateT;
 
-struct idpRqtCtxS {
-    int ucount;
-    const char* uuid;
-    const oidcIdpT* idp;
-    struct afb_hreq* hreq;
-    struct afb_req_v4* wreq;
-    fedSocialRawT* fedSocial;
-    fedUserRawT* fedUser;
+struct oidcStateS {
+    unsigned ucount;
+    oidcSessionT *session;
     const oidcProfileT* profile;
-    char* token;
-    void* userData;
+    const oidcIdpT *idp;
+    struct afb_hreq *hreq;
+    struct afb_req_v4 *wreq;
+    const char *uuid;
+    fedSocialRawT *fedSocial;
+    fedUserRawT *fedUser;
+    char *token;
+    void *userData;
 };
 
 void idpRqtCtxFree(idpRqtCtxT* rqtCtx);
 
 void fedidsessionReset(oidcSessionT* session, const oidcProfileT* idpProfile);
 
+
+oidcStateT *oidcStateCreateForHttpReq(
+                struct afb_hreq* hreq,
+                oidcSessionT *session,
+                const oidcProfileT* profile,
+                const oidcIdpT *idp);
+
+oidcStateT *oidcStateAddRef(oidcStateT *state);
+void oidcStateUnRef(oidcStateT *state);
 

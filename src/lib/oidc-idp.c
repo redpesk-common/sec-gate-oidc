@@ -625,3 +625,4 @@ int idpStdRedirectLogin(const oidcIdpT *idp, struct afb_hreq *hreq)
         idp->credentials->clientId, idp->wellknown->respondLabel,
         oidcSessionUUID(session));
 }
+
