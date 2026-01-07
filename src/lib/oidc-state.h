@@ -25,10 +25,30 @@
 
 #pragma once
 
-#include <fedid-types.h>
-#include "oidc-defaults.h"
+#include "oidc-alias.h"
+#include "oidc-common.h"
 #include "oidc-idp.h"
 #include "oidc-session.h"
-#include "oidc-state.h"
 
-int fedidCheck(idpRqtCtxT* rqtCtx);
+
+// request handle store federation attribute during multiple IDP async calls
+typedef struct idpRqtCtxS idpRqtCtxT;
+
+struct idpRqtCtxS {
+    int ucount;
+    const char* uuid;
+    const oidcIdpT* idp;
+    struct afb_hreq* hreq;
+    struct afb_req_v4* wreq;
+    fedSocialRawT* fedSocial;
+    fedUserRawT* fedUser;
+    const oidcProfileT* profile;
+    char* token;
+    void* userData;
+};
+
+void idpRqtCtxFree(idpRqtCtxT* rqtCtx);
+
+void fedidsessionReset(oidcSessionT* session, const oidcProfileT* idpProfile);
+
+

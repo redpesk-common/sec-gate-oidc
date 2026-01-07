@@ -27,6 +27,8 @@
 
 #include "oidc-session.h"
 
+#include <stdlib.h>
+
 #include <rp-utils/rp-jsonc.h>
 
 #include <libafb/afb-core.h>
@@ -376,3 +378,4 @@ int oidcSessionEventPush(oidcSessionT *session, const char *desc, ...)
     }
     return rc;
 }
+

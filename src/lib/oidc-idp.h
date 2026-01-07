@@ -117,22 +117,6 @@ typedef struct oidcDefaultsS {
     const httpKeyValT* headers;
 } oidcDefaultsT;
 
-// request handle store federation attribute during multiple IDP async calls
-typedef struct idpRqtCtxS idpRqtCtxT;
-
-struct idpRqtCtxS {
-    int ucount;
-    const char* uuid;
-    const oidcIdpT* idp;
-    struct afb_hreq* hreq;
-    struct afb_req_v4* wreq;
-    fedSocialRawT* fedSocial;
-    fedUserRawT* fedUser;
-    const oidcProfileT* profile;
-    char* token;
-    void* userData;
-};
-
 // idp exported functions
 const oidcProfileT* idpGetFirstProfile(const oidcIdpT* idp,
                                        int targetLOA,
@@ -156,7 +140,6 @@ int idpRegisterAlias(const oidcCoreHdlT* oidc,
                      struct afb_hsrv* hsrv);
 
 int idpPluginRegister(const idpPluginT* pluginCbs);
-void idpRqtCtxFree(idpRqtCtxT* rqtCtx);
 
 int idpStdRedirectLogin(const oidcIdpT* idp, struct afb_hreq* hreq);
 

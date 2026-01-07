@@ -38,6 +38,7 @@ add_library(sgoidc SHARED
 	oidc-idp.c
 	oidc-idp-plugin.c
 	oidc-session.c
+	oidc-state.c
 	oidc-utils.c
 )
 

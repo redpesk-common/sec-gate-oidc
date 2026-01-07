@@ -37,44 +37,13 @@
 #include <fedid-types-glue.h>
 
 #include <curl-glue.h>
+
 #include "fedid-client.h"
 #include "oidc-alias.h"
 #include "oidc-core.h"
 #include "oidc-fedid.h"
 #include "oidc-idp-plugin.h"
 #include "oidc-session.h"
-
-// session timeout, reset LOA
-void fedidsessionReset(oidcSessionT *session, const oidcProfileT *idpProfile)
-{
-    int err;
-    int count = -1;
-
-    // reset session and alias LOA (this will force authentication)
-    oidcSessionSetActualLOA(session, 0);
-    oidcSessionSetNextCheck(session, 0);
-    EXT_DEBUG("[fedid-session-reset] logout/timeout session uuid=%s ?",
-              oidcSessionUUID(session));
-
-    if (idpProfile) {
-        if (idpProfile->idp->plugin && idpProfile->idp->plugin->resetSession) {
-            void *ctx = oidcSessionGetOpaqueData(session);
-            if (ctx != NULL) {
-                idpProfile->idp->plugin->resetSession(idpProfile, ctx);
-                oidcSessionSetOpaqueData(session, NULL);
-            }
-        }
-
-        const oidGlobalsT *globals = oidcCoreGlobals(idpProfile->idp->oidc);
-        count = oidcSessionEventPush(
-            session, "{ss ss ss* ss*}", "status", "loa-reset", "home",
-            globals->homeUrl ?: "/", "login", globals->loginUrl, "error",
-            globals->errorUrl);
-        if (!count)
-            EXT_DEBUG("[fedid-session-reset] no client subscribed uuid=%s ?",
-                      oidcSessionUUID(session));
-    }
-}
 
 // if fedkey exists callback receive local store user profile otherwise we
 // should create it

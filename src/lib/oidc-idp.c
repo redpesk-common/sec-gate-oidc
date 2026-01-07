@@ -57,18 +57,6 @@ const rp_enum_map_t idpRespondTypes[] = {
     {NULL}  // terminator
 };
 
-void idpRqtCtxFree(idpRqtCtxT *rqtCtx)
-{
-    assert(rqtCtx->ucount >= 0);
-    rqtCtx->ucount--;
-
-    if (rqtCtx->ucount < 0) {
-        if (rqtCtx->token)
-            free(rqtCtx->token);
-        free(rqtCtx);
-    }
-}
-
 // get the first profile of idp enough for the targeted LOA
 // and the given scope (that might be NULL)
 // Return NULL if no profile matches the LOA
