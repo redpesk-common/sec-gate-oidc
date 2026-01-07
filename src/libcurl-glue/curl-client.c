@@ -53,11 +53,13 @@ typedef struct httpRqtHndlS
 static uint8_t curl_initialised = 0;
 static const char nulchar = 0;
 
-#define INIT                               \
-    if (!curl_initialised) {               \
-        curl_global_init(CURL_GLOBAL_ALL); \
-        curl_initialised = 1;              \
+static void init()
+{
+    if (!curl_initialised) {
+        curl_global_init(CURL_GLOBAL_ALL);
+        curl_initialised = 1;
     }
+}
 
 // create systemd source event and attach http processing callback to sock fd
 static int multiSetSockCB(CURL *easy,
@@ -309,7 +311,8 @@ static int httpSendQuery(httpPoolT *httpPool,
         goto OnErrorExit;
     }
 
-    INIT hndl->verbose = verbose;
+    init();
+    hndl->verbose = verbose;
     hndl->easy = curl_easy_init();
     if (hndl->easy == NULL && verbose) {
         fprintf(stderr, "[curl-client] allocation of easy CURL failed");
@@ -436,9 +439,10 @@ httpPoolT *httpCreatePool(void *evtLoop,
 {
     httpPoolT *httpPool;
 
-    INIT
-        // create the object
-        httpPool = calloc(1, sizeof(httpPoolT));
+    init();
+
+    // create the object
+    httpPool = calloc(1, sizeof(httpPoolT));
     if (httpPool != NULL) {
         httpPool->verbose = verbose;
         httpPool->evtLoop = evtLoop;
