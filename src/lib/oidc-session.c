@@ -47,6 +47,7 @@ struct oidcSessionS
     fedidLinkT fedlink;
     struct afb_evt *event;
     void *data;
+    void (*freeData)(void*);
     struct timespec now;
     struct timespec nextCheck;
     struct timespec endValid;
@@ -305,12 +306,25 @@ void oidcSessionSetFedUser(oidcSessionT *session, fedUserRawT *fedUser)
 
 void *oidcSessionGetOpaqueData(oidcSessionT *session)
 {
-    return session->data;
+    return oidcSessionGetActualData(session);
 }
 
 void oidcSessionSetOpaqueData(oidcSessionT *session, void *data)
 {
+    oidcSessionSetActualData(session, data, NULL);
+}
+
+void oidcSessionSetActualData(oidcSessionT* session, void *data, void (*freecb)(void*))
+{
+    if (session->freeData)
+        session->freeData(session->data);
     session->data = data;
+    session->freeData = freecb;
+}
+
+void *oidcSessionGetActualData(oidcSessionT* session)
+{
+    return session->data;
 }
 
 int oidcSessionEventSubscribe(afb_req_t wreq)
