@@ -85,20 +85,6 @@ struct social_check_data
     void *closure;
 };
 
-/* calls the callback */
-static void social_check_reply(struct social_check_data *scd,
-                               int status,
-                               fedUserRawT *fedUsr)
-{
-    // call it
-    scd->callback(scd->closure, status, scd->fedSoc, fedUsr);
-
-    // release resources
-    fedSocialUnRef(scd->fedSoc);
-    fedUserUnRef(fedUsr);
-    free(scd);
-}
-
 /* verb call callback */
 static void social_check_cb(void *closure,
                             int status,
@@ -124,8 +110,14 @@ static void social_check_cb(void *closure,
         }
     }
     /* send the reply */
-    social_check_reply(scd, status, fedUsr);
+    scd->callback(scd->closure, status, scd->fedSoc, fedUsr);
+
+    /* release resources */
+    fedSocialUnRef(scd->fedSoc);
+    fedUserUnRef(fedUsr);
+    free(scd);
 }
+
 
 // fedSoc should remain valid after subcall for fedsocial cookie
 void fedIdClientSocialCheck(
@@ -140,21 +132,21 @@ void fedIdClientSocialCheck(
 
     /* prepare the call */
     scd = malloc(sizeof *scd);
-    if (scd == NULL)
-        callback(closure, AFB_ERRNO_OUT_OF_MEMORY, fedSoc, NULL);
-    else {
-        scd->fedSoc = fedSocialAddRef(fedSoc);
-        scd->callback = callback;
-        scd->closure = closure;
-
+    if (scd != NULL) {
         /* wrap the fedSoc in a data */
         rc =
             afb_data_create_raw(&data, fedSocialObjType, fedSoc, 0, NULL, NULL);
-        if (rc < 0)
-            social_check_reply(scd, AFB_ERRNO_OUT_OF_MEMORY, NULL);
-        else
+        if (rc >= 0) {
+            scd->fedSoc = fedSocialAddRef(fedSoc);
+            scd->callback = callback;
+            scd->closure = closure;
+
             /* call fedid binding */
             fedIdClientCall(api, "social-check", 1, &data, social_check_cb,
                             scd);
+            return;
+        }
+        free(scd);
     }
+    callback(closure, AFB_ERRNO_OUT_OF_MEMORY, fedSoc, NULL);
 }
