@@ -44,6 +44,9 @@ oidcSessionT* oidcSessionOfHttpReq(struct afb_hreq* hreq);
 oidcSessionT* oidcSessionOfReq(struct afb_req_v4* wreq);
 oidcSessionT* oidcSessionOfUUID(const char* uuid);
 
+oidcSessionT *oidcSessionAddRef(oidcSessionT *session);
+void oidcSessionUnRef(oidcSessionT *session);
+
 const char* oidcSessionUUID(const oidcSessionT* session);
 
 int oidcSessionIsValid(oidcSessionT* session);

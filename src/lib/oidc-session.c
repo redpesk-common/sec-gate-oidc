@@ -37,6 +37,7 @@
 
 struct oidcSessionS
 {
+    unsigned refcount;
     int nowset;
     int loa;
     const char *uuid;
@@ -55,10 +56,20 @@ struct oidcSessionS
     struct timespec endValid;
 };
 
-// free memory used by the session
-static void destroySession(oidcSessionT *session)
+// release memory used by the session
+void oidcSessionUnRef(oidcSessionT *session)
 {
-    free(session);
+    if (session != NULL && --session->refcount == 0) {
+        free(session);
+    }
+}
+
+// add a reference to the session
+oidcSessionT *oidcSessionAddRef(oidcSessionT *session)
+{
+    if (session != NULL)
+        session->refcount++;
+    return session;
 }
 
 // callback for creating session object
@@ -70,10 +81,11 @@ static int createSession(void *closure,
     oidcSessionT *session = calloc(1, sizeof *session);
     if (session == NULL)
         return -1;
+    session->refcount = 1;
     session->uuid = afb_session_uuid(closure);
     *value = session;
     *freeclo = session;
-    *freecb = (void *)destroySession;
+    *freecb = (void *)oidcSessionUnRef;
     return 0;
 }
 
