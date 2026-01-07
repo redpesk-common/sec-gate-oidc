@@ -350,15 +350,9 @@ static int githubLoginCB(struct afb_hreq *hreq, void *ctx)
                                 idp->statics->aliasLogin,
                                 idp->credentials->clientId, "code", NULL);
     }
-    const char *uuid = oidcSessionUUID(session);
-
-    // add afb-binder endpoint to login redirect alias
-    status = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin, redirectUrl,
-                                    sizeof(redirectUrl));
-    if (status < 0)
-        goto OnErrorExit;
 
     // check question/response state match
+    const char *uuid = oidcSessionUUID(session);
     const char *oidcState = afb_hreq_get_argument(hreq, "state");
     if (strcmp(oidcState, uuid)) {
         EXT_WARNING("[idp-github] state mismatch recv=%s expect=%s", oidcState,
@@ -366,8 +360,14 @@ static int githubLoginCB(struct afb_hreq *hreq, void *ctx)
         goto OnErrorExit;
     }
 
+    // add afb-binder endpoint to login redirect alias
+    status = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin, redirectUrl,
+                                    sizeof(redirectUrl));
+    if (status < 0)
+        goto OnErrorExit;
+
+    // wreq authentication token from tempory code
     EXT_DEBUG("[idp-github] authorized state=%s code=%s", oidcState, code);
-    // wreq authentication token from tempry code
     githubAccessToken(hreq, idp, redirectUrl, code, session);
     return 1;
 
