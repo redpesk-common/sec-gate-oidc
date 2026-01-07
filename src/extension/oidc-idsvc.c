@@ -262,7 +262,7 @@ static void idpQueryUser(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     else {
         // fedlink isn't set
         const oidcCoreHdlT *oidc = wreq2oidc(wreq);
-        const oidcProfileT *profile = oidcSessionGetIdpProfile(session);
+        const oidcProfileT *profile = oidcSessionGetTargetProfile(session);
         const char *idpId = profile != NULL ? profile->idp->uid : NULL;
         const char *idps[MAX_OIDC_IDPS + 1];
         int count =
@@ -309,11 +309,11 @@ static void userRegisterCB(void *ctx,
 
         // return destination alias
         oidcSessionT *session = oidcSessionOfReq(wreq);
-        const oidcProfileT *profile = oidcSessionGetIdpProfile(session);
+        const oidcProfileT *profile = oidcSessionGetTargetProfile(session);
         const oidcAliasT *alias = oidcSessionGetAlias(session);
 
         // set current LOA ????
-        oidcSessionSetLOA(session, profile->loa);
+        oidcSessionSetActualLOA(session, profile->loa);
 
         // reply to the query
         rp_jsonc_pack(&aliasJ, "{ss}", "target", alias->url ?: "/");
@@ -338,7 +338,7 @@ static void userRegister(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     status = AFB_ERRNO_BAD_API_STATE;
     session = oidcSessionOfReq(wreq);
     fedSocial = oidcSessionGetFedSocial(session);
-    profile = oidcSessionGetIdpProfile(session);
+    profile = oidcSessionGetTargetProfile(session);
     alias = oidcSessionGetAlias(session);
     if (profile == NULL || alias == NULL || fedSocial == NULL)
         goto OnErrorExit;
@@ -399,7 +399,7 @@ static void userFederateCB(void *ctx,
     }
     // get used IDP profile to access oidc wellknown urls
     session = oidcSessionOfReq(wreq);
-    profile = oidcSessionGetIdpProfile(session);
+    profile = oidcSessionGetTargetProfile(session);
     if (!profile) {
         EXT_INFO("no recorded IDP");
         afb_req_reply(wreq, AFB_USER_ERRNO(1), 0, NULL);
@@ -466,7 +466,7 @@ static void sessionReset(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     const oidcProfileT *profile;
     afb_data_t reply;
 
-    profile = oidcSessionGetIdpProfile(session);
+    profile = oidcSessionGetTargetProfile(session);
     if (!profile)
         goto OnErrorExit;
 
@@ -498,7 +498,7 @@ static void sessionGet(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 
     // retrieve current wreq LOA from session (to be fixed by Jose)
     oidcSessionT *session = oidcSessionOfReq(wreq);
-    profile = oidcSessionGetIdpProfile(session);
+    profile = oidcSessionGetTargetProfile(session);
     if (!profile)
         goto OnErrorExit;
 

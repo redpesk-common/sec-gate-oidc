@@ -54,15 +54,15 @@ int oidcSessionShouldCheck(oidcSessionT* session);
 void oidcSessionSetNextCheck(oidcSessionT* session, long millisec);
 
 int oidcSessionGetTargetLOA(oidcSessionT* session);
-int oidcSessionGetLOA(oidcSessionT* session);
-void oidcSessionSetLOA(oidcSessionT* session, int LOA);
+int oidcSessionGetActualLOA(oidcSessionT* session);
+void oidcSessionSetActualLOA(oidcSessionT* session, int LOA);
 
 const oidcAliasT* oidcSessionGetAlias(oidcSessionT* session);
 void oidcSessionSetAlias(oidcSessionT* session, const oidcAliasT* alias);
 
-const oidcProfileT* oidcSessionGetIdpProfile(oidcSessionT* session);
-void oidcSessionSetIdpProfile(oidcSessionT* session,
-                              const oidcProfileT* profile);
+const oidcProfileT* oidcSessionGetTargetProfile(oidcSessionT* session);
+void oidcSessionSetTargetProfile(oidcSessionT* session,
+                                 const oidcProfileT* profile);
 
 int oidcSessionSetFedIdLink(oidcSessionT* session,
                             const char* pseudo,

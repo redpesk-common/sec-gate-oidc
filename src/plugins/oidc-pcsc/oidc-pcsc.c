@@ -155,7 +155,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
         switch (pcscRqtCtx->status) {
             // session was authenticated logout session and kill thread
         case PCSC_STATUS_AUTHENTICATED:
-            idpProfile = oidcSessionGetIdpProfile(pcscRqtCtx->session);
+            idpProfile = oidcSessionGetTargetProfile(pcscRqtCtx->session);
             fedidsessionReset(pcscRqtCtx->session, idpProfile);
             pcscRqtCtxFree(pcscRqtCtx);
             status = 1;  // terminate thread
@@ -435,7 +435,7 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
     }
     // store working profile to retreive attached loa and role filter if login
     // succeeded
-    oidcSessionSetIdpProfile(session, profile);
+    oidcSessionSetTargetProfile(session, profile);
 
     // try to access smart card
     err = pcscScardGet(idp, profile, pinCode, /*hreq */ NULL, wreq);

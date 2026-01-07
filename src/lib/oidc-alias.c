@@ -99,20 +99,20 @@ static int aliasCheckReq(struct afb_hreq *hreq, void *ctx)
     }
     // Check required LOA
     if (!oidcSessionIsValid(session) ||
-        oidcSessionGetLOA(session) < alias->loa) {
+        oidcSessionGetActualLOA(session) < alias->loa) {
         EXT_INFO("[oidc-alias] Redirecting valid %s, loa %d for %d",
                  oidcSessionIsValid(session) ? "yes" : "no",
-                 oidcSessionGetLOA(session), alias->loa);
+                 oidcSessionGetActualLOA(session), alias->loa);
 
         // push event to notify the access denied
         oidcSessionEventPush(session, "{ss ss ss si si}", "status",
                              "loa-mismatch", "uid", alias->uid, "url",
                              alias->url, "loa-target", alias->loa,
-                             "loa-session", oidcSessionGetLOA(session));
+                             "loa-session", oidcSessionGetActualLOA(session));
 
         // if current profile LOA is enough then fire same idp/profile
         // authen
-        idpProfile = oidcSessionGetIdpProfile(session);
+        idpProfile = oidcSessionGetTargetProfile(session);
         if (idpProfile != NULL && idpProfile->loa >= alias->loa)
             return aliasRedirectTimeout(hreq, alias, session, idpProfile);
         return aliasRedirectLogin(hreq, alias, session);

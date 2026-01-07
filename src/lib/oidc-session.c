@@ -39,7 +39,7 @@ struct oidcSessionS
     int loa;
     const char *uuid;
     const oidcAliasT *alias;
-    const oidcProfileT *profile;
+    const oidcProfileT *targetProfile;
     fedUserRawT *user;
     fedSocialRawT *social;
     int fedidLinkRequest;
@@ -161,8 +161,8 @@ void oidcSessionValidate(oidcSessionT *session, long seconds)
 void oidcSessionAutoValidate(oidcSessionT *session)
 {
     long to = EXT_SESSION_TIMEOUT;
-    if (session->profile != NULL && session->profile->sTimeout > 0)
-        to = session->profile->sTimeout;
+    if (session->targetProfile != NULL && session->targetProfile->sTimeout > 0)
+        to = session->targetProfile->sTimeout;
     oidcSessionValidate(session, to);
 }
 
@@ -184,12 +184,12 @@ int oidcSessionGetTargetLOA(oidcSessionT *session)
     return session->alias ? session->alias->loa : 0;
 }
 
-int oidcSessionGetLOA(oidcSessionT *session)
+int oidcSessionGetActualLOA(oidcSessionT *session)
 {
     return session->loa;
 }
 
-void oidcSessionSetLOA(oidcSessionT *session, int LOA)
+void oidcSessionSetActualLOA(oidcSessionT *session, int LOA)
 {
     session->loa = LOA;
 }
@@ -204,15 +204,15 @@ void oidcSessionSetAlias(oidcSessionT *session, const oidcAliasT *alias)
     session->alias = alias;
 }
 
-const oidcProfileT *oidcSessionGetIdpProfile(oidcSessionT *session)
+const oidcProfileT *oidcSessionGetTargetProfile(oidcSessionT *session)
 {
-    return session->profile;
+    return session->targetProfile;
 }
 
-void oidcSessionSetIdpProfile(oidcSessionT *session,
+void oidcSessionSetTargetProfile(oidcSessionT *session,
                               const oidcProfileT *profile)
 {
-    session->profile = profile;
+    session->targetProfile = profile;
 }
 
 const fedidLinkT *oidcSessionGetFedIdLink(oidcSessionT *session)

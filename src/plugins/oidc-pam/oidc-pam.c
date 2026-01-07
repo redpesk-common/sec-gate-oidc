@@ -257,7 +257,7 @@ int pamLoginCB(struct afb_hreq *hreq, void *ctx)
         goto OnErrorExit;
 
     EXT_DEBUG("[pam-auth-code] login=%s (pamLoginCB)", login);
-    const oidcProfileT *profile = oidcSessionGetIdpProfile(session);
+    const oidcProfileT *profile = oidcSessionGetTargetProfile(session);
     if (profile == NULL)
         goto OnErrorExit;
 

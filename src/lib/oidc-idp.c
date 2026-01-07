@@ -616,7 +616,7 @@ int idpRedirectLogin(const oidcIdpT *idp,
     }
 
     // setup session profile
-    oidcSessionSetIdpProfile(session, profile);
+    oidcSessionSetTargetProfile(session, profile);
 
     // send the redirect now
     EXT_DEBUG("redirect to %s", url);

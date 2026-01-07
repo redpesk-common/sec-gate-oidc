@@ -307,7 +307,7 @@ static int githubAccessToken(struct afb_hreq *hreq,
     // afb_hreq_addref (hreq); // prevent automatic href liberation
     rqtCtx->hreq = hreq;
     rqtCtx->idp = idp;
-    rqtCtx->profile = oidcSessionGetIdpProfile(session);
+    rqtCtx->profile = oidcSessionGetTargetProfile(session);
     if (rqtCtx->profile == NULL)
         goto OnErrorExit;
 

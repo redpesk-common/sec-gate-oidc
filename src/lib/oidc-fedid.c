@@ -51,7 +51,7 @@ void fedidsessionReset(oidcSessionT *session, const oidcProfileT *idpProfile)
     int count = -1;
 
     // reset session and alias LOA (this will force authentication)
-    oidcSessionSetLOA(session, 0);
+    oidcSessionSetActualLOA(session, 0);
     oidcSessionSetNextCheck(session, 0);
     EXT_DEBUG("[fedid-session-reset] logout/timeout session uuid=%s ?",
               oidcSessionUUID(session));
@@ -96,8 +96,10 @@ static void onSocialCheckResult(void *closure,
     int err;
 
     // internal API error
-    if (status < 0)
+    if (status < 0) {
+        EXT_WARNING("Social check got error %d", status);
         goto OnErrorExit;
+    }
 
     // session is in hreq for REST and in comreq for wbesocket
     if (idpRqtCtx->hreq) {
@@ -114,12 +116,13 @@ static void onSocialCheckResult(void *closure,
         EXT_DEBUG("[fedid-register-fail] session missing");
         goto OnErrorExit;
     }
+
     // user try to login if loa set then reset session
-    int sessionLoa = oidcSessionGetLOA(session);
+    int sessionLoa = oidcSessionGetActualLOA(session);
     if (sessionLoa)
         fedidsessionReset(session, NULL);
 
-    idpProfile = oidcSessionGetIdpProfile(session);
+    idpProfile = oidcSessionGetTargetProfile(session);
 
     if (status != 1) {  // fedid is not registered and we are not facing a
         // secondary authentication
@@ -130,8 +133,8 @@ static void onSocialCheckResult(void *closure,
         oidcSessionSetFedUser(session, idpRqtCtx->fedUser);
         oidcSessionSetFedSocial(session, idpRqtCtx->fedSocial);
         if (idpProfile->slave) {
-            targetUrl = oidcCoreGlobals(idpRqtCtx->idp->oidc)->fedlinkUrl;
             oidcSessionSetFedIdLinkRequest(session, FEDID_LINK_REQUESTED);
+            targetUrl = oidcCoreGlobals(idpRqtCtx->idp->oidc)->fedlinkUrl;
         }
         else {
             targetUrl = oidcCoreGlobals(idpRqtCtx->idp->oidc)->registerUrl;
@@ -199,7 +202,6 @@ static void onSocialCheckResult(void *closure,
         oidcSessionSetFedSocial(session, idpRqtCtx->fedSocial);
 
         // everything looks good let's return user to original page
-        idpProfile = oidcSessionGetIdpProfile(session);
         alias = oidcSessionGetAlias(session);
 
         size_t sz = rp_escape_url_to(NULL, alias->url, NULL, url, sizeof url);
@@ -221,7 +223,7 @@ static void onSocialCheckResult(void *closure,
         }
 
         // user successfully loggin set session loa to current idp login profile
-        oidcSessionSetLOA(session, idpProfile->loa);
+        oidcSessionSetActualLOA(session, idpProfile->loa);
         oidcSessionAutoValidate(session);
 
         // if idp request get userdata keep track of them (needed by pcscd to

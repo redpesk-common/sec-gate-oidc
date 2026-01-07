@@ -469,7 +469,7 @@ static int ldapLoginCB(struct afb_hreq *hreq, void *ctx)
         goto OnErrorExit;
 
     EXT_DEBUG("[ldap-auth-code] login=%s (ldapLoginCB)", login);
-    if (oidcSessionGetIdpProfile(session) == NULL)
+    if (oidcSessionGetTargetProfile(session) == NULL)
         goto OnErrorExit;
 
     // Check received login/passwd

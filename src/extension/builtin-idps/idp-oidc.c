@@ -430,7 +430,7 @@ static int oidcAccessToken(struct afb_hreq *hreq,
     rqtCtx->hreq = hreq;
     rqtCtx->idp = idp;
     rqtCtx->uuid = oidcSessionUUID(session);
-    rqtCtx->profile = oidcSessionGetIdpProfile(session);
+    rqtCtx->profile = oidcSessionGetTargetProfile(session);
     if (rqtCtx->profile == NULL)
         goto OnErrorExit;
 
@@ -584,7 +584,7 @@ static int oidcLogoutCB(struct afb_hreq *hreq, void *ctx)
     session = oidcSessionOfUUID(sessionUid);
     if (!session)
         goto OnErrorExit;
-    idpProfile = oidcSessionGetIdpProfile(oidcSessionOfHttpReq(hreq));
+    idpProfile = oidcSessionGetTargetProfile(oidcSessionOfHttpReq(hreq));
     fedidsessionReset(session, idpProfile);
 
     // remove sid from sidmap table
