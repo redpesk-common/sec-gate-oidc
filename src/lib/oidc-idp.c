@@ -544,6 +544,7 @@ int idpRedirectLogin(const oidcIdpT *idp,
     int rc, ipar, targetLOA;
     const char *scope;
     const oidcProfileT *profile;
+    oidcStateT *state = NULL;
 
     // get target LOA and expected scope (if any)
     scope = afb_hreq_get_argument(hreq, "scope");
@@ -556,6 +557,13 @@ int idpRedirectLogin(const oidcIdpT *idp,
         EXT_WARNING("no profile found for LOA %d SCOPE %s", targetLOA, scope);
         afb_hreq_reply_error(hreq, EXT_HTTP_UNAUTHORIZED);
         return 1;
+    }
+
+    // create target state
+    state = oidcStateCreate(idp, session, profile);
+    if (state == NULL) {
+        EXT_ERROR("Creation of state failed");
+        goto error;
     }
 
     // prepare redirection URI
@@ -603,8 +611,9 @@ int idpRedirectLogin(const oidcIdpT *idp,
         goto error;
     }
 
-    // setup session profile
+    // setup session profile+state
     oidcSessionSetTargetProfile(session, profile);
+    oidcSessionSetTargetState(session, state);
 
     // send the redirect now
     EXT_DEBUG("redirect to %s", url);
@@ -613,6 +622,7 @@ int idpRedirectLogin(const oidcIdpT *idp,
 
 error:
     // internal error
+    oidcStateUnRef(state);
     afb_hreq_reply_error(hreq, EXT_HTTP_SERVER_ERROR);
     return 1;
 }
