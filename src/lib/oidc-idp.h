@@ -151,3 +151,19 @@ int idpRedirectLogin(const oidcIdpT* idp,
                      const char* clientId,
                      const char* responseType,
                      const char* nonce);
+
+typedef int (*idpOnLoginRedirCB)(
+                struct afb_hreq *hreq,
+                const oidcIdpT *idp,
+                oidcSessionT *session,
+                oidcStateT *state);
+
+int idpOnLoginPage(struct afb_hreq *hreq,
+                   const oidcIdpT *idp,
+                   idpOnLoginRedirCB onRedirCB,
+                   const char *destPath,
+                   const char *redirPath,
+                   const char *clientId,
+                   const char *responseType,
+                   const char *nonce);
+

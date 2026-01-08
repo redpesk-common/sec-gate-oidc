@@ -632,3 +632,55 @@ int idpStdRedirectLogin(const oidcIdpT *idp, struct afb_hreq *hreq)
         oidcSessionUUID(session));
 }
 
+int idpOnLoginPage(struct afb_hreq *hreq,
+                   const oidcIdpT *idp,
+                   idpOnLoginRedirCB onRedirCB,
+                   const char *destPath,
+                   const char *redirPath,
+                   const char *clientId,
+                   const char *responseType,
+                   const char *nonce)
+{
+    const oidcProfileT *profile;
+    const char *stateid, *uuid;
+    oidcSessionT *session;
+    oidcStateT *state;
+
+    // check if request holds a state
+    session = oidcSessionOfHttpReq(hreq);
+    stateid = afb_hreq_get_argument(hreq, "state");
+
+    // no, send the redirect
+    if (stateid == NULL)
+        return idpRedirectLogin(idp, hreq, session, destPath, redirPath,
+                                clientId, responseType, nonce);
+
+    // yes, check the state
+    uuid = oidcSessionUUID(session);
+    if (strcmp(stateid, uuid) != 0) {
+        EXT_WARNING("[oidc-idp] state mismatch recv=%s expect=%s", stateid,
+                    uuid);
+        goto error;
+    }
+    state = oidcSessionGetTargetState(session);
+    if (state == NULL) {
+        EXT_WARNING("[oidc-idp] invalid state %s", stateid);
+        goto error;
+    }
+
+    // check target profile+idp
+    profile = oidcSessionGetTargetProfile(session);
+    if (profile == NULL || idp != profile->idp) {
+        EXT_WARNING("[oidc-idp] Unexpected Target mismatch");
+        goto error;
+    }
+
+    EXT_DEBUG("[oidc-idp] got redirection state=%s", stateid);
+    oidcStateSetHttpReq(state, hreq);
+    return onRedirCB(hreq, idp, session, state);
+
+error:
+    afb_hreq_reply_error(hreq, EXT_HTTP_SERVER_ERROR);
+    return 1;
+}
+
