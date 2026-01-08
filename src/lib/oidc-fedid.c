@@ -175,7 +175,7 @@ static void onSocialCheckResult(void *closure,
 
         size_t sz = rp_escape_url_to(NULL, alias->url, NULL, url, sizeof url);
         if (sz >= sizeof url) {
-            EXT_ERROR("[fedid-register-exist] fail to build redirect url");
+            EXT_ERROR("[oidc-fedid] fail to build redirect url");
             goto OnErrorExit;
         }
 
@@ -183,7 +183,7 @@ static void onSocialCheckResult(void *closure,
             // add afb-binder endpoint to login redirect alias
             err = afb_hreq_make_here_url(hreq, alias->url, url, sizeof(url));
             if (err < 0) {
-                EXT_ERROR("[fedid-register-exist] fail to build redirect url");
+                EXT_ERROR("[oidc-fedid] fail to build redirect url");
                 goto OnErrorExit;
             }
         }
@@ -192,7 +192,10 @@ static void onSocialCheckResult(void *closure,
         }
 
         // user successfully loggin set session loa to current idp login profile
+        EXT_DEBUG("[oidc-fedid] setting actual profile %s/%s/%d",
+                  idpProfile->idp->uid, idpProfile->uid, idpProfile->loa);
         oidcSessionSetActualLOA(session, idpProfile->loa);
+        oidcSessionSetActualProfile(session, idpProfile);
         oidcSessionAutoValidate(session);
 
         // if idp request get userdata keep track of them (needed by pcscd to
