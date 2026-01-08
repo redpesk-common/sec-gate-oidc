@@ -567,13 +567,11 @@ int idpRedirectLogin(const oidcIdpT *idp,
     }
 
     // prepare redirection URI
-    if (redirPath != NULL) {
-        rc = afb_hreq_make_here_url(hreq, redirPath, redirectUrl,
-                                    sizeof redirectUrl);
-        if (rc < 0 || rc >= (int)sizeof(redirectUrl)) {
-            EXT_ERROR("Redirect too long");
-            goto error;
-        }
+    rc = afb_hreq_make_here_url(hreq, redirPath, redirectUrl,
+                                sizeof redirectUrl);
+    if (rc < 0 || rc >= (int)sizeof(redirectUrl)) {
+        EXT_ERROR("Redirect too long");
+        goto error;
     }
 
     // prepare arguments encoding
@@ -582,10 +580,8 @@ int idpRedirectLogin(const oidcIdpT *idp,
     params[ipar++] = oidcSessionUUID(session);
     params[ipar++] = "scope";
     params[ipar++] = profile->scope;
-    if (redirPath != NULL) {
-        params[ipar++] = "redirect_uri";
-        params[ipar++] = redirectUrl;
-    }
+    params[ipar++] = "redirect_uri";
+    params[ipar++] = redirectUrl;
     if (clientId != NULL) {
         params[ipar++] = "client_id";
         params[ipar++] = clientId;
