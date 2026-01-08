@@ -46,6 +46,7 @@ struct oidcSessionS
     const oidcAliasT *alias;
     const oidcProfileT *targetProfile;
     const oidcProfileT *actualProfile;
+    oidcStateT *targetState;
     fedUserRawT *user;
     fedSocialRawT *social;
     int fedidLinkRequest;
@@ -242,6 +243,16 @@ void oidcSessionSetActualProfile(oidcSessionT *session,
                                  const oidcProfileT *profile)
 {
     session->actualProfile = profile;
+}
+
+void oidcSessionSetTargetState(oidcSessionT* session, oidcStateT *state)
+{
+    session->targetState = state;
+}
+
+oidcStateT *oidcSessionGetTargetState(oidcSessionT* session)
+{
+    return session->targetState;
 }
 
 const fedidLinkT *oidcSessionGetFedIdLink(oidcSessionT *session)

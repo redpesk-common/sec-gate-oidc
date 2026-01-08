@@ -70,6 +70,9 @@ const oidcProfileT* oidcSessionGetActualProfile(oidcSessionT* session);
 void oidcSessionSetActualProfile(oidcSessionT* session,
                                  const oidcProfileT* profile);
 
+void oidcSessionSetTargetState(oidcSessionT* session, oidcStateT *state);
+oidcStateT *oidcSessionGetTargetState(oidcSessionT* session);
+
 int oidcSessionSetFedIdLink(oidcSessionT* session,
                             const char* pseudo,
                             const char* email);
@@ -94,4 +97,5 @@ void oidcSessionSetOpaqueData(oidcSessionT* session, void* data);
 typedef void (*oidcSessionFreeDataCB)(void *data);
 void oidcSessionSetActualData(oidcSessionT* session, void *data, oidcSessionFreeDataCB freecb);
 void *oidcSessionGetActualData(oidcSessionT* session);
+
 
