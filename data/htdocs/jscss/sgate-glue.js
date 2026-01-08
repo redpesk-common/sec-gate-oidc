@@ -230,19 +230,24 @@ function sgateReset() {
 
 function sgateSubmit() {
     var api="sgate";
-    var verb="none";
     var query={};
 
     // make sure form id march with html page
     var form= document.getElementById ("sgate_form");
-    if (form === null) {
-        window.alert("registerUser() require <form id='sgate_form'> in page");
+    if (!form) {
+        window.alert("sgateSubmit() require <form id='sgate_form'> in page");
         return;
     }
 
     var register= document.getElementById ("sgate_register");
-    if (register === null) {
-        window.alert("registerUser() require <button id='sgate_register'> in page");
+    if (!register) {
+        window.alert("sgateSubmit() require <button id='sgate_register'> in page");
+        return;
+    }
+    var verbs = { "Federate": "usr-federate", "Register": "usr-register" };
+    var verb = verbs[register.value];
+    if (!verb) {
+        window.alert("sgateSubmit() require <button id='sgate_register'> of values Federate or Register");
         return;
     }
 
@@ -259,14 +264,10 @@ function sgateSubmit() {
         }
     }
 
-    if (register.value == "Federate") verb="usr-federate";
-    if (register.value === "Register") verb="usr-register";
-
     callbinder(api, verb, query)
     .then(function (res) {
         // redirect to requested URL
         window.location.assign(res.response.target);
-
     })
     .catch(function (err) {
         var info= document.getElementById ("sgate_error");

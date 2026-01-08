@@ -426,7 +426,7 @@ static int oidcAccessToken(struct afb_hreq *hreq,
     int err, dataLen;
     oidcSchemaT *schema = (oidcSchemaT *)idp->userData;
 
-    idpRqtCtxT *rqtCtx = calloc(1, sizeof(idpRqtCtxT));
+    idpRqtCtxT *rqtCtx = oidcSessionGetTargetState(session);
     rqtCtx->hreq = hreq;
     rqtCtx->idp = idp;
     rqtCtx->uuid = oidcSessionUUID(session);

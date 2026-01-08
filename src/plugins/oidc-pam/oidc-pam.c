@@ -210,8 +210,7 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
     // do no check federation when only login
     if (fedUser) {
         afb_req_addref(wreq);
-        idpRqtCtxT *idpRqtCtx = calloc(1, sizeof(idpRqtCtxT));
-        idpRqtCtx->idp = idp;
+        idpRqtCtxT *idpRqtCtx = oidcStateCreate(idp, session, profile);
         idpRqtCtx->fedSocial = fedSocial;
         idpRqtCtx->fedUser = fedUser;
         idpRqtCtx->wreq = wreq;
@@ -269,8 +268,7 @@ int pamLoginCB(struct afb_hreq *hreq, void *ctx)
         goto OnErrorExit;
 
     // check if federated id is already present or not
-    idpRqtCtxT *idpRqtCtx = calloc(1, sizeof(idpRqtCtxT));
-    idpRqtCtx->idp = idp;
+    idpRqtCtxT *idpRqtCtx = oidcStateCreate(idp, session, profile);
     idpRqtCtx->fedSocial = fedSocial;
     idpRqtCtx->fedUser = fedUser;
     idpRqtCtx->hreq = hreq;

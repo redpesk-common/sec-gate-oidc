@@ -363,24 +363,23 @@ static int pcscScardGet(const oidcIdpT *idp,
 {
     pcscOptsT *pcscOpts = (pcscOptsT *)idp->ctx;
 
-    // store pcsc context within idp request one
-    idpRqtCtxT *idpRqtCtx = calloc(1, sizeof(idpRqtCtxT));
-    idpRqtCtx->hreq = hreq;
-    idpRqtCtx->wreq = wreq;
-    idpRqtCtx->idp = idp;
-
     // prepare context for pcsc monitor callbacks
     pcscRqtCtxT *pcscRqtCtx = calloc(1, sizeof(pcscRqtCtxT));
     pcscRqtCtx->pin = pin;
     pcscRqtCtx->scope = profile->scope;
     pcscRqtCtx->label = profile->attrs;
     pcscRqtCtx->opts = pcscOpts;
-    pcscRqtCtx->idpRqtCtx = idpRqtCtx;
 
-    if (idpRqtCtx->hreq)
-        pcscRqtCtx->session = oidcSessionOfHttpReq(idpRqtCtx->hreq);
-    if (idpRqtCtx->wreq)
+    if (hreq)
+        pcscRqtCtx->session = oidcSessionOfHttpReq(hreq);
+    if (wreq)
         pcscRqtCtx->session = oidcSessionOfReq(wreq);
+
+    // store pcsc context within idp request one
+    idpRqtCtxT *idpRqtCtx = oidcStateCreate(idp, pcscRqtCtx->session, profile);
+    pcscRqtCtx->idpRqtCtx = idpRqtCtx;
+    idpRqtCtx->hreq = hreq;
+    idpRqtCtx->wreq = wreq;
 
     ulong tid = pcscMonitorReader(pcscOpts->handle, readerMonitorCB,
                                   (void *)pcscRqtCtx);

@@ -326,25 +326,19 @@ OnErrorExit:
 }
 
 // check ldap login/passwd scope is unused
-static int ldapAccessProfile(const oidcIdpT *idp,
+static int ldapAccessProfile(oidcStateT *state,		     
                              const char *login,
-                             const char *passwd,
-                             struct afb_hreq *hreq,
-                             struct afb_req_v4 *wreq)
+                             const char *passwd)
 {
     int err;
-    ldapOptsT *ldapOpts = (ldapOptsT *)idp->userData;
+    ldapOptsT *ldapOpts = (ldapOptsT *)oidcStateGetIdp(state)->userData;
 
     // prepare context for curl callbacks
     ldapRqtCtxT *ldapRqtCtx = calloc(1, sizeof(ldapRqtCtxT));
     ldapRqtCtx->login = strdup(login);
     ldapRqtCtx->passwd = strdup(passwd);
 
-    idpRqtCtxT *idpRqtCtx = calloc(1, sizeof(idpRqtCtxT));
-    idpRqtCtx->hreq = hreq;
-    idpRqtCtx->wreq = wreq;
-    idpRqtCtx->idp = idp;
-    idpRqtCtx->userData = (void *)ldapRqtCtx;
+    state->userData = (void *)ldapRqtCtx;
 
     // place %%login%% with wreq.
     err = rp_jsonc_pack(&ldapRqtCtx->loginJ, "{ss}", "login", login);
@@ -380,7 +374,7 @@ static int ldapAccessProfile(const oidcIdpT *idp,
     EXT_DEBUG("[curl-ldap-profile] curl -u '%s:my_secret_passwd' '%s'\n",
               ldapRqtCtx->userdn, curlQuery);
     err = httpSendGet(ldapRqtCtx->httpPool, curlQuery, &curlOpts, NULL,
-                      ldapAccessProfileCB, idpRqtCtx);
+                      ldapAccessProfileCB, state);
     if (err)
         goto OnErrorExit;
 
@@ -388,7 +382,7 @@ static int ldapAccessProfile(const oidcIdpT *idp,
 
 OnErrorExit:
     ldapRqtCtxFree(ldapRqtCtx);
-    oidcStateUnRef(idpRqtCtx);
+    oidcStateUnRef(state);
     return 1;
 }
 
@@ -400,24 +394,23 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
     const char *errmsg = "[ldap-login] invalid credentials";
     const oidcIdpT *idp = (const oidcIdpT *)afb_req_v4_vcbdata(wreq);
     struct afb_data *args[nparams];
-    const char *login, *passwd = NULL, *scope = NULL;
+    const char *login, *stateid, *passwd = NULL, *scope = NULL;
     const oidcProfileT *profile = NULL;
     afb_data_t reply;
-    const char *state;
     int targetLOA;
     int err;
 
     err = afb_data_convert(params[0], &afb_type_predefined_json_c, &args[0]);
     json_object *queryJ = afb_data_ro_pointer(args[0]);
     err = rp_jsonc_unpack(queryJ, "{ss ss s?s s?s s?s}", "login", &login,
-                          "state", &state, "passwd", &passwd, "password",
+                          "state", &stateid, "passwd", &passwd, "password",
                           &passwd, "scope", &scope);
     if (err)
         goto OnErrorExit;
 
     // search for a scope fiting matching loa
     oidcSessionT *session = oidcSessionOfReq(wreq);
-    if (!state || strcmp(state, oidcSessionUUID(session)))
+    if (!stateid || strcmp(stateid, oidcSessionUUID(session)))
         goto OnErrorExit;
 
     targetLOA = oidcSessionGetTargetLOA(session);
@@ -431,8 +424,9 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
         goto OnErrorExit;
     }
     // check login password
-    err = ldapAccessProfile(idp, login, passwd, NULL /*hreq */, wreq);
-    afb_req_addref(wreq);
+    oidcStateT *state = oidcStateCreate(idp, session, profile);
+    state->wreq = afb_req_addref(wreq);
+    err = ldapAccessProfile(state, login, passwd);
     if (err)
         goto OnErrorExit;
 
@@ -473,7 +467,7 @@ static int ldapLoginCB(struct afb_hreq *hreq, void *ctx)
         goto OnErrorExit;
 
     // Check received login/passwd
-    err = ldapAccessProfile(idp, login, passwd, hreq, NULL /*wreq */);
+    err = ldapAccessProfile(oidcSessionGetTargetState(session), login, passwd);
     if (err)
         goto OnErrorExit;
 

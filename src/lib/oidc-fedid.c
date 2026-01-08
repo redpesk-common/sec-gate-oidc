@@ -52,37 +52,23 @@ static void onSocialCheckResult(void *closure,
                                 fedSocialRawT *fedSoc,
                                 fedUserRawT *fedUsr)
 {
-    idpRqtCtxT *idpRqtCtx = (idpRqtCtxT *)closure;
+    oidcStateT *state = (oidcStateT *)closure;
     char url[EXT_URL_MAX_LEN];
     const char *target;
     fedUserRawT *fedUser;
-    const oidcProfileT *idpProfile;
+    const oidcProfileT *profile = oidcStateGetProfile(state);
     const oidcAliasT *alias;
-    oidcSessionT *session = NULL;
+    oidcSessionT *session = oidcStateGetSession(state);
     const char *redirect;
-    struct afb_hreq *hreq = NULL;
-    struct afb_req_v4 *wreq = NULL;
+    struct afb_hreq *hreq = state->hreq;
+    struct afb_req_v4 *wreq = state->wreq;
     int err;
+
+    EXT_WARNING("*** entering Social check status=%d ***", status);
 
     // internal API error
     if (status < 0) {
         EXT_WARNING("Social check got error %d", status);
-        goto OnErrorExit;
-    }
-
-    // session is in hreq for REST and in comreq for wbesocket
-    if (idpRqtCtx->hreq) {
-        hreq = idpRqtCtx->hreq;
-        session = oidcSessionOfHttpReq(idpRqtCtx->hreq);
-    }
-
-    if (idpRqtCtx->wreq) {
-        wreq = idpRqtCtx->wreq;
-        session = oidcSessionOfReq(wreq);
-    }
-
-    if (!session) {
-        EXT_DEBUG("[fedid-register-fail] session missing");
         goto OnErrorExit;
     }
 
@@ -91,22 +77,20 @@ static void onSocialCheckResult(void *closure,
     if (sessionLoa)
         fedidsessionReset(session, NULL);
 
-    idpProfile = oidcSessionGetTargetProfile(session);
-
     if (status != 1) {  // fedid is not registered and we are not facing a
         // secondary authentication
         const char *targetUrl;
 
         // fedkey not found let's store social authority profile into session
         // and redirect user on userprofil creation
-        oidcSessionSetFedUser(session, idpRqtCtx->fedUser);
-        oidcSessionSetFedSocial(session, idpRqtCtx->fedSocial);
-        if (idpProfile->slave) {
+        oidcSessionSetFedUser(session, state->fedUser);
+        oidcSessionSetFedSocial(session, state->fedSocial);
+        if (profile->slave) {
             oidcSessionSetFedIdLinkRequest(session, FEDID_LINK_REQUESTED);
-            targetUrl = oidcCoreGlobals(idpRqtCtx->idp->oidc)->fedlinkUrl;
+            targetUrl = oidcCoreGlobals(state->idp->oidc)->fedlinkUrl;
         }
         else {
-            targetUrl = oidcCoreGlobals(idpRqtCtx->idp->oidc)->registerUrl;
+            targetUrl = oidcCoreGlobals(state->idp->oidc)->registerUrl;
         }
         if (hreq) {
             const char *params[] = {
@@ -154,7 +138,7 @@ static void onSocialCheckResult(void *closure,
                                       0, NULL, NULL);
             if (err < 0)
                 goto OnErrorExit;
-            afb_api_t api = oidcCoreAfbApi(idpRqtCtx->idp->oidc);
+            afb_api_t api = oidcCoreAfbApi(state->idp->oidc);
             err = fedIdClientCallSync(api, "user-federate", 2, params, &status,
                                       &count, &data);
             if (err < 0 || status != 0) {
@@ -168,7 +152,7 @@ static void onSocialCheckResult(void *closure,
         // let's store user profile into session cookie (/oidc/profile/get
         // serves it)
         oidcSessionSetFedUser(session, fedUserAddRef(fedUser));
-        oidcSessionSetFedSocial(session, idpRqtCtx->fedSocial);
+        oidcSessionSetFedSocial(session, state->fedSocial);
 
         // everything looks good let's return user to original page
         alias = oidcSessionGetAlias(session);
@@ -193,15 +177,15 @@ static void onSocialCheckResult(void *closure,
 
         // user successfully loggin set session loa to current idp login profile
         EXT_DEBUG("[oidc-fedid] setting actual profile %s/%s/%d",
-                  idpProfile->idp->uid, idpProfile->uid, idpProfile->loa);
-        oidcSessionSetActualLOA(session, idpProfile->loa);
-        oidcSessionSetActualProfile(session, idpProfile);
+                  profile->idp->uid, profile->uid, profile->loa);
+        oidcSessionSetActualLOA(session, profile->loa);
+        oidcSessionSetActualProfile(session, profile);
         oidcSessionAutoValidate(session);
 
         // if idp request get userdata keep track of them (needed by pcscd to
         // kill monitoring thread)
-        if (idpRqtCtx->userData)
-            oidcSessionSetOpaqueData(session, idpRqtCtx->userData);
+        if (state->userData)
+            oidcSessionSetOpaqueData(session, state->userData);
     }
 
     // free user info handle and redirect to initial targeted url
@@ -221,25 +205,25 @@ static void onSocialCheckResult(void *closure,
         afb_req_v4_reply_hookable(wreq, status, 1, &reply);
     }
 
-    oidcStateUnRef(idpRqtCtx);
+    oidcStateUnRef(state);
     return;
 
 OnErrorExit:
     EXT_NOTICE("[fedid-authent-redirect] (hoops!!!) internal error");
     if (hreq)
         afb_hreq_redirect_to(hreq,
-                             oidcCoreGlobals(idpRqtCtx->idp->oidc)->errorUrl,
+                             oidcCoreGlobals(state->idp->oidc)->errorUrl,
                              HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
     if (wreq)
         afb_req_v4_reply_hookable(wreq, -1, 0, NULL);
-    oidcStateUnRef(idpRqtCtx);
+    oidcStateUnRef(state);
 }
 
 // try to wreq user profile from its federation key
-int fedidCheck(idpRqtCtxT *idpRqtCtx)
+int fedidCheck(oidcStateT *state)
 {
-    afb_api_t api = oidcCoreAfbApi(idpRqtCtx->idp->oidc);
-    fedIdClientSocialCheck(api, idpRqtCtx->fedSocial, onSocialCheckResult,
-                           idpRqtCtx);
+    afb_api_t api = oidcCoreAfbApi(state->idp->oidc);
+    fedIdClientSocialCheck(api, state->fedSocial, onSocialCheckResult,
+                           state);
     return 0;
 }

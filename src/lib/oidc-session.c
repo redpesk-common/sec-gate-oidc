@@ -136,7 +136,7 @@ const char *oidcSessionUUID(const oidcSessionT *session)
 
 static void ensureNowIsSet(oidcSessionT *session)
 {
-    if (!session->nowset) {
+    if (1 || !session->nowset) {
         clock_gettime(CLOCK_MONOTONIC, &session->now);
         session->nowset = 1;
     }
