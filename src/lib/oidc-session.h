@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "oidc-alias.h"
+#include "oidc-core.h"
 #include "oidc-common.h"
 #include "oidc-idp.h"
 

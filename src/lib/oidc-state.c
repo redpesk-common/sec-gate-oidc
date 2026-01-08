@@ -32,16 +32,59 @@
 
 #include "oidc-idp-plugin.h"
 
-void idpRqtCtxFree(idpRqtCtxT *rqtCtx)
-{
-    assert(rqtCtx->ucount >= 0);
-    rqtCtx->ucount--;
+static const char bearer[] = "Bearer ";
 
-    if (rqtCtx->ucount < 0) {
-        if (rqtCtx->token)
-            free(rqtCtx->token);
-        free(rqtCtx);
+void oidcStateUnRef(oidcStateT *state)
+{
+    if (state != NULL && state->ucount-- == 0) {
+        oidcSessionUnRef(state->session);
+        free (state->bearer ?: state->token);
+        free(state);
     }
+}
+
+oidcStateT *oidcStateAddRef(oidcStateT *state)
+{
+    if (state != NULL)
+        state->ucount++;
+    return state;
+}
+
+oidcStateT *oidcStateCreate(
+                const oidcIdpT *idp,
+                oidcSessionT *session,
+                const oidcProfileT* profile)
+{
+    oidcStateT *state;
+
+    if (idp == NULL)
+        idp = profile->idp;
+
+    state = calloc(1, sizeof *state);
+    if (state == NULL)
+        EXT_ERROR("allocation failed");
+    else {
+        state->ucount = 1;
+        state->session = oidcSessionAddRef(session);
+        state->profile = profile;
+        state->idp = idp;
+    }
+    return state;
+}
+
+
+int oidcStatePutToken(oidcStateT *state, const char *token)
+{
+    size_t sz = strlen(token);
+    char *mem = malloc(sz + sizeof bearer);
+    if (mem == NULL)
+        return -1;
+    free(state->bearer);
+    state->bearer = mem;
+    memcpy(mem, bearer, sizeof bearer - 1);
+    state->token = &mem[sizeof bearer - 1];
+    memcpy(&mem[sizeof bearer - 1], token, sz + 1);
+    return 0;
 }
 
 // session timeout, reset LOA
@@ -74,78 +117,5 @@ void fedidsessionReset(oidcSessionT *session, const oidcProfileT *idpProfile)
             EXT_DEBUG("[fedid-session-reset] no client subscribed uuid=%s ?",
                       oidcSessionUUID(session));
     }
-}
-
-oidcStateT *oidcStateAddRef(oidcStateT *state)
-{
-    if (state != NULL)
-        state->ucount++;
-    return state;
-}
-
-void oidcStateUnRef(oidcStateT *state)
-{
-    if (state != NULL && state->ucount-- == 0) {
-        oidcSessionUnRef(state->session);
-        free(state);
-    }
-}
-
-static oidcStateT *createState(
-                struct afb_hreq* hreq,
-                struct afb_req_v4* wreq,
-                oidcSessionT *session,
-                const oidcProfileT* profile,
-                const oidcIdpT *idp)
-{
-    oidcStateT *state;
-
-    /* provide session if required */
-    if (session == NULL) {
-        session = hreq != NULL ? oidcSessionOfHttpReq(hreq)
-                               : wreq != NULL ? oidcSessionOfReq(wreq) : NULL;
-        if (session == NULL) {
-            EXT_ERROR("can't get session");
-            return NULL;
-        }
-    }
-
-    if (profile == NULL) {
-        profile = oidcSessionGetTargetProfile(session);
-        if (profile == NULL) {
-            EXT_ERROR("can't get target profile");
-            return NULL;
-        }
-    }
-
-    if (idp == NULL)
-        idp = profile->idp;
-
-    state = calloc(1, sizeof *state);
-    if (state == NULL)
-        EXT_ERROR("allocation failed");
-    else {
-        state->ucount = 1;
-        state->session = oidcSessionAddRef(session);
-        state->profile = profile;
-        state->idp = idp;
-        state->hreq = hreq;
-        state->wreq = wreq;
-//        state->uuid;
-//        state->fedSocial;
-//        state->fedUser;
-//        state->token;
-//        state->userData;
-    }
-    return state;
-}
-
-oidcStateT *oidcStateCreateForHttpReq(
-                struct afb_hreq* hreq,
-                oidcSessionT *session,
-                const oidcProfileT* profile,
-                const oidcIdpT *idp)
-{
-    return createState(hreq, NULL, session, profile, idp);
 }
 

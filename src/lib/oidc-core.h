@@ -36,6 +36,7 @@ typedef struct oidcIdpS oidcIdpT;
 typedef struct httpPoolS httpPoolT;
 typedef struct idpPluginS idpPluginT;
 typedef struct oidcSessionS oidcSessionT;
+typedef struct oidcStateS oidcStateT;
 
 typedef struct oidGlobalsS oidGlobalsT;
 typedef struct oidcCoreHdlS oidcCoreHdlT;

@@ -35,6 +35,8 @@
 #include <libafb/afb-http.h>
 #include <libafb/afb-v4.h>
 
+#include "oidc-alias.h"
+
 struct oidcSessionS
 {
     unsigned refcount;

@@ -267,7 +267,7 @@ OnErrorExit:
         "status=%d body='%s'",
         httpRqt->status, httpRqt->body.buffer);
     afb_hreq_reply_error(rqtCtx->hreq, EXT_HTTP_UNAUTHORIZED);
-    idpRqtCtxFree(rqtCtx);
+    oidcStateUnRef(rqtCtx);
     return HTTP_HANDLE_FREE;
 }
 

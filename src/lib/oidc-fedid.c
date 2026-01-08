@@ -218,7 +218,7 @@ static void onSocialCheckResult(void *closure,
         afb_req_v4_reply_hookable(wreq, status, 1, &reply);
     }
 
-    idpRqtCtxFree(idpRqtCtx);
+    oidcStateUnRef(idpRqtCtx);
     return;
 
 OnErrorExit:
@@ -229,7 +229,7 @@ OnErrorExit:
                              HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
     if (wreq)
         afb_req_v4_reply_hookable(wreq, -1, 0, NULL);
-    idpRqtCtxFree(idpRqtCtx);
+    oidcStateUnRef(idpRqtCtx);
 }
 
 // try to wreq user profile from its federation key

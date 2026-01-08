@@ -388,7 +388,7 @@ static int ldapAccessProfile(const oidcIdpT *idp,
 
 OnErrorExit:
     ldapRqtCtxFree(ldapRqtCtx);
-    idpRqtCtxFree(idpRqtCtx);
+    oidcStateUnRef(idpRqtCtx);
     return 1;
 }
 

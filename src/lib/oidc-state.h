@@ -30,7 +30,6 @@
 #include "oidc-idp.h"
 #include "oidc-session.h"
 
-
 // request handle store federation attribute during multiple IDP async calls
 typedef struct oidcStateS idpRqtCtxT;
 typedef struct oidcStateS oidcStateT;
@@ -46,20 +45,73 @@ struct oidcStateS {
     fedSocialRawT *fedSocial;
     fedUserRawT *fedUser;
     char *token;
+    char *bearer;
     void *userData;
 };
-
-void idpRqtCtxFree(idpRqtCtxT* rqtCtx);
 
 void fedidsessionReset(oidcSessionT* session, const oidcProfileT* idpProfile);
 
 
-oidcStateT *oidcStateCreateForHttpReq(
-                struct afb_hreq* hreq,
+oidcStateT *oidcStateCreate(
+                const oidcIdpT *idp,
                 oidcSessionT *session,
-                const oidcProfileT* profile,
-                const oidcIdpT *idp);
+                const oidcProfileT* profile);
 
 oidcStateT *oidcStateAddRef(oidcStateT *state);
 void oidcStateUnRef(oidcStateT *state);
 
+static inline
+const oidcIdpT *oidcStateGetIdp(oidcStateT *state)
+{
+    return state->idp;
+}
+
+static inline
+const oidcProfileT *oidcStateGetProfile(oidcStateT *state)
+{
+    return state->profile;
+}
+
+static inline
+oidcSessionT *oidcStateGetSession(oidcStateT *state)
+{
+    return state->session;
+}
+
+static inline
+void oidcStateSetHttpReq(oidcStateT *state, struct afb_hreq *hreq)
+{
+    state->hreq = hreq;
+}
+
+static inline
+struct afb_hreq *oidcStateGetHttpReq(oidcStateT *state)
+{
+    return state->hreq;
+}
+
+static inline
+void oidcStateSetReq(oidcStateT *state, struct afb_req_v4 *wreq)
+{
+    state->wreq = wreq;
+}
+
+static inline
+struct afb_req_v4 *oidcStateGetReq(oidcStateT *state)
+{
+    return state->wreq;
+}
+
+int oidcStatePutToken(oidcStateT *state, const char *token);
+
+static inline
+const char *oidcStateGetToken(oidcStateT *state)
+{
+    return state->token;
+}
+
+static inline
+const char *oidcStateGetBearer(oidcStateT *state)
+{
+    return state->bearer;
+}
