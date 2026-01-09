@@ -303,8 +303,10 @@ static int githubOnCodeCB(struct afb_hreq *hreq,
     // add afb-binder endpoint to login redirect alias
     status = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin, redirectUrl,
                                     sizeof(redirectUrl));
-    if (status < 0)
+    if (status < 0) {
+        EXT_WARNING("[idp-github] can't compute redirect url");
         goto OnErrorExit;
+    }
 
     const char *params[] = {
         "client_id",
