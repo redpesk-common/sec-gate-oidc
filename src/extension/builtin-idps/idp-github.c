@@ -139,18 +139,19 @@ static void githubGetAttrsByToken(oidcStateT *state, const char *orgApiUrl)
     const oidcIdpT *idp = oidcStateGetIdp(state);
 
     httpKeyValT authToken[] = {
-        {.tag = "Authorization", .value = oidcStateGetBearer(state)}, {NULL}  // terminator
+        {.tag = "Authorization", .value = oidcStateGetBearer(state)},
+        {NULL}  // terminator
     };
 
     // asynchronous wreq to IDP user profile
     // https://docs.github.com/en/rest/reference/orgs#list-organizations-for-the-authenticated-user
-    EXT_DEBUG("[idp-github] curl -H 'Authorization: %s' %s\n", oidcStateGetToken(state),
-              orgApiUrl);
+    EXT_DEBUG("[idp-github] curl -H 'Authorization: %s' %s\n",
+              oidcStateGetToken(state), orgApiUrl);
     int err = httpSendGet(oidcCoreHTTPPool(idp->oidc), orgApiUrl, &dfltOpts,
                           authToken, githubAttrsGetByTokenCB, state);
     if (err)
-        EXT_ERROR("[idp-github] curl -H 'Authorization: %s' %s\n", oidcStateGetToken(state),
-                  orgApiUrl);
+        EXT_ERROR("[idp-github] curl -H 'Authorization: %s' %s\n",
+                  oidcStateGetToken(state), orgApiUrl);
     return;
 }
 
@@ -180,8 +181,7 @@ static httpRqtActionT githubUserGetByTokenCB(const httpRqtT *httpRqt)
                             get_object_string(profileJ, "email"),
                             get_object_string(profileJ, "name"),
                             get_object_string(profileJ, "avatar_url"),
-                            get_object_string(profileJ, "company"),
-                            0);
+                            get_object_string(profileJ, "company"), 0);
 
     state->fedSocial = fedSocial;
     state->fedUser = fedUser;
@@ -222,13 +222,14 @@ static void githubUserGetByToken(oidcStateT *state)
     const oidcIdpT *idp = oidcStateGetIdp(state);
 
     httpKeyValT authToken[] = {
-        {.tag = "Authorization", .value = oidcStateGetBearer(state)}, {NULL}  // terminator
+        {.tag = "Authorization", .value = oidcStateGetBearer(state)},
+        {NULL}  // terminator
     };
 
     // asynchronous wreq to IDP user profile
     // https://docs.github.com/en/rest/reference/orgs#list-organizations-for-the-authenticated-user
-    EXT_DEBUG("[idp-github] curl -H 'Authorization: %s' %s\n", oidcStateGetToken(state),
-              idp->wellknown->userinfo);
+    EXT_DEBUG("[idp-github] curl -H 'Authorization: %s' %s\n",
+              oidcStateGetToken(state), idp->wellknown->userinfo);
     int err = httpSendGet(oidcCoreHTTPPool(idp->oidc), idp->wellknown->userinfo,
                           &dfltOpts, authToken, githubUserGetByTokenCB, state);
     if (err)
@@ -249,7 +250,8 @@ static httpRqtActionT githubAccessTokenCB(const httpRqtT *httpRqt)
     // github returns
     // "access_token=ffefd8e2f7b0fbe2de25b54e6a415c92a15491b8&scope=user%3Aemail&token_type=bearer"
     if (httpRqt->status != 200) {
-        EXT_ERROR("[idp-github] Getting token returned error %d", httpRqt->status);
+        EXT_ERROR("[idp-github] Getting token returned error %d",
+                  httpRqt->status);
         goto OnErrorExit;
     }
 
@@ -330,7 +332,7 @@ static int githubOnCodeCB(struct afb_hreq *hreq,
                        NULL /*headers */, NULL /*data */, 0 /*length */,
                        githubAccessTokenCB, state);
     if (err) {
-OnErrorExit:
+    OnErrorExit:
         afb_hreq_reply_error(hreq, EXT_HTTP_SERVER_ERROR);
     }
 
@@ -342,8 +344,8 @@ static int githubLoginCB(struct afb_hreq *hreq, void *ctx)
 {
     const oidcIdpT *idp = (const oidcIdpT *)ctx;
     return idpOnLoginPage(hreq, idp, githubOnCodeCB, idp->wellknown->authorize,
-                            idp->statics->aliasLogin,
-                            idp->credentials->clientId, "code", NULL);
+                          idp->statics->aliasLogin, idp->credentials->clientId,
+                          "code", NULL);
 }
 
 static int githubRegisterAlias(const oidcIdpT *idp, struct afb_hsrv *hsrv)

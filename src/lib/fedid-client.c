@@ -118,7 +118,6 @@ static void social_check_cb(void *closure,
     free(scd);
 }
 
-
 // fedSoc should remain valid after subcall for fedsocial cookie
 void fedIdClientSocialCheck(
     afb_api_t api,

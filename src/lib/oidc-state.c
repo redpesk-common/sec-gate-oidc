@@ -27,8 +27,8 @@
 
 #include "oidc-state.h"
 
-#include <stdlib.h>
 #include <assert.h>
+#include <stdlib.h>
 
 #include "oidc-idp-plugin.h"
 
@@ -38,7 +38,7 @@ void oidcStateUnRef(oidcStateT *state)
 {
     if (state != NULL && state->ucount-- == 0) {
         oidcSessionUnRef(state->session);
-        free (state->bearer ?: state->token);
+        free(state->bearer ?: state->token);
         free(state);
     }
 }
@@ -50,10 +50,9 @@ oidcStateT *oidcStateAddRef(oidcStateT *state)
     return state;
 }
 
-oidcStateT *oidcStateCreate(
-                const oidcIdpT *idp,
-                oidcSessionT *session,
-                const oidcProfileT* profile)
+oidcStateT *oidcStateCreate(const oidcIdpT *idp,
+                            oidcSessionT *session,
+                            const oidcProfileT *profile)
 {
     oidcStateT *state;
 
@@ -71,7 +70,6 @@ oidcStateT *oidcStateCreate(
     }
     return state;
 }
-
 
 int oidcStatePutToken(oidcStateT *state, const char *token)
 {
@@ -118,4 +116,3 @@ void fedidsessionReset(oidcSessionT *session, const oidcProfileT *idpProfile)
                       oidcSessionUUID(session));
     }
 }
-

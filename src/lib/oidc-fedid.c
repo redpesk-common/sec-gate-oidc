@@ -211,8 +211,7 @@ static void onSocialCheckResult(void *closure,
 OnErrorExit:
     EXT_NOTICE("[fedid-authent-redirect] (hoops!!!) internal error");
     if (hreq)
-        afb_hreq_redirect_to(hreq,
-                             oidcCoreGlobals(state->idp->oidc)->errorUrl,
+        afb_hreq_redirect_to(hreq, oidcCoreGlobals(state->idp->oidc)->errorUrl,
                              HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
     if (wreq)
         afb_req_v4_reply_hookable(wreq, -1, 0, NULL);
@@ -223,7 +222,6 @@ OnErrorExit:
 int fedidCheck(oidcStateT *state)
 {
     afb_api_t api = oidcCoreAfbApi(state->idp->oidc);
-    fedIdClientSocialCheck(api, state->fedSocial, onSocialCheckResult,
-                           state);
+    fedIdClientSocialCheck(api, state->fedSocial, onSocialCheckResult, state);
     return 0;
 }

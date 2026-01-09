@@ -53,7 +53,7 @@ struct oidcSessionS
     fedidLinkT fedlink;
     struct afb_evt *event;
     void *data;
-    void (*freeData)(void*);
+    void (*freeData)(void *);
     struct timespec now;
     struct timespec nextCheck;
     struct timespec endValid;
@@ -229,7 +229,7 @@ const oidcProfileT *oidcSessionGetTargetProfile(oidcSessionT *session)
 }
 
 void oidcSessionSetTargetProfile(oidcSessionT *session,
-                              const oidcProfileT *profile)
+                                 const oidcProfileT *profile)
 {
     session->targetProfile = profile;
 }
@@ -245,12 +245,12 @@ void oidcSessionSetActualProfile(oidcSessionT *session,
     session->actualProfile = profile;
 }
 
-void oidcSessionSetTargetState(oidcSessionT* session, oidcStateT *state)
+void oidcSessionSetTargetState(oidcSessionT *session, oidcStateT *state)
 {
     session->targetState = state;
 }
 
-oidcStateT *oidcSessionGetTargetState(oidcSessionT* session)
+oidcStateT *oidcSessionGetTargetState(oidcSessionT *session)
 {
     return session->targetState;
 }
@@ -341,7 +341,9 @@ void oidcSessionSetOpaqueData(oidcSessionT *session, void *data)
     oidcSessionSetActualData(session, data, NULL);
 }
 
-void oidcSessionSetActualData(oidcSessionT* session, void *data, void (*freecb)(void*))
+void oidcSessionSetActualData(oidcSessionT *session,
+                              void *data,
+                              void (*freecb)(void *))
 {
     if (session->freeData)
         session->freeData(session->data);
@@ -349,7 +351,7 @@ void oidcSessionSetActualData(oidcSessionT* session, void *data, void (*freecb)(
     session->freeData = freecb;
 }
 
-void *oidcSessionGetActualData(oidcSessionT* session)
+void *oidcSessionGetActualData(oidcSessionT *session)
 {
     return session->data;
 }
@@ -403,4 +405,3 @@ int oidcSessionEventPush(oidcSessionT *session, const char *desc, ...)
     }
     return rc;
 }
-

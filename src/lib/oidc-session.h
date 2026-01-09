@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "oidc-core.h"
 #include "oidc-common.h"
+#include "oidc-core.h"
 #include "oidc-idp.h"
 
 typedef struct {
@@ -44,8 +44,8 @@ oidcSessionT* oidcSessionOfHttpReq(struct afb_hreq* hreq);
 oidcSessionT* oidcSessionOfReq(struct afb_req_v4* wreq);
 oidcSessionT* oidcSessionOfUUID(const char* uuid);
 
-oidcSessionT *oidcSessionAddRef(oidcSessionT *session);
-void oidcSessionUnRef(oidcSessionT *session);
+oidcSessionT* oidcSessionAddRef(oidcSessionT* session);
+void oidcSessionUnRef(oidcSessionT* session);
 
 const char* oidcSessionUUID(const oidcSessionT* session);
 
@@ -70,8 +70,8 @@ const oidcProfileT* oidcSessionGetActualProfile(oidcSessionT* session);
 void oidcSessionSetActualProfile(oidcSessionT* session,
                                  const oidcProfileT* profile);
 
-void oidcSessionSetTargetState(oidcSessionT* session, oidcStateT *state);
-oidcStateT *oidcSessionGetTargetState(oidcSessionT* session);
+void oidcSessionSetTargetState(oidcSessionT* session, oidcStateT* state);
+oidcStateT* oidcSessionGetTargetState(oidcSessionT* session);
 
 int oidcSessionSetFedIdLink(oidcSessionT* session,
                             const char* pseudo,
@@ -94,8 +94,8 @@ void oidcSessionSetFedUser(oidcSessionT* session, fedUserRawT* fedUser);
 void* oidcSessionGetOpaqueData(oidcSessionT* session);
 void oidcSessionSetOpaqueData(oidcSessionT* session, void* data);
 
-typedef void (*oidcSessionFreeDataCB)(void *data);
-void oidcSessionSetActualData(oidcSessionT* session, void *data, oidcSessionFreeDataCB freecb);
-void *oidcSessionGetActualData(oidcSessionT* session);
-
-
+typedef void (*oidcSessionFreeDataCB)(void* data);
+void oidcSessionSetActualData(oidcSessionT* session,
+                              void* data,
+                              oidcSessionFreeDataCB freecb);
+void* oidcSessionGetActualData(oidcSessionT* session);

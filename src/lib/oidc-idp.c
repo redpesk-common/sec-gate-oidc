@@ -683,4 +683,3 @@ error:
     afb_hreq_reply_error(hreq, EXT_HTTP_SERVER_ERROR);
     return 1;
 }
-

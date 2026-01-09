@@ -133,7 +133,7 @@ static httpRqtActionT ldapAccessAttrsCB(const httpRqtT *httpRqt)
     int idx = 0;
     const char *iter = strcasestr(httpRqt->body.buffer, DNString);
     idpRqtCtx->fedSocial->attrs = calloc(ldapOpts->gidsMax + 1, sizeof(char *));
-    while(iter) {
+    while (iter) {
         const char *line = iter + DNLen;
         const char *niter = strcasestr(line, DNString);
         const char *entry = strcasestr(line, cnString);
@@ -143,9 +143,8 @@ static httpRqtActionT ldapAccessAttrsCB(const httpRqtT *httpRqt)
             while (*end != 0 && *end != ',' && *end != '\n')
                 end++;
             if (idx == ldapOpts->gidsMax) {
-                EXT_INFO(
-                    "[idp-ldap] maxgids=%d too small, ignoring group %.*s",
-                    ldapOpts->gidsMax, (int)(end-start), start);
+                EXT_INFO("[idp-ldap] maxgids=%d too small, ignoring group %.*s",
+                         ldapOpts->gidsMax, (int)(end - start), start);
             }
             else {
                 unsigned len = (unsigned)(end - start);
@@ -326,7 +325,7 @@ OnErrorExit:
 }
 
 // check ldap login/passwd scope is unused
-static int ldapAccessProfile(oidcStateT *state,		     
+static int ldapAccessProfile(oidcStateT *state,
                              const char *login,
                              const char *passwd)
 {

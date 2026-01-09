@@ -200,7 +200,8 @@ static int oidcUserFederateId(idpRqtCtxT *rqtCtx, json_object *profileJ)
         return -1;
 
     // build social fedkey from idp->uid+oidc->id
-    fedSocial = fedSocialCreate(idp->uid, get_object_string(profileJ, schema->fedid), 0);
+    fedSocial = fedSocialCreate(idp->uid,
+                                get_object_string(profileJ, schema->fedid), 0);
     rqtCtx->fedSocial = fedSocial;
 
     // check groups as security attributs
@@ -222,8 +223,7 @@ static int oidcUserFederateId(idpRqtCtxT *rqtCtx, json_object *profileJ)
                             get_object_string(profileJ, schema->email),
                             get_object_string(profileJ, schema->name),
                             get_object_string(profileJ, schema->avatar),
-                            get_object_string(profileJ, schema->company),
-                            0);
+                            get_object_string(profileJ, schema->company), 0);
     rqtCtx->fedUser = fedUser;
 
     err = fedidCheck(rqtCtx);

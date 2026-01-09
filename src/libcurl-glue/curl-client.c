@@ -102,7 +102,7 @@ static size_t writeBuffer(void *data,
 {
     size_t size = blkSize * blkCount;
     if (size > 0) {
-        char *buf = realloc((void*)buffer->buffer, buffer->length + size + 1);
+        char *buf = realloc((void *)buffer->buffer, buffer->length + size + 1);
         if (buf == NULL)
             return 0;
 
@@ -154,9 +154,9 @@ static void freeHttpRqtHndl(httpRqtHndlT *hndl)
     curl_easy_cleanup(hndl->easy);
     curl_slist_free_all(hndl->headers);
     if (hndl->httpRqt.body.buffer != &nulchar)
-        free((void*)hndl->httpRqt.body.buffer);
+        free((void *)hndl->httpRqt.body.buffer);
     if (hndl->httpRqt.headers.buffer != &nulchar)
-        free((void*)hndl->httpRqt.headers.buffer);
+        free((void *)hndl->httpRqt.headers.buffer);
     free(hndl);
 }
 
@@ -177,7 +177,7 @@ static void rqtDone(httpRqtHndlT *hndl, CURL *easy, CURLcode status)
             fprintf(stderr, "%s\n", message);
         hndl->httpRqt.status = -(int)status;
         if (hndl->httpRqt.body.buffer != &nulchar)
-            free((void*)hndl->httpRqt.body.buffer);
+            free((void *)hndl->httpRqt.body.buffer);
         hndl->httpRqt.body.buffer = message;
         hndl->httpRqt.body.length = (size_t)len;
     }

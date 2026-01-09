@@ -36,82 +36,63 @@ typedef struct oidcStateS oidcStateT;
 
 struct oidcStateS {
     unsigned ucount;
-    oidcSessionT *session;
+    oidcSessionT* session;
     const oidcProfileT* profile;
-    const oidcIdpT *idp;
-    struct afb_hreq *hreq;
-    struct afb_req_v4 *wreq;
-    const char *uuid;
-    fedSocialRawT *fedSocial;
-    fedUserRawT *fedUser;
-    char *token;
-    char *bearer;
-    void *userData;
+    const oidcIdpT* idp;
+    struct afb_hreq* hreq;
+    struct afb_req_v4* wreq;
+    const char* uuid;
+    fedSocialRawT* fedSocial;
+    fedUserRawT* fedUser;
+    char* token;
+    char* bearer;
+    void* userData;
 };
 
 void fedidsessionReset(oidcSessionT* session, const oidcProfileT* idpProfile);
 
+oidcStateT* oidcStateCreate(const oidcIdpT* idp,
+                            oidcSessionT* session,
+                            const oidcProfileT* profile);
 
-oidcStateT *oidcStateCreate(
-                const oidcIdpT *idp,
-                oidcSessionT *session,
-                const oidcProfileT* profile);
+oidcStateT* oidcStateAddRef(oidcStateT* state);
+void oidcStateUnRef(oidcStateT* state);
 
-oidcStateT *oidcStateAddRef(oidcStateT *state);
-void oidcStateUnRef(oidcStateT *state);
-
-static inline
-const oidcIdpT *oidcStateGetIdp(oidcStateT *state)
-{
+static inline const oidcIdpT* oidcStateGetIdp(oidcStateT* state) {
     return state->idp;
 }
 
-static inline
-const oidcProfileT *oidcStateGetProfile(oidcStateT *state)
-{
+static inline const oidcProfileT* oidcStateGetProfile(oidcStateT* state) {
     return state->profile;
 }
 
-static inline
-oidcSessionT *oidcStateGetSession(oidcStateT *state)
-{
+static inline oidcSessionT* oidcStateGetSession(oidcStateT* state) {
     return state->session;
 }
 
-static inline
-void oidcStateSetHttpReq(oidcStateT *state, struct afb_hreq *hreq)
-{
+static inline void oidcStateSetHttpReq(oidcStateT* state,
+                                       struct afb_hreq* hreq) {
     state->hreq = hreq;
 }
 
-static inline
-struct afb_hreq *oidcStateGetHttpReq(oidcStateT *state)
-{
+static inline struct afb_hreq* oidcStateGetHttpReq(oidcStateT* state) {
     return state->hreq;
 }
 
-static inline
-void oidcStateSetReq(oidcStateT *state, struct afb_req_v4 *wreq)
-{
+static inline void oidcStateSetReq(oidcStateT* state, struct afb_req_v4* wreq) {
     state->wreq = wreq;
 }
 
-static inline
-struct afb_req_v4 *oidcStateGetReq(oidcStateT *state)
-{
+static inline struct afb_req_v4* oidcStateGetReq(oidcStateT* state) {
     return state->wreq;
 }
 
-int oidcStatePutToken(oidcStateT *state, const char *token);
+int oidcStatePutToken(oidcStateT* state, const char* token);
 
-static inline
-const char *oidcStateGetToken(oidcStateT *state)
-{
+static inline const char* oidcStateGetToken(oidcStateT* state) {
     return state->token;
 }
 
-static inline
-const char *oidcStateGetBearer(oidcStateT *state)
-{
+static inline const char* oidcStateGetBearer(oidcStateT* state) {
     return state->bearer;
 }
