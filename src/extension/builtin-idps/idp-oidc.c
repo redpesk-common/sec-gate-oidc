@@ -489,7 +489,9 @@ static int oidcOnCodeCB(struct afb_hreq *hreq,
             schema->auth64, content, idp->wellknown->tokenid);
         break;
     case IDP_CLIENT_SECRET_POST:
-        EXT_DEBUG("[oidc-access-token] curl -X post -d '%s' %s\n", content);
+        EXT_DEBUG("[oidc-access-token] curl -X post -d '%s' %s\n", content, idp->wellknown->tokenid);
+        break;
+    default:
         break;
     }
     err =

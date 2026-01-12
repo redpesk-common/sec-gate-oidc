@@ -56,7 +56,7 @@ static int aliasCheckAttrs(oidcSessionT *session, oidcAliasT *alias)
         roles++;
     }
     return 0;
-};
+}
 
 // create aliasFrom cookie and redirect to common login page
 static int aliasRedirectLogin(struct afb_hreq *hreq,
@@ -88,7 +88,6 @@ static int aliasCheckReq(struct afb_hreq *hreq, void *ctx)
     oidcAliasT *alias = (oidcAliasT *)ctx;
     const oidcProfileT *idpProfile;
     oidcSessionT *session;
-    json_object *eventJ;
 
     // get session of the request
     session = oidcSessionOfHttpReq(hreq);
@@ -187,7 +186,7 @@ static int parseOneAlias(const oidcCoreHdlT *oidc,
                          oidcAliasT *alias)
 {
     const char **roles;
-    int rc, count, idx;
+    int rc, count;
     json_object *requireJ = NULL;
 
     // set tCache default

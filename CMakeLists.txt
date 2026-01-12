@@ -32,7 +32,7 @@ set(AFM_APP_DIR ${CMAKE_INSTALL_PREFIX}/redpesk CACHE PATH "Applications directo
 
 set(APPDIR ${AFM_APP_DIR}/sec-gate-oidc CACHE PATH "sec-gate-oidc directory")
 
-add_compile_options(-fPIC)
+add_compile_options(-fPIC -Wall)
 
 configure_file(sec-gate-oidc.pc.in sec-gate-oidc.pc @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/sec-gate-oidc.pc

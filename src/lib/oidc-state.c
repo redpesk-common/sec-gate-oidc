@@ -38,7 +38,7 @@ void oidcStateUnRef(oidcStateT *state)
 {
     if (state != NULL && state->ucount-- == 0) {
         oidcSessionUnRef(state->session);
-        free(state->bearer ?: state->token);
+        free(state->bearer != NULL ? state->bearer : state->token);
         free(state);
     }
 }
@@ -88,13 +88,12 @@ int oidcStatePutToken(oidcStateT *state, const char *token)
 // session timeout, reset LOA
 void fedidsessionReset(oidcSessionT *session, const oidcProfileT *idpProfile)
 {
-    int err;
     int count = -1;
 
     // reset session and alias LOA (this will force authentication)
     oidcSessionSetActualLOA(session, 0);
     oidcSessionSetNextCheck(session, 0);
-    EXT_DEBUG("[fedid-session-reset] logout/timeout session uuid=%s ?",
+    EXT_DEBUG("[oidc-state] logout/timeout session uuid=%s ?",
               oidcSessionUUID(session));
 
     if (idpProfile) {
@@ -109,10 +108,10 @@ void fedidsessionReset(oidcSessionT *session, const oidcProfileT *idpProfile)
         const oidGlobalsT *globals = oidcCoreGlobals(idpProfile->idp->oidc);
         count = oidcSessionEventPush(
             session, "{ss ss ss* ss*}", "status", "loa-reset", "home",
-            globals->homeUrl ?: "/", "login", globals->loginUrl, "error",
+            globals->homeUrl != NULL ? globals->homeUrl : "/", "login", globals->loginUrl, "error",
             globals->errorUrl);
         if (!count)
-            EXT_DEBUG("[fedid-session-reset] no client subscribed uuid=%s ?",
+            EXT_DEBUG("[oidc-state] no client subscribed uuid=%s ?",
                       oidcSessionUUID(session));
     }
 }
@@ -122,7 +121,7 @@ static void reply(oidcStateT *state, int hrc, int wrc)
     if (state->hreq)
         afb_hreq_reply_error(state->hreq, hrc);
     if (state->wreq)
-        afb_req_reply(state->wreq, wrc, 0, NULL);
+        afb_req_v4_reply_hookable(state->wreq, wrc, 0, NULL);
 }
 
 void oidcStateUnauthorized(oidcStateT *state)

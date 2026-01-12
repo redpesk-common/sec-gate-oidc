@@ -92,10 +92,6 @@ static int glueSetSocketCB(httpRqtHndlT *httpRqtHndl,
 // map libafb ontimer with multi version
 static void glueOnTimerCB(struct ev_timer *tim, void *ctx, unsigned decount)
 {
-    // signal should be null
-    if (signal)
-        return;
-
     httpRqtHndlT *httpRqtHndl = (httpRqtHndlT *)ctx;
     httpOnTimerCB(httpRqtHndl);
 }
@@ -105,7 +101,6 @@ static int glueSetTimerCB(httpRqtHndlT *httpRqtHndl,
                           long timeout,
                           void **ptimedata)
 {
-    int err;
     struct ev_timer **ptim = (struct ev_timer **)ptimedata;
     struct ev_timer *tim = *ptim;  // on 1st call efd is null
 

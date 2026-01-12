@@ -244,7 +244,6 @@ OnErrorExit:
 static httpRqtActionT githubAccessTokenCB(const httpRqtT *httpRqt)
 {
     oidcStateT *state = (oidcStateT *)httpRqt->userData;
-    oidcSessionT *session = oidcStateGetSession(state);
     const char *accessTok;
 
     // github returns

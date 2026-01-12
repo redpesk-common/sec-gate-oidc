@@ -83,7 +83,6 @@ static int multiSetSockCB(CURL *easy,
 static int multiSetTimerCB(CURLM *curl, long timeout, void *ctx)
 {
     httpRqtHndlT *hndl = (httpRqtHndlT *)ctx;
-    httpPoolT *httpPool = hndl->httpPool;
 
     if (hndl->verbose > 2)
         fprintf(stderr, "[curl-client] multiSetTimerCB timeout=%ld\n", timeout);
@@ -194,7 +193,7 @@ static void rqtDone(httpRqtHndlT *hndl, CURL *easy, CURLcode status)
         hndl->httpRqt.status = (int)rcode;
         if ((long)hndl->httpRqt.status != rcode && hndl->verbose)
             fprintf(stderr,
-                    "[curl-client] error! status truncated %ld != %ld.\n",
+                    "[curl-client] error! status truncated %ld != %d.\n",
                     rcode, hndl->httpRqt.status);
         curl_easy_getinfo(easy, CURLINFO_CONTENT_TYPE,
                           &hndl->httpRqt.contentType);

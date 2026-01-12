@@ -179,7 +179,6 @@ OnErrorExit:
 // https://docs.ldap.com/en/developers/apps/authorizing-oauth-apps#web-application-flow
 static void ldapAccessAttrs(ldapRqtCtxT *ldapRqtCtx)
 {
-    idpRqtCtxT *idpRqtCtx = ldapRqtCtx->state;
     const ldapOptsT *ldapOpts = ldapRqtCtx->ldapOpts;
 
     const char *curlQuery =

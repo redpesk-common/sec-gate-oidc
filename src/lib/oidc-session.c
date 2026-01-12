@@ -88,7 +88,7 @@ static int createSession(void *closure,
     session->uuid = afb_session_uuid(closure);
     *value = session;
     *freeclo = session;
-    *freecb = (void *)oidcSessionUnRef;
+    *freecb = (void (*)(void*))oidcSessionUnRef;
     return 0;
 }
 
@@ -100,7 +100,7 @@ oidcSessionT *oidcSessionOfAfbSession(struct afb_session *ases)
         EXT_CRITICAL("[oidc-session] AFB session is NULL");
     else {
         int rc =
-            afb_session_cookie_getinit(ases, oidcSessionOfAfbSession,
+            afb_session_cookie_getinit(ases, (void*)oidcSessionOfAfbSession,
                                        (void *)&session, createSession, ases);
         if (rc < 0) {
             EXT_CRITICAL("[oidc-session] iCreation of session failed");
@@ -367,7 +367,7 @@ int oidcSessionEventSubscribe(afb_req_t wreq)
             return rc;
         }
     }
-    afb_req_subscribe(wreq, session->event);
+    return afb_req_subscribe(wreq, session->event);
 }
 
 int oidcSessionEventPush(oidcSessionT *session, const char *desc, ...)
@@ -389,7 +389,7 @@ int oidcSessionEventPush(oidcSessionT *session, const char *desc, ...)
     // create  the data
     if (rc >= 0)
         rc = afb_create_data_raw(&data, AFB_PREDEFINED_TYPE_JSON_C, obj, 0,
-                                 (void *)json_object_put, obj);
+                                 (void (*)(void*))json_object_put, obj);
 
     // check if event created
     if (rc < 0)

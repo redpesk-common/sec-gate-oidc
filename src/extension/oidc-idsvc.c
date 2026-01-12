@@ -200,7 +200,7 @@ static void idpQueryUserReply(afb_req_t wreq, const char **idps)
     // create the replied data
     if (rc >= 0)
         rc = afb_create_data_raw(&data, AFB_PREDEFINED_TYPE_JSON_C, obj, 0,
-                                 (void *)json_object_put, obj);
+                                 (void (*)(void*))json_object_put, obj);
 
     // send the reply
     if (rc >= 0)
@@ -255,7 +255,7 @@ static void idpQueryUser(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
         rp_jsonc_pack(&queryJ, "{ss ss}", "email", fedlink->email, "pseudo",
                       fedlink->pseudo);
         afb_create_data_raw(&data, AFB_PREDEFINED_TYPE_JSON_C, queryJ, 0,
-                            (void *)json_object_put, queryJ);
+                            (void (*)(void*))json_object_put, queryJ);
         fedIdClientSubCall(wreq, "social-idps", 1, &data, idpQueryUserCB, NULL);
         oidcSessionDropFedIdLink(session);
     }
@@ -316,9 +316,9 @@ static void userRegisterCB(void *ctx,
         oidcSessionSetActualLOA(session, profile->loa);
 
         // reply to the query
-        rp_jsonc_pack(&aliasJ, "{ss}", "target", alias->url ?: "/");
+        rp_jsonc_pack(&aliasJ, "{ss}", "target", alias->url != NULL ? alias->url : "/");
         afb_create_data_raw(&reply, AFB_PREDEFINED_TYPE_JSON_C, aliasJ, 0,
-                            (void *)json_object_put, aliasJ);
+                            (void (*)(void*))json_object_put, aliasJ);
         afb_req_reply(wreq, status, 1, &reply);
     }
 }
@@ -380,7 +380,6 @@ static void userFederateCB(void *ctx,
     fedUserRawT *fedUser = (fedUserRawT *)ctx;
     afb_data_t reply[1];
     const oidcProfileT *profile;
-    oidcAliasT *alias;
     json_object *responseJ;
     oidcSessionT *session;
     int err;
@@ -417,7 +416,7 @@ static void userFederateCB(void *ctx,
         goto OnErrorExit;
 
     afb_create_data_raw(reply, AFB_PREDEFINED_TYPE_JSON_C, responseJ, 0,
-                        (void *)json_object_put, responseJ);
+                        (void (*)(void*))json_object_put, responseJ);
     afb_req_reply(wreq, 0, 1, reply);
 
     return;
@@ -432,11 +431,7 @@ OnErrorExit:
 // backup social data for further federation social linking
 static void userFederate(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 {
-    char *errorMsg = "[user-federate-fail] invalid/missing query arguments";
-    afb_event_t evtCookie;
-    const fedSocialRawT *fedSocial;
     fedUserRawT *fedUser;
-    json_object *responseJ;
     afb_data_t data;
     int err, status;
 
@@ -473,10 +468,10 @@ static void sessionReset(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     fedidsessionReset(session, profile);
 
     const oidGlobalsT *globals = oidcCoreGlobals(profile->idp->oidc);
-    rp_jsonc_pack(&responseJ, "{ss ss* ss*}", "home", globals->homeUrl ?: "/",
+    rp_jsonc_pack(&responseJ, "{ss ss* ss*}", "home", globals->homeUrl != NULL ? globals->homeUrl : "/",
                   "login", globals->loginUrl, "error", globals->errorUrl);
     afb_create_data_raw(&reply, AFB_PREDEFINED_TYPE_JSON_C, responseJ, 0,
-                        (void *)json_object_put, responseJ);
+                        (void (*)(void*))json_object_put, responseJ);
     afb_req_reply(wreq, 0, 1, &reply);
 
     return;
@@ -490,7 +485,6 @@ static void sessionGet(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 {
     char *errorMsg = "[fail-session-get] no session running anonymous mode";
     afb_data_t reply[3];
-    afb_event_t evtCookie;
     const oidcProfileT *profile;
     const fedUserRawT *fedUser;
     const fedSocialRawT *fedSocial;
@@ -511,7 +505,7 @@ static void sessionGet(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     afb_create_data_raw(&reply[1], fedSocialObjType, fedSocial, 0, NULL,
                         NULL);  // keep feduser
     afb_create_data_raw(&reply[2], AFB_PREDEFINED_TYPE_JSON_C, profileJ, 0,
-                        (void *)json_object_put, profileJ);
+                        (void (*)(void*))json_object_put, profileJ);
 
     afb_req_reply(wreq, 0, 3, reply);
     return;
@@ -589,7 +583,7 @@ static void idpQueryConf(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
         goto OnErrorExit;
 
     afb_create_data_raw(&reply, AFB_PREDEFINED_TYPE_JSON_C, responseJ, 0,
-                        (void *)json_object_put, responseJ);
+                        (void (*)(void*))json_object_put, responseJ);
     afb_req_reply(wreq, 0, 1, &reply);
 
     return;
@@ -623,7 +617,7 @@ static void urlQuery(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
         goto OnErrorExit;
 
     afb_create_data_raw(&reply, AFB_PREDEFINED_TYPE_JSON_C, responseJ, 0,
-                        (void *)json_object_put, responseJ);
+                        (void (*)(void*))json_object_put, responseJ);
     afb_req_reply(wreq, 0, 1, &reply);
 
     return;

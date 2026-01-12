@@ -280,8 +280,6 @@ static const oidcWellknownT *idpParseWellknown(oidcIdpT *idp,
     if (!wellknownJ)
         return defaults;
 
-    const char *authMethod = NULL;
-
     oidcWellknownT *wellknown = calloc(1, sizeof(oidcWellknownT));
     if (defaults)
         memcpy(wellknown, defaults, sizeof(oidcWellknownT));
