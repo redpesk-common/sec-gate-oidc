@@ -360,7 +360,6 @@ static httpRqtActionT oidcAccessTokenCB(const httpRqtT *httpRqt)
     int err;
 
     // free old post data
-    free(rqtCtx->userData);
 
     if (httpRqt->status != 200)
         goto OnErrorExit;
@@ -417,88 +416,95 @@ OnErrorExit:
     return HTTP_HANDLE_FREE;
 }
 
-static int oidcAccessToken(struct afb_hreq *hreq,
-                           oidcIdpT *idp,
-                           const char *redirectUrl,
-                           const char *code,
-                           oidcSessionT *session)
+static int oidcOnCodeCB(struct afb_hreq *hreq,
+                        const oidcIdpT *idp,
+                        oidcSessionT *session,
+                        oidcStateT *state)
 {
-    int err, dataLen;
+    int err, status;
+    char content[EXT_URL_MAX_LEN];
+    char redirectUrl[EXT_HEADER_MAX_LEN];
     oidcSchemaT *schema = (oidcSchemaT *)idp->userData;
 
-    idpRqtCtxT *rqtCtx = oidcSessionGetTargetState(session);
-    rqtCtx->hreq = hreq;
-    rqtCtx->idp = idp;
-    rqtCtx->uuid = oidcSessionUUID(session);
-    rqtCtx->profile = oidcSessionGetTargetProfile(session);
-    if (rqtCtx->profile == NULL)
+    // check if wreq as a code
+    const char *code = afb_hreq_get_argument(hreq, "code");
+    if (code == NULL) {
+        EXT_WARNING("[idp-oidc] code is missing");
         goto OnErrorExit;
+    }
+
+    // add afb-binder endpoint to login redirect alias
+    status = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin, redirectUrl,
+                                    sizeof(redirectUrl));
+    if (status < 0) {
+        EXT_WARNING("[idp-oidc] can't compute redirect url");
+        goto OnErrorExit;
+    }
+
+    state->uuid = oidcSessionUUID(session);
+
+    httpKeyValT headers[5];
+    const char *params[12];
+    int ipar = 0, ihead = 0;
+    params[ipar++] = "code";
+    params[ipar++] = code;
+    params[ipar++] = "redirect_uri";
+    params[ipar++] = redirectUrl;
+    headers[ihead++] =
+        (httpKeyValT){"Content-type", "application/x-www-form-urlencoded"};
+    headers[ihead++] = (httpKeyValT){"Accept", "application/json"};
+    switch (idp->wellknown->authMethod) {
+    case IDP_CLIENT_SECRET_BASIC:
+        params[ipar++] = "grant_type";
+        params[ipar++] = "authorization_code";
+        headers[ihead++] = (httpKeyValT){"Authorization", schema->auth64};
+        break;
+    case IDP_CLIENT_SECRET_POST:
+        params[ipar++] = "client_id";
+        params[ipar++] = idp->credentials->clientId;
+        params[ipar++] = "client_secret";
+        params[ipar++] = idp->credentials->secret;
+        break;
+    default:
+        EXT_DEBUG("[idp-oidc] idp=%s unsupported authentication method=%d",
+                  idp->uid, idp->wellknown->authMethod);
+        goto OnErrorExit;
+    }
+    params[ipar] = NULL;
+    headers[ihead] = (httpKeyValT){NULL, NULL};
+
+    // send asynchronous post wreq with params in query //
+    // https://gist.github.com/technoweenie/419219
+    size_t sz = rp_escape_url_to(NULL, NULL, params, content, sizeof content);
+    if (sz >= sizeof content) {
+        EXT_WARNING("[idp-oidc] content is too small < %u", (unsigned)sz);
+        goto OnErrorExit;
+    }
 
     switch (idp->wellknown->authMethod) {
-    case IDP_CLIENT_SECRET_BASIC: {
-        dataLen = asprintf((char **)&rqtCtx->userData,
-                           "code=%s&redirect_uri=%s&grant_type=%s", code,
-                           redirectUrl, "authorization_code");
-
-        httpKeyValT headers[] = {
-            {.tag = "Content-type",
-             .value = "application/x-www-form-urlencoded"},
-            {.tag = "Accept", .value = "application/json"},
-            {.tag = "Authorization", .value = schema->auth64},
-            {NULL}  // terminator
-        };
-
+    case IDP_CLIENT_SECRET_BASIC:
         EXT_DEBUG(
             "[oidc-access-token] curl -H 'Authorization: %s' -X post -d '%s' "
             "%s\n",
-            schema->auth64, (char *)rqtCtx->userData, idp->wellknown->tokenid);
-        err = httpSendPost(oidcCoreHTTPPool(idp->oidc), idp->wellknown->tokenid,
-                           &dfltOpts, headers, rqtCtx->userData, dataLen,
-                           oidcAccessTokenCB, rqtCtx);
+            schema->auth64, content, idp->wellknown->tokenid);
         break;
-    }
-
-        // reference
-        // https://developers.onelogin.com/openid-connect/api/client-credentials-grant
-        // https://iot-bzh-dev.onelogin.com/ (email not username)
     case IDP_CLIENT_SECRET_POST:
-        dataLen =
-            asprintf((char **)&rqtCtx->userData,
-                     "code=%s&redirect_uri=%s&grant_type=%s&client_id=%s&"
-                     "client_secret=%s",
-                     code, redirectUrl, "client_credentials",
-                     idp->credentials->clientId, idp->credentials->secret);
-
-        httpKeyValT headers[] = {
-            {.tag = "Content-type",
-             .value = "application/x-www-form-urlencoded"},
-            {.tag = "Accept", .value = "application/json"},
-            {NULL}  // terminator
-        };
-
-        EXT_DEBUG("[oidc-access-token] curl -X post -d '%s' %s\n",
-                  (char *)rqtCtx->userData, idp->wellknown->tokenid);
-        err = httpSendPost(oidcCoreHTTPPool(idp->oidc), idp->wellknown->tokenid,
-                           &dfltOpts, headers, rqtCtx->userData, dataLen,
-                           oidcAccessTokenCB, rqtCtx);
+        EXT_DEBUG("[oidc-access-token] curl -X post -d '%s' %s\n", content);
         break;
-
-    default:
-        EXT_DEBUG(
-            "[oidc-auth-unknown] idp=%s unsupported authentication method=%d",
-            idp->uid, idp->wellknown->authMethod);
+    }
+    err =
+        httpSendPost(oidcCoreHTTPPool(idp->oidc), idp->wellknown->tokenid,
+                     &dfltOpts, headers, content, sz, oidcAccessTokenCB, state);
+    if (err) {
+        EXT_WARNING("[idp-oidc] HTTP post returned error %d", err);
         goto OnErrorExit;
     }
-    if (err)
-        goto OnErrorExit;
 
     return 0;
 
 OnErrorExit:
-    if (rqtCtx->userData)
-        free(rqtCtx->userData);
-    free(rqtCtx);
-    afb_hreq_reply_error(hreq, EXT_HTTP_UNAUTHORIZED);
+    oidcStateUnauthorized(state);
+    oidcStateUnRef(state);
     return 1;
 }
 
@@ -506,50 +512,11 @@ OnErrorExit:
 static int oidcLoginCB(struct afb_hreq *hreq, void *ctx)
 {
     oidcIdpT *idp = (oidcIdpT *)ctx;
-    char redirectUrl[EXT_HEADER_MAX_LEN];
-    int err, status;
-
-    // check if wreq as a code
     oidcSessionT *session = oidcSessionOfHttpReq(hreq);
-    const char *uuid = oidcSessionUUID(session);
-    const char *code = afb_hreq_get_argument(hreq, "code");
-    if (code == NULL) {
-        // if no code then set state and redirect to IDP
-        return idpRedirectLogin(idp, hreq, session, idp->wellknown->authorize,
-                                idp->statics->aliasLogin,
-                                idp->credentials->clientId,
-                                idp->wellknown->respondLabel, uuid);
-    }
-
-    // add afb-binder endpoint to login redirect alias
-    status = afb_hreq_make_here_url(hreq, idp->statics->aliasLogin, redirectUrl,
-                                    sizeof(redirectUrl));
-    if (status < 0)
-        goto OnErrorExit;
-
-    // use state to retreive original wreq session uuid and restore original
-    // session before wreqing token
-    const char *oidcState = afb_hreq_get_argument(hreq, "state");
-    if (strcmp(oidcState, uuid)) {
-        EXT_DEBUG(
-            "[oidc-auth-code] missmatch uuid/state state=%s uuid=%s "
-            "(oidcRegisterAlias)",
-            oidcState, uuid);
-        goto OnErrorExit;
-    }
-
-    EXT_DEBUG("[oidc-auth-code] state=%s code=%s (oidcRegisterAlias)",
-              oidcState, code);
-    // wreq authentication token from tempry code
-    err = oidcAccessToken(hreq, idp, redirectUrl, code, session);
-    if (err)
-        goto OnErrorExit;
-
-    return 1;  // we're done (0 would search for an html page)
-
-OnErrorExit:
-    afb_hreq_reply_error(hreq, EXT_HTTP_UNAUTHORIZED);
-    return 1;
+    return idpOnLoginPage(hreq, idp, oidcOnCodeCB, idp->wellknown->authorize,
+                          idp->statics->aliasLogin, idp->credentials->clientId,
+                          idp->wellknown->respondLabel,
+                          oidcSessionUUID(session));
 }
 
 // this check idp code and either wreq profile or redirect to idp login page
