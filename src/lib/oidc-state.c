@@ -117,11 +117,16 @@ void fedidsessionReset(oidcSessionT *session, const oidcProfileT *idpProfile)
     }
 }
 
-void oidcStateUnauthorized(oidcStateT *state)
+static void reply(oidcStateT *state, int hrc, int wrc)
 {
     if (state->hreq)
-        afb_hreq_reply_error(state->hreq, EXT_HTTP_UNAUTHORIZED);
+        afb_hreq_reply_error(state->hreq, hrc);
     if (state->wreq)
-        afb_req_reply(state->wreq, AFB_ERRNO_UNAUTHORIZED, 0, NULL);
+        afb_req_reply(state->wreq, wrc, 0, NULL);
+}
+
+void oidcStateUnauthorized(oidcStateT *state)
+{
+    reply(state, EXT_HTTP_UNAUTHORIZED, AFB_ERRNO_UNAUTHORIZED);
 }
 
