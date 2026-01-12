@@ -528,6 +528,33 @@ int idpRegisterApis(const oidcCoreHdlT *oidc,
     return err;
 }
 
+static int idpMakeState(const oidcIdpT *idp,
+                        oidcSessionT *session,
+                        const char *scope,
+                        oidcStateT **state)
+{
+    // get target LOA and expected scope (if any)
+    int targetLOA = oidcSessionGetTargetLOA(session);
+
+    // search a profile for the target LOA and expected scope
+    const oidcProfileT *profile = idpGetFirstProfile(idp, targetLOA, scope);
+    if (!profile) {
+        // no profile foun exit without trying authentication
+        EXT_WARNING("IDP %s has no profile for LOA %d SCOPE %s",
+                    idp->uid, targetLOA, scope);
+        return 0;
+    }
+
+    // create target state
+    *state = oidcStateCreate(idp, session, profile);
+    if (*state == NULL) {
+        EXT_ERROR("Creation of state failed");
+        return -1;
+    }
+
+    return 1;
+}
+
 int idpRedirectLogin(const oidcIdpT *idp,
                      struct afb_hreq *hreq,
                      oidcSessionT *session,
@@ -541,30 +568,21 @@ int idpRedirectLogin(const oidcIdpT *idp,
     char redirectUrl[EXT_HEADER_MAX_LEN];
     const char *params[21];
 
-    int rc, ipar, targetLOA;
+    int rc, ipar;
     const char *scope;
-    const oidcProfileT *profile;
     oidcStateT *state = NULL;
 
-    // get target LOA and expected scope (if any)
+    // get expected scope (if any)
     scope = afb_hreq_get_argument(hreq, "scope");
-    targetLOA = oidcSessionGetTargetLOA(session);
 
-    // search a profile for the target LOA and expected scope
-    profile = idpGetFirstProfile(idp, targetLOA, scope);
-    if (!profile) {
-        // no profile foun exit without trying authentication
-        EXT_WARNING("no profile found for LOA %d SCOPE %s", targetLOA, scope);
+    // make the target state
+    rc = idpMakeState(idp, session, scope, &state);
+    if (rc == 0) {
         afb_hreq_reply_error(hreq, EXT_HTTP_UNAUTHORIZED);
         return 1;
     }
-
-    // create target state
-    state = oidcStateCreate(idp, session, profile);
-    if (state == NULL) {
-        EXT_ERROR("Creation of state failed");
+    if (rc < 0)
         goto error;
-    }
 
     // prepare redirection URI
     rc = afb_hreq_make_here_url(hreq, redirPath, redirectUrl,
@@ -579,7 +597,7 @@ int idpRedirectLogin(const oidcIdpT *idp,
     params[ipar++] = "state";
     params[ipar++] = oidcSessionUUID(session);
     params[ipar++] = "scope";
-    params[ipar++] = profile->scope;
+    params[ipar++] = oidcStateGetProfile(state)->scope;
     params[ipar++] = "redirect_uri";
     params[ipar++] = redirectUrl;
     if (clientId != NULL) {
@@ -608,7 +626,7 @@ int idpRedirectLogin(const oidcIdpT *idp,
     }
 
     // setup session profile+state
-    oidcSessionSetTargetProfile(session, profile);
+    oidcSessionSetTargetProfile(session, oidcStateGetProfile(state));
     oidcSessionSetTargetState(session, state);
 
     // send the redirect now
