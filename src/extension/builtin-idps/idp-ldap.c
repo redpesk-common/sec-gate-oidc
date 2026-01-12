@@ -45,20 +45,6 @@
 #include "oidc-session.h"
 #include "oidc-utils.h"
 
-// ldap context request handle for callbacks
-typedef struct
-{
-    char *login;
-    char *passwd;
-    char *userdn;
-    httpPoolT *httpPool;
-    json_object *loginJ;
-} ldapRqtCtxT;
-
-// provide dummy default values to oidc callbacks
-static const oidcCredentialsT noCredentials = {};
-static const httpKeyValT noHeaders = {};
-
 typedef struct
 {
     int gidsMax;
@@ -69,6 +55,22 @@ typedef struct
     char *people;
     char *groups;
 } ldapOptsT;
+
+// ldap context request handle for callbacks
+typedef struct
+{
+    char *login;
+    char *passwd;
+    char *userdn;
+    httpPoolT *httpPool;
+    json_object *loginJ;
+    oidcStateT *state;
+    const ldapOptsT *ldapOpts;
+} ldapRqtCtxT;
+
+// provide dummy default values to oidc callbacks
+static const oidcCredentialsT noCredentials = {};
+static const httpKeyValT noHeaders = {};
 
 // dflt_xxxx config.json default options
 static ldapOptsT dfltLdap = {
@@ -97,21 +99,19 @@ static const oidcWellknownT dfltWellknown = {
 
 static void ldapRqtCtxFree(ldapRqtCtxT *ldapRqtCtx)
 {
-    if (ldapRqtCtx->login)
-        free(ldapRqtCtx->login);
-    if (ldapRqtCtx->passwd)
-        free(ldapRqtCtx->passwd);
-    if (ldapRqtCtx->userdn)
-        free(ldapRqtCtx->userdn);
-    if (ldapRqtCtx->loginJ)
-        json_object_put(ldapRqtCtx->loginJ);
+    free(ldapRqtCtx->login);
+    free(ldapRqtCtx->passwd);
+    free(ldapRqtCtx->userdn);
+    json_object_put(ldapRqtCtx->loginJ);
+    oidcStateUnRef(ldapRqtCtx->state);
+    free(ldapRqtCtx);
 }
 
 static httpRqtActionT ldapAccessAttrsCB(const httpRqtT *httpRqt)
 {
-    idpRqtCtxT *idpRqtCtx = (idpRqtCtxT *)httpRqt->userData;
-    ldapRqtCtxT *ldapRqtCtx = (ldapRqtCtxT *)idpRqtCtx->userData;
-    ldapOptsT *ldapOpts = (ldapOptsT *)idpRqtCtx->idp->userData;
+    ldapRqtCtxT *ldapRqtCtx = (ldapRqtCtxT *)httpRqt->userData;
+    idpRqtCtxT *idpRqtCtx = ldapRqtCtx->state;
+    const ldapOptsT *ldapOpts = ldapRqtCtx->ldapOpts;
     int err;
 
     // something when wrong
@@ -177,10 +177,10 @@ OnErrorExit:
 
 // reference
 // https://docs.ldap.com/en/developers/apps/authorizing-oauth-apps#web-application-flow
-static void ldapAccessAttrs(idpRqtCtxT *idpRqtCtx)
+static void ldapAccessAttrs(ldapRqtCtxT *ldapRqtCtx)
 {
-    ldapRqtCtxT *ldapRqtCtx = (ldapRqtCtxT *)idpRqtCtx->userData;
-    ldapOptsT *ldapOpts = (ldapOptsT *)idpRqtCtx->idp->userData;
+    idpRqtCtxT *idpRqtCtx = ldapRqtCtx->state;
+    const ldapOptsT *ldapOpts = ldapRqtCtx->ldapOpts;
 
     const char *curlQuery =
         utilsExpandJson(ldapOpts->groups, ldapRqtCtx->loginJ);
@@ -201,7 +201,7 @@ static void ldapAccessAttrs(idpRqtCtxT *idpRqtCtx)
     EXT_DEBUG("[curl-ldap-attrs] curl -u '%s:my_secret_passwd' '%s'",
               ldapRqtCtx->userdn, curlQuery);
     int err = httpSendGet(ldapRqtCtx->httpPool, curlQuery, &curlOpts, NULL,
-                          ldapAccessAttrsCB, idpRqtCtx);
+                          ldapAccessAttrsCB, ldapRqtCtx);
     if (err)
         goto OnErrorExit;
 
@@ -219,9 +219,9 @@ static httpRqtActionT ldapAccessProfileCB(const httpRqtT *httpRqt)
     static char errorMsg[] =
         "[ldap-fail-user-profile] Fail to get user profile from ldap "
         "(login/passwd ?)";
-    idpRqtCtxT *idpRqtCtx = (idpRqtCtxT *)httpRqt->userData;
-    ldapRqtCtxT *ldapRqtCtx = (ldapRqtCtxT *)idpRqtCtx->userData;
-    ldapOptsT *ldapOpts = (ldapOptsT *)idpRqtCtx->idp->userData;
+    ldapRqtCtxT *ldapRqtCtx = (ldapRqtCtxT *)httpRqt->userData;
+    idpRqtCtxT *idpRqtCtx = ldapRqtCtx->state;
+    const ldapOptsT *ldapOpts = ldapRqtCtx->ldapOpts;
 
     int err, start;
     char *value;
@@ -293,7 +293,7 @@ static httpRqtActionT ldapAccessProfileCB(const httpRqtT *httpRqt)
     }
     // user is ok, let's map user organisation onto security attributes
     if (ldapOpts->groups)
-        ldapAccessAttrs(idpRqtCtx);
+        ldapAccessAttrs(ldapRqtCtx);
     else {
         // query federation ldap groups are handle asynchronously
         err = fedidCheck(idpRqtCtx);
@@ -326,18 +326,19 @@ OnErrorExit:
 
 // check ldap login/passwd scope is unused
 static int ldapAccessProfile(oidcStateT *state,
+                             const oidcIdpT *idp,
                              const char *login,
                              const char *passwd)
 {
     int err;
-    ldapOptsT *ldapOpts = (ldapOptsT *)oidcStateGetIdp(state)->userData;
+    ldapOptsT *ldapOpts = (ldapOptsT *)idp->userData;
 
     // prepare context for curl callbacks
     ldapRqtCtxT *ldapRqtCtx = calloc(1, sizeof(ldapRqtCtxT));
     ldapRqtCtx->login = strdup(login);
     ldapRqtCtx->passwd = strdup(passwd);
-
-    state->userData = (void *)ldapRqtCtx;
+    ldapRqtCtx->state = state;
+    ldapRqtCtx->ldapOpts = ldapOpts;
 
     // place %%login%% with wreq.
     err = rp_jsonc_pack(&ldapRqtCtx->loginJ, "{ss}", "login", login);
@@ -373,7 +374,7 @@ static int ldapAccessProfile(oidcStateT *state,
     EXT_DEBUG("[curl-ldap-profile] curl -u '%s:my_secret_passwd' '%s'\n",
               ldapRqtCtx->userdn, curlQuery);
     err = httpSendGet(ldapRqtCtx->httpPool, curlQuery, &curlOpts, NULL,
-                      ldapAccessProfileCB, state);
+                      ldapAccessProfileCB, ldapRqtCtx);
     if (err)
         goto OnErrorExit;
 
@@ -381,7 +382,6 @@ static int ldapAccessProfile(oidcStateT *state,
 
 OnErrorExit:
     ldapRqtCtxFree(ldapRqtCtx);
-    oidcStateUnRef(state);
     return 1;
 }
 
@@ -425,7 +425,7 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
     // check login password
     oidcStateT *state = oidcStateCreate(idp, session, profile);
     state->wreq = afb_req_addref(wreq);
-    err = ldapAccessProfile(state, login, passwd);
+    err = ldapAccessProfile(state, idp, login, passwd);
     if (err)
         goto OnErrorExit;
 
@@ -439,43 +439,33 @@ OnErrorExit:
 }
 
 // when call with no login/passwd display form otherwise try to log user
-static int ldapLoginCB(struct afb_hreq *hreq, void *ctx)
+static int ldapOnCredsCB(struct afb_hreq *hreq,
+                         const oidcIdpT *idp,
+                         oidcSessionT *session,
+                         oidcStateT *state)
 {
-    oidcIdpT *idp = (oidcIdpT *)ctx;
-    int err, status;
-
     // check if wreq as a code
     const char *login = afb_hreq_get_argument(hreq, "login");
     const char *passwd = afb_hreq_get_argument(hreq, "passwd");
-    oidcSessionT *session = oidcSessionOfHttpReq(hreq);
 
     // if no code then set state and redirect to IDP
-    if (!login || !passwd) {
-        return idpRedirectLogin(idp, hreq, session, idp->wellknown->tokenid,
-                                idp->statics->aliasLogin, NULL, NULL, NULL);
+    if (login != NULL && passwd != NULL) {
+        int err = ldapAccessProfile(state, idp, login, passwd);
+        if (err == 0)
+            return 1;  // we're done
     }
 
-    // we have a code check state to assert that the response was generated
-    // by us then wreq authentication token
-    const char *state = afb_hreq_get_argument(hreq, "state");
-    if (!state || strcmp(state, oidcSessionUUID(session)))
-        goto OnErrorExit;
-
-    EXT_DEBUG("[ldap-auth-code] login=%s (ldapLoginCB)", login);
-    if (oidcSessionGetTargetProfile(session) == NULL)
-        goto OnErrorExit;
-
-    // Check received login/passwd
-    err = ldapAccessProfile(oidcSessionGetTargetState(session), login, passwd);
-    if (err)
-        goto OnErrorExit;
-
-    return 1;  // we're done
-
-OnErrorExit:
     afb_hreq_redirect_to(hreq, idp->wellknown->tokenid, HREQ_QUERY_INCL,
                          HREQ_REDIR_TMPY);
     return 1;
+}
+
+// when call with no login/passwd display form otherwise try to log user
+static int ldapLoginCB(struct afb_hreq *hreq, void *ctx)
+{
+    const oidcIdpT *idp = (const oidcIdpT *)ctx;
+    return idpOnLoginPage(hreq, idp, ldapOnCredsCB, idp->wellknown->tokenid,
+                          idp->statics->aliasLogin, NULL, NULL, NULL);
 }
 
 static int ldapRegisterVerbs(const oidcIdpT *idp, struct afb_api_v4 *sgApi)
