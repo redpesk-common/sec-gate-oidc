@@ -181,11 +181,6 @@ static void onSocialCheckResult(void *closure,
         oidcSessionSetActualLOA(session, profile->loa);
         oidcSessionSetActualProfile(session, profile);
         oidcSessionAutoValidate(session);
-
-        // if idp request get userdata keep track of them (needed by pcscd to
-        // kill monitoring thread)
-        if (state->userData)
-            oidcSessionSetOpaqueData(session, state->userData);
     }
 
     // free user info handle and redirect to initial targeted url

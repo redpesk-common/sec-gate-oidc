@@ -46,7 +46,6 @@ struct oidcStateS {
     fedUserRawT* fedUser;
     char* token;
     char* bearer;
-    void* userData;
 };
 
 void fedidsessionReset(oidcSessionT* session, const oidcProfileT* idpProfile);

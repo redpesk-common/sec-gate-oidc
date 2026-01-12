@@ -322,7 +322,6 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
                 free(copy);
             }
             // try do federate user
-            idpRqtCtx->userData = (void *)handle;
             err = fedidCheck(idpRqtCtx);
             if (err)
                 goto OnErrorExit;
