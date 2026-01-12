@@ -438,7 +438,7 @@ OnErrorExit:
     afb_req_v4_reply_hookable(wreq, -1, 1, &reply);
 }
 
-// when call with no login/passwd display form otherwise try to log user
+// Called when login page got a valid state
 static int ldapOnCredsCB(struct afb_hreq *hreq,
                          const oidcIdpT *idp,
                          oidcSessionT *session,
@@ -460,7 +460,7 @@ static int ldapOnCredsCB(struct afb_hreq *hreq,
     return 1;
 }
 
-// when call with no login/passwd display form otherwise try to log user
+// Called when on login page
 static int ldapLoginCB(struct afb_hreq *hreq, void *ctx)
 {
     const oidcIdpT *idp = (const oidcIdpT *)ctx;
