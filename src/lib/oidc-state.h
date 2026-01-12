@@ -96,3 +96,6 @@ static inline const char* oidcStateGetToken(oidcStateT* state) {
 static inline const char* oidcStateGetBearer(oidcStateT* state) {
     return state->bearer;
 }
+
+void oidcStateUnauthorized(oidcStateT* states);
+
