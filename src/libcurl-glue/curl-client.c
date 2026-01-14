@@ -256,6 +256,7 @@ static int multiAction(httpRqtHndlT *hndl, int sock, int action)
                 fprintf(stderr, "[curl-client] multiAction: done\n");
 
             rqtDone(hndl, easy, status);
+            return 0;
         }
     }
 }
