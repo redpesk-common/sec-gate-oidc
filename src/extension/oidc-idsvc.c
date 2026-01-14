@@ -174,7 +174,7 @@ static json_object *idpQueryList(afb_req_t wreq, const char **idps)
     const oidcAliasT *alias = oidcSessionGetAlias(session);
 
     // build IDP list with corresponding scope for requested LOA
-    idpsJ = oidcCoreGetProfilsForLOA(oidc, 0, idps,
+    idpsJ = oidcCoreGetProfilesForLOA(oidc, 0, idps,
                                      1);  // TODO values of loa and noslave?
     if (alias)
         rp_jsonc_pack(&aliasJ, "{ss ss* ss si}", "uid", alias->uid, "info",
@@ -569,12 +569,12 @@ static void idpQueryConf(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 
     // build IDP list with corresponding scope for requested LOA
     if (alias) {
-        idpsJ = oidcCoreGetProfilsForLOA(oidc, alias->loa, NULL, 0);
+        idpsJ = oidcCoreGetProfilesForLOA(oidc, alias->loa, NULL, 0);
         rp_jsonc_pack(&aliasJ, "{ss ss* ss si}", "uid", alias->uid, "info",
                       alias->info, "url", alias->url, "loa", alias->loa);
     }
     else {
-        idpsJ = oidcCoreGetProfilsForLOA(oidc, 0, NULL, 0);
+        idpsJ = oidcCoreGetProfilesForLOA(oidc, 0, NULL, 0);
         aliasJ = NULL;
     }
 

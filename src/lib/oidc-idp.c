@@ -169,7 +169,7 @@ OnErrorExit:
     return NULL;
 }
 
-static int idpParseOneProfil(oidcIdpT *idp,
+static int idpParseOneProfile(oidcIdpT *idp,
                              json_object *profileJ,
                              oidcProfileT *profile)
 {
@@ -183,7 +183,7 @@ static int idpParseOneProfil(oidcIdpT *idp,
     if (err) {
         EXT_CRITICAL(
             "[idp-profile-error] idp=%s parsing fail expect: "
-            "uid,loa,scope,label[s],timeout (idpParseOneProfil)",
+            "uid,loa,scope,label[s],timeout (idpParseOneProfile)",
             idp->uid);
         goto OnErrorExit;
     }
@@ -193,7 +193,7 @@ OnErrorExit:
     return 1;
 }
 
-static const oidcProfileT *idpParseProfils(oidcIdpT *idp,
+static const oidcProfileT *idpParseProfiles(oidcIdpT *idp,
                                            json_object *profilesJ,
                                            const oidcProfileT *defaults)
 {
@@ -213,7 +213,7 @@ static const oidcProfileT *idpParseProfils(oidcIdpT *idp,
 
         for (int idx = 0; idx < count; idx++) {
             json_object *profileJ = json_object_array_get_idx(profilesJ, idx);
-            err = idpParseOneProfil(idp, profileJ, &profile[idx]);
+            err = idpParseOneProfile(idp, profileJ, &profile[idx]);
             if (err)
                 goto OnErrorExit;
         }
@@ -221,7 +221,7 @@ static const oidcProfileT *idpParseProfils(oidcIdpT *idp,
 
     case json_type_object:
         profile = calloc(2, sizeof(oidcProfileT));
-        err = idpParseOneProfil(idp, profilesJ, &profile[0]);
+        err = idpParseOneProfile(idp, profilesJ, &profile[0]);
         if (err)
             goto OnErrorExit;
         break;
@@ -343,7 +343,7 @@ int idpParseOidcConfig(oidcIdpT *idp,
     idp->credentials =
         idpParseCredentials(idp, credentialsJ, defaults->credentials);
     idp->statics = idpParsestatic(idp, staticJ, defaults->statics);
-    idp->profiles = idpParseProfils(idp, profilesJ, defaults->profiles);
+    idp->profiles = idpParseProfiles(idp, profilesJ, defaults->profiles);
     idp->wellknown = idpParseWellknown(idp, wellknownJ, defaults->wellknown);
     idp->headers = idpParseHeaders(idp, headersJ, defaults->headers);
 

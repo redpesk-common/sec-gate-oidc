@@ -313,7 +313,7 @@ OnErrorExit:
 // Return a JSON array listing the IDP matching the criterium.
 // [ {uid, info, logo, client-id, login-url,
 //     profiles: [ {uid, info, scope, loa} ... ] } ... ]
-json_object *oidcCoreGetProfilsForLOA(const oidcCoreHdlT *oidc,
+json_object *oidcCoreGetProfilesForLOA(const oidcCoreHdlT *oidc,
                                       int loa,
                                       const char **idps,
                                       int noslave)

@@ -69,7 +69,7 @@ int oidcCoreDeclareApis(oidcCoreHdlT* oidc,
                         struct afb_apiset* call_set);
 int oidcCoreDeclareHTTP(oidcCoreHdlT* oidc, struct afb_hsrv* hsrv);
 
-json_object* oidcCoreGetProfilsForLOA(const oidcCoreHdlT* oidc,
+json_object* oidcCoreGetProfilesForLOA(const oidcCoreHdlT* oidc,
                                       int loa,
                                       const char** idps,
                                       int noslave);
