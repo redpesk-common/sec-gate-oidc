@@ -97,6 +97,8 @@ void fedidsessionReset(oidcSessionT *session, const oidcProfileT *idpProfile)
               oidcSessionUUID(session));
 
     if (idpProfile) {
+/*
+  TODO
         if (idpProfile->idp->plugin && idpProfile->idp->plugin->resetSession) {
             void *ctx = oidcSessionGetOpaqueData(session);
             if (ctx != NULL) {
@@ -104,6 +106,7 @@ void fedidsessionReset(oidcSessionT *session, const oidcProfileT *idpProfile)
                 oidcSessionSetOpaqueData(session, NULL);
             }
         }
+*/
 
         const oidGlobalsT *globals = oidcCoreGlobals(idpProfile->idp->oidc);
         count = oidcSessionEventPush(

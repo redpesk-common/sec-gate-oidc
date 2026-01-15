@@ -91,11 +91,3 @@ int oidcSessionHasAttribute(oidcSessionT* session, const char* value);
 const fedUserRawT* oidcSessionGetUser(oidcSessionT* session);
 void oidcSessionSetFedUser(oidcSessionT* session, fedUserRawT* fedUser);
 
-void* oidcSessionGetOpaqueData(oidcSessionT* session);
-void oidcSessionSetOpaqueData(oidcSessionT* session, void* data);
-
-typedef void (*oidcSessionFreeDataCB)(void* data);
-void oidcSessionSetActualData(oidcSessionT* session,
-                              void* data,
-                              oidcSessionFreeDataCB freecb);
-void* oidcSessionGetActualData(oidcSessionT* session);
