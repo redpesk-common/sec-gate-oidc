@@ -243,6 +243,7 @@ OnErrorExit:
 // call when github return a valid access_token
 static httpRqtActionT githubAccessTokenCB(const httpRqtT *httpRqt)
 {
+    json_object *responseJ = NULL;
     oidcStateT *state = (oidcStateT *)httpRqt->userData;
     const char *accessTok;
 
@@ -255,14 +256,13 @@ static httpRqtActionT githubAccessTokenCB(const httpRqtT *httpRqt)
     }
 
     // we should have a valid token or something when wrong
-    json_object *responseJ = json_tokener_parse(httpRqt->body.buffer);
+    responseJ = json_tokener_parse(httpRqt->body.buffer);
     if (!responseJ) {
         EXT_ERROR("[idp-github] Can't parse response");
         EXT_INFO("[idp-github] response is: %s", httpRqt->body.buffer);
         goto OnErrorExit;
     }
     accessTok = get_object_string(responseJ, "access_token");
-    json_object_put(responseJ);
     if (accessTok == NULL) {
         EXT_ERROR("[idp-github] No access token in response");
         goto OnErrorExit;
@@ -276,10 +276,12 @@ static httpRqtActionT githubAccessTokenCB(const httpRqtT *httpRqt)
 
     // we have our wreq token let's try to get user profile
     githubUserGetByToken(state);
+    json_object_put(responseJ);
     return HTTP_HANDLE_FREE;
 
 OnErrorExit:
     afb_hreq_reply_error(oidcStateGetHttpReq(state), EXT_HTTP_UNAUTHORIZED);
+    json_object_put(responseJ);
     return HTTP_HANDLE_FREE;
 }
 
