@@ -43,7 +43,8 @@ static void glueOnSocketCB(struct ev_fd *efd,
     if (revents & EV_FD_ERR)
         action |= CURL_CSELECT_ERR;
 
-    httpOnSocketCB(httpRqtHndl, sock, action);
+    if (action != 0)
+	    httpOnSocketCB(httpRqtHndl, sock, action);
 }
 
 // create libafb efd event and attach http processing callback to sock fd
@@ -55,6 +56,8 @@ static int glueSetSocketCB(httpRqtHndlT *httpRqtHndl,
     struct ev_fd **pefd = (struct ev_fd **)psockdata;
     struct ev_fd *efd = *pefd;  // on 1st call efd is null
     uint32_t events = 0;
+    struct ev_mgr *mgr;
+    int rc = 0;
 
     // map CURL events with system events
     switch (what) {
@@ -73,20 +76,27 @@ static int glueSetSocketCB(httpRqtHndlT *httpRqtHndl,
     }
 
     // end or error
-    if (events == 0) {
-        if (efd != NULL) {
-            ev_fd_unref(efd);
-            *pefd = NULL;
+    mgr = afb_ev_mgr_get_for_me();
+    if (mgr == NULL)
+        rc = -1;
+    else {
+        if (events == 0) {
+            if (efd != NULL) {
+                ev_fd_unref(efd);
+                *pefd = NULL;
+            }
+            rc = -(what != CURL_POLL_REMOVE);
         }
-        return -(what != CURL_POLL_REMOVE);
+        else {
+            // set the efd or create it
+            if (efd != NULL)
+                ev_fd_set_events(efd, events);
+            else if (ev_mgr_add_fd(mgr, pefd, sock, events, glueOnSocketCB, httpRqtHndl, 0, 0) < 0)
+                rc = -1;
+        }
+        afb_ev_mgr_release_for_me();
     }
-    // set the efd or create it
-    if (efd != NULL)
-        ev_fd_set_events(efd, events);
-    else if (afb_ev_mgr_add_fd(pefd, sock, events, glueOnSocketCB, httpRqtHndl,
-                               0, 1) < 0)
-        return -1;
-    return 0;
+    return rc;
 }
 
 // map libafb ontimer with multi version
@@ -103,18 +113,25 @@ static int glueSetTimerCB(httpRqtHndlT *httpRqtHndl,
 {
     struct ev_timer **ptim = (struct ev_timer **)ptimedata;
     struct ev_timer *tim = *ptim;  // on 1st call efd is null
+    struct ev_mgr *mgr;
+    int rc = 0;
 
-    if (tim) {
-        ev_timer_unref(tim);
-        *ptim = NULL;
-    }
-    if (timeout >= 0) {
-        if (afb_ev_mgr_add_timer(ptim, 0, (time_t)timeout / 1000,
+    *ptim = NULL;
+    mgr = afb_ev_mgr_get_for_me();
+    if (mgr == NULL)
+        rc = -1;
+    else {
+        if (timeout >= 0) {
+            if (ev_mgr_add_timer(mgr, ptim, 0, (time_t)timeout / 1000,
                                  (unsigned)timeout % 1000, 1, 0, 0,
                                  glueOnTimerCB, httpRqtHndl, 0) < 0)
-            return -1;
+                rc = -1;
+        }
+        if (tim != NULL)
+            ev_timer_unref(tim);
+        afb_ev_mgr_release_for_me();
     }
-    return 0;
+    return rc;
 }
 
 static const httpCallbacksT libafbCbs = {
