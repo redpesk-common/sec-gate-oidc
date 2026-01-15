@@ -528,12 +528,10 @@ int idpRegisterApis(const oidcCoreHdlT *oidc,
 
 static int idpMakeState(const oidcIdpT *idp,
                         oidcSessionT *session,
+                        int targetLOA,
                         const char *scope,
                         oidcStateT **state)
 {
-    // get target LOA and expected scope (if any)
-    int targetLOA = oidcSessionGetTargetLOA(session);
-
     // search a profile for the target LOA and expected scope
     const oidcProfileT *profile = idpGetFirstProfile(idp, targetLOA, scope);
     if (!profile) {
@@ -566,15 +564,16 @@ int idpRedirectLogin(const oidcIdpT *idp,
     char redirectUrl[EXT_HEADER_MAX_LEN];
     const char *params[21];
 
-    int rc, ipar;
+    int rc, ipar, targetLOA;
     const char *scope;
     oidcStateT *state = NULL;
 
-    // get expected scope (if any)
+    // get target LOA and expected scope (if any)
+    targetLOA = oidcSessionGetTargetLOA(session);
     scope = afb_hreq_get_argument(hreq, "scope");
 
     // make the target state
-    rc = idpMakeState(idp, session, scope, &state);
+    rc = idpMakeState(idp, session, targetLOA, scope, &state);
     if (rc == 0) {
         afb_hreq_reply_error(hreq, EXT_HTTP_UNAUTHORIZED);
         return 1;
@@ -698,4 +697,26 @@ int idpOnLoginPage(struct afb_hreq *hreq,
 error:
     afb_hreq_reply_error(hreq, EXT_HTTP_SERVER_ERROR);
     return 1;
+}
+
+int idpOnLoginRequest(const oidcIdpT *idp,
+                      struct afb_req_v4 *wreq,
+                      int targetLOA,
+                      const char *scope,
+                      oidcSessionT **session,
+                      oidcStateT **state)
+{
+    int rc;
+    *session = oidcSessionOfReq(wreq);
+    *state = NULL;
+
+    // make the target state
+    rc = idpMakeState(idp, *session, targetLOA, scope, state);
+    if (rc == 0)
+        afb_req_v4_reply_hookable(wreq, AFB_ERRNO_UNAUTHORIZED, 0, NULL);
+    else if (rc < 0)
+        afb_req_v4_reply_hookable(wreq, AFB_ERRNO_OUT_OF_MEMORY, 0, NULL);
+    else
+        oidcStateSetReq(*state, wreq);
+    return rc;
 }

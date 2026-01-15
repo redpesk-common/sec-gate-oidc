@@ -165,3 +165,11 @@ int idpOnLoginPage(struct afb_hreq* hreq,
                    const char* clientId,
                    const char* responseType,
                    const char* nonce);
+
+int idpOnLoginRequest(const oidcIdpT *idp,
+                       struct afb_req_v4 *wreq,
+                       int targetLOA,
+                       const char *scope,
+                       oidcSessionT **session,
+                       oidcStateT **state);
+
