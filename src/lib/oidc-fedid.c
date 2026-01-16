@@ -113,7 +113,7 @@ static void fedidLoginUser(oidcStateT *state,
     oidcSessionSetFedSocial(session, state->fedSocial);
 
     // everything looks good let's return user to original page
-    alias = oidcSessionGetAlias(session);
+    alias = oidcSessionGetTargetPage(session);
 
     // user successfully loggin set session loa to current idp login profile
     EXT_DEBUG("[oidc-fedid] setting actual profile %s/%s/%d",

@@ -63,7 +63,7 @@ static int aliasRedirectLogin(struct afb_hreq *hreq,
                               oidcAliasT *alias,
                               oidcSessionT *session)
 {
-    oidcSessionSetAlias(session, alias);
+    oidcSessionSetTargetPage(session, alias);
     return oidcCoreRedirectLogin(alias->oidc, hreq);
 }
 
@@ -74,7 +74,7 @@ static int aliasRedirectTimeout(struct afb_hreq *hreq,
                                 const oidcProfileT *profile)
 {
     const oidcIdpT *idp = profile->idp;
-    oidcSessionSetAlias(session, alias);
+    oidcSessionSetTargetPage(session, alias);
     return idpRedirectLogin(
         idp, hreq, session, idp->statics->aliasLogin, idp->statics->aliasLogin,
         idp->credentials->clientId, idp->wellknown->respondLabel, NULL);

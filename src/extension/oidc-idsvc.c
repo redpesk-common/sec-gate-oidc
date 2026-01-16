@@ -135,7 +135,7 @@ static void replyIdpList(afb_req_t wreq, const char **idps, int loa, int noslave
 
     // retrieve oidc config from current alias cookie
     oidcSessionT *session = oidcSessionOfReq(wreq);
-    const oidcAliasT *alias = oidcSessionGetAlias(session);
+    const oidcAliasT *alias = oidcSessionGetTargetPage(session);
 
     // build IDP list with corresponding scope for requested LOA
     if (alias != NULL) {
@@ -364,7 +364,7 @@ static void userRegisterCB(void *ctx,
     // return destination alias
     oidcSessionT *session = oidcSessionOfReq(wreq);
     const oidcProfileT *profile = oidcSessionGetTargetProfile(session);
-    const oidcAliasT *alias = oidcSessionGetAlias(session);
+    const oidcAliasT *alias = oidcSessionGetTargetPage(session);
 
     // set current LOA ????
     oidcSessionSetActualLOA(session, profile->loa);
@@ -393,7 +393,7 @@ static void userRegister(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     session = oidcSessionOfReq(wreq);
     fedSocial = oidcSessionGetFedSocial(session);
     profile = oidcSessionGetTargetProfile(session);
-    alias = oidcSessionGetAlias(session);
+    alias = oidcSessionGetTargetPage(session);
     if (profile == NULL || alias == NULL || fedSocial == NULL)
         return replyBadState(wreq);
 

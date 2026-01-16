@@ -43,7 +43,7 @@ struct oidcSessionS
     int nowset;
     int loa;
     const char *uuid;
-    const oidcAliasT *alias;
+    const oidcAliasT *targetPage;
     const oidcProfileT *targetProfile;
     const oidcProfileT *actualProfile;
     oidcStateT *targetState;
@@ -198,7 +198,7 @@ void oidcSessionSetNextCheck(oidcSessionT *session, long millisec)
 
 int oidcSessionGetTargetLOA(oidcSessionT *session)
 {
-    return session->alias ? session->alias->loa : 0;
+    return session->targetPage ? session->targetPage->loa : 0;
 }
 
 int oidcSessionGetActualLOA(oidcSessionT *session)
@@ -211,14 +211,14 @@ void oidcSessionSetActualLOA(oidcSessionT *session, int LOA)
     session->loa = LOA;
 }
 
-const oidcAliasT *oidcSessionGetAlias(oidcSessionT *session)
+const oidcAliasT *oidcSessionGetTargetPage(oidcSessionT *session)
 {
-    return session->alias;
+    return session->targetPage;
 }
 
-void oidcSessionSetAlias(oidcSessionT *session, const oidcAliasT *alias)
+void oidcSessionSetTargetPage(oidcSessionT *session, const oidcAliasT *alias)
 {
-    session->alias = alias;
+    session->targetPage = alias;
 }
 
 const oidcProfileT *oidcSessionGetTargetProfile(oidcSessionT *session)

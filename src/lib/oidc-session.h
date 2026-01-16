@@ -60,8 +60,8 @@ int oidcSessionGetTargetLOA(oidcSessionT* session);
 int oidcSessionGetActualLOA(oidcSessionT* session);
 void oidcSessionSetActualLOA(oidcSessionT* session, int LOA);
 
-const oidcAliasT* oidcSessionGetAlias(oidcSessionT* session);
-void oidcSessionSetAlias(oidcSessionT* session, const oidcAliasT* alias);
+const oidcAliasT* oidcSessionGetTargetPage(oidcSessionT* session);
+void oidcSessionSetTargetPage(oidcSessionT* session, const oidcAliasT* alias);
 
 const oidcProfileT* oidcSessionGetTargetProfile(oidcSessionT* session);
 void oidcSessionSetTargetProfile(oidcSessionT* session,
