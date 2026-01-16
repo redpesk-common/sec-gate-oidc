@@ -435,7 +435,6 @@ static void userFederateCB(void *ctx,
     afb_data_t data = ctx;
     fedUserRawT *fedUser = afb_data_ro_pointer(data);
     afb_data_t reply;
-    const oidcProfileT *profile;
     json_object *responseJ;
     oidcSessionT *session;
     int rc;
@@ -451,22 +450,14 @@ static void userFederateCB(void *ctx,
         return replyInvalid(wreq);
     }
 
-    // get used IDP profile to access oidc wellknown urls
-    session = oidcSessionOfReq(wreq);
-    profile = oidcSessionGetTargetProfile(session);
-    if (!profile) {
-        EXT_INFO("no recorded IDP");
-        return replyBadState(wreq);
-    }
-
     // copy current user social and registration data for further federation
     // request
+    session = oidcSessionOfReq(wreq);
     oidcSessionSetFedIdLink(session, fedUser->pseudo, fedUser->email);
     oidcSessionSetFedIdLinkRequest(session, FEDID_LINK_REQUESTED);
 
     // Send the url of the federation
-    rc = rp_jsonc_pack(&responseJ, "{ss}", "target",
-                        oidcCoreGlobals(profile->idp->oidc)->fedlinkUrl);
+    rc = rp_jsonc_pack(&responseJ, "{ss}", "target", oidcCoreGlobals(wreq2oidc(wreq))->fedlinkUrl);
     if (rc >= 0)
         rc = makeJSONData(&reply, responseJ);
     if (rc < 0)
@@ -479,16 +470,6 @@ static void userFederateCB(void *ctx,
 static void userFederate(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 {
     afb_data_t data;
-    oidcSessionT *session;
-    const oidcProfileT *profile;
-
-    // check the state
-    session = oidcSessionOfReq(wreq);
-    profile = oidcSessionGetTargetProfile(session);
-    if (!profile) {
-        EXT_INFO("no recorded IDP");
-        return replyBadState(wreq);
-    }
 
     // get first argument and check the request
     if (argc != 1 || afb_req_param_convert(wreq, 0, fedUserObjType, &data) < 0)
@@ -519,7 +500,7 @@ static void sessionReset(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 
     fedidsessionReset(session, profile);
 
-    const oidGlobalsT *globals = oidcCoreGlobals(profile->idp->oidc);
+    const oidGlobalsT *globals = oidcCoreGlobals(wreq2oidc(wreq));
     rc = rp_jsonc_pack(&responseJ, "{ss ss* ss*}", "home", globals->homeUrl != NULL ? globals->homeUrl : "/",
                   "login", globals->loginUrl, "error", globals->errorUrl);
     if (rc >= 0)
