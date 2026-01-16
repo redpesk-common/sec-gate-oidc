@@ -10,23 +10,22 @@ function addOneIdp (div_box, idp) {
 
     // add icon
     var logo= document.createElement('img');
-    idp_box.appendChild(logo)
+    idp_box.appendChild(logo);
     logo.src= idp.logo;
     logo.className= "sgate_logo";
 
     // add login button
+    var tourl = idp["login-url"];
     var button = document.createElement("button");
-    idp_box.appendChild(button)
+    idp_box.appendChild(button);
     button.className= "sgate_button";
     button.innerText= idp.uid;
-    button.onclick= function() {
-        location.href= idp["login-url"];
-    }
+    button.onclick= function() { location.href= tourl; }
 
     // add idp info text
     var info= document.createElement('span');
     info.className= "sgate_info";
-    idp_box.appendChild(info)
+    idp_box.appendChild(info);
     info.innerHTML = idp.info;
 }
 
@@ -56,12 +55,12 @@ function getConfigIdps() {
     .then(function (res) {
         var div_box;
         var sgate_div= document.getElementById("sgate_data");
-        sgate_div.className="sgate_box";
 
         if (sgate_div === null) {
             window.alert("getConfigIdps() require <div id='sgate_data'> in page");
             return;
         }
+        sgate_div.className="sgate_box";
 
         // div box is recreated/deleted each time we get/lost binding connection
         sgate_box = document.getElementById("sgate_box");
@@ -76,7 +75,7 @@ function getConfigIdps() {
             div_box= document.createElement("div");
             div_box.id="alias_json";
             div_box.className="sgate_extra";
-            div_box.innerText= "Request: " + JSON.stringify(res.response.alias);
+            div_box.innerText= "Target: " + JSON.stringify(res.response.alias);
             sgate_box.appendChild(div_box);
         }
 
