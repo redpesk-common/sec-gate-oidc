@@ -108,18 +108,18 @@ static int pamAccessToken(const oidcIdpT *idp,
     // bits, AES_KEY *key); AES_cbc_encrypt((unsigned char *)&ticket, enc_out,
     // encslength, &enc_key, iv_enc, AES_ENCRYPT);
 
-    // pam challenge callback to retreive user input (e.g. passwd)
+    // pam challenge callback to retrieve user input (e.g. passwd)
     struct pam_conv conversion = {
         .conv = pamChalengeCB,
         .appdata_ptr = (void *)passwd,
     };
 
-    // login/passwd match let's retreive gids
+    // login/passwd match let's retrieve gids
     struct passwd *pw = getpwnam(login);
     if (pw == NULL || pw->pw_uid < dfltOpts.uidMin)
         goto OnErrorExit;
 
-    // if passwd check passwd and retreive groups when login/passwd match
+    // if passwd check passwd and retrieve groups when login/passwd match
     if (passwd) {
         // init pam transaction using scope as pam application
         status = pam_start(profile->scope, login, &conversion, &pamh);
@@ -135,7 +135,7 @@ static int pamAccessToken(const oidcIdpT *idp,
         fedUserRawT *fedUser = fedUserCreate(pw->pw_name, NULL, pw->pw_gecos,
                                              dfltOpts.avatarAlias, NULL, 0);
 
-        // retreive groups list and add them to fedSocial labels list
+        // retrieve groups list and add them to fedSocial labels list
         err = getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups);
         if (err < 0) {
             EXT_CRITICAL("[pam-auth-gids] opts{'gids':%d} too small",

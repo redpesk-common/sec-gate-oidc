@@ -533,7 +533,7 @@ static int oidcLogoutCB(struct afb_hreq *hreq, void *ctx)
     sidMapT *sidMap;
     int err;
 
-    // retreive nonce from tokenid to access targetted session
+    // retrieve nonce from tokenid to access targetted session
     const char *tokenId = afb_hreq_get_argument(hreq, "logout_token");
     json_object *fedIdJ = oidcUserGetByJwt(schema, (char *)tokenId);
     if (!fedIdJ)
@@ -594,7 +594,7 @@ OnErrorExit:
     return 1;
 }
 
-// request IDP wellknown endpoint and retreive config
+// request IDP wellknown endpoint and retrieve config
 static httpRqtActionT oidcDiscoJwksCB(const httpRqtT *httpRqt)
 {
     oidcSchemaT *schema = (oidcSchemaT *)httpRqt->userData;
@@ -622,7 +622,7 @@ OnErrorExit:
     return HTTP_HANDLE_FREE;
 }
 
-// request IDP wellknown endpoint and retreive config
+// request IDP wellknown endpoint and retrieve config
 static httpRqtActionT oidcDiscoveryCB(const httpRqtT *httpRqt)
 {
     oidcIdpT *idp = (oidcIdpT *)httpRqt->userData;

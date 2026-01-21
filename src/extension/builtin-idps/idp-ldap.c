@@ -196,7 +196,7 @@ static void ldapAccessAttrs(ldapRqtCtxT *ldapRqtCtx)
         .password = ldapRqtCtx->passwd,
     };
 
-    // asynchronous wreq to LDAP to check passwd and retreive user groups
+    // asynchronous wreq to LDAP to check passwd and retrieve user groups
     EXT_DEBUG("[curl-ldap-attrs] curl -u '%s:my_secret_passwd' '%s'",
               ldapRqtCtx->userdn, curlQuery);
     int err = httpSendGet(ldapRqtCtx->httpPool, curlQuery, &curlOpts, NULL,
@@ -369,7 +369,7 @@ static int ldapAccessProfile(oidcStateT *state,
         .timeout = (long)ldapOpts->timeout,
     };
 
-    // asynchronous wreq to LDAP to check passwd and retreive user groups
+    // asynchronous wreq to LDAP to check passwd and retrieve user groups
     EXT_DEBUG("[curl-ldap-profile] curl -u '%s:my_secret_passwd' '%s'\n",
               ldapRqtCtx->userdn, curlQuery);
     err = httpSendGet(ldapRqtCtx->httpPool, curlQuery, &curlOpts, NULL,

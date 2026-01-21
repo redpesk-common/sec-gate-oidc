@@ -506,7 +506,7 @@ int pcscCardCheckAtr(pcscHandleT *handle)
             handle->readerName);
         goto OnErrorExit;
     }
-    // use status to retreive smart cart ATR
+    // use status to retrieve smart cart ATR
     rv = SCardStatus(handle->hCard, readerName, &readerLen, &readerState,
                      &handle->activeProtocol, atrData, &atrLen);
     if (rv != SCARD_S_SUCCESS) {
@@ -635,7 +635,7 @@ static void *pcscMonitorThread(void *ptr)
                 // update pcsc handle status change
                 rgReaderStates.dwCurrentState = rgReaderStates.dwEventState;
 
-                // card was inserted retreive uuid/atr
+                // card was inserted retrieve uuid/atr
                 if (rgReaderStates.dwEventState & SCARD_STATE_PRESENT) {
                     rv = SCardConnect(handle->hContext, handle->readerName,
                                       SCARD_SHARE_SHARED,

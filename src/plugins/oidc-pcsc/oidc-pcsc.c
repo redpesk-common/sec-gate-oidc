@@ -431,7 +431,7 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
                    scope, targetLOA);
         goto OnErrorExit;
     }
-    // store working profile to retreive attached loa and role filter if login
+    // store working profile to retrieve attached loa and role filter if login
     // succeeded
     oidcSessionSetTargetProfile(session, profile);
 
