@@ -49,17 +49,7 @@
 static void fedidEnd(oidcStateT *state, int status, const char *url)
 {
     EXT_DEBUG("[oidc-fedid] end %d redirect to %s", status, url);
-    if (state->hreq) {
-        char buffer[EXT_URL_MAX_LEN];
-        if (afb_hreq_make_here_url(state->hreq, url, buffer, sizeof(buffer)) >= 0)
-            url = buffer;
-        afb_hreq_redirect_to(state->hreq, url, HREQ_QUERY_EXCL, HREQ_REDIR_TMPY);
-    }
-    if (state->wreq) {
-        struct afb_data *data;
-        afb_data_create_copy(&data, &afb_type_predefined_stringz, url, 1 + strlen(url));
-        afb_req_v4_reply_hookable(state->wreq, status, 1, &data);
-    }
+    oidcStateRedirect(state, status, url);
     oidcStateUnRef(state);
 }
 
@@ -68,7 +58,7 @@ static void fedidError(oidcStateT *state)
 {
     EXT_NOTICE("[oidc-fedid] (hoops!!!) internal error");
     fedidEnd(state, AFB_ERRNO_INTERNAL_ERROR,
-            oidcCoreGlobals(state->idp->oidc)->errorUrl);
+            oidcStateGetGlobals(state)->errorUrl);
 }
 
 /*
@@ -85,14 +75,14 @@ static void fedidNewUser(oidcStateT *state,
 
     // fedkey not found let's store social authority profile into session
     // and redirect user on userprofil creation
-    oidcSessionSetFedUser(session, state->fedUser);
-    oidcSessionSetFedSocial(session, state->fedSocial);
+    oidcSessionSetFedUser(session, oidcStateGetUser(state));
+    oidcSessionSetFedSocial(session, oidcStateGetSocial(state));
     if (profile->slave) {
-        oidcSessionSetFedIdUser(session, state->fedUser);
-        targetUrl = oidcCoreGlobals(state->idp->oidc)->fedlinkUrl;
+        oidcSessionSetFedIdUser(session, oidcStateGetUser(state));
+        targetUrl = oidcStateGetGlobals(state)->fedlinkUrl;
     }
     else {
-        targetUrl = oidcCoreGlobals(state->idp->oidc)->registerUrl;
+        targetUrl = oidcStateGetGlobals(state)->registerUrl;
     }
     fedidEnd(state, 0, targetUrl);
 }
@@ -110,7 +100,7 @@ static void fedidLoginUser(oidcStateT *state,
     // let's store user profile into session cookie (/oidc/profile/get
     // serves it)
     oidcSessionSetFedUser(session, fedUserAddRef(fedUsr));
-    oidcSessionSetFedSocial(session, state->fedSocial);
+    oidcSessionSetFedSocial(session, oidcStateGetSocial(state));
 
     // everything looks good let's return user to original page
     alias = oidcSessionGetTargetPage(session);
@@ -159,7 +149,7 @@ static void fedidFederateUser(oidcStateT *state,
                               0, NULL, NULL);
     if (err < 0)
         return fedidError(state);
-    afb_api_t api = oidcCoreAfbApi(state->idp->oidc);
+    afb_api_t api = oidcStateGetAfbApi(state);
     err = fedIdClientCallSync(api, "user-federate", 2, params, &status,
                               &count, &data);
     if (err < 0 || status != 0) {
@@ -214,10 +204,9 @@ static void onSocialCheckResult(void *closure,
 }
 
 // try to wreq user profile from its federation key
-int fedidCheck(oidcStateT *state)
+void fedidCheck(oidcStateT *state)
 {
-    afb_api_t api = oidcCoreAfbApi(state->idp->oidc);
-    fedIdClientSocialCheck(api, state->fedSocial, onSocialCheckResult, state);
-    return 0;
+    afb_api_t api = oidcStateGetAfbApi(state);
+    fedIdClientSocialCheck(api, oidcStateGetSocial(state), onSocialCheckResult, state);
 }
 

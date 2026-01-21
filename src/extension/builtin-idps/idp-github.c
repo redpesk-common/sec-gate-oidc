@@ -88,7 +88,7 @@ static const char *get_object_string(json_object *objJ, const char *key)
 }
 
 // duplicate key value if not null
-static char *json_object_dup_key_value(json_object *objJ, const char *key)
+static char *get_object_string_dup(json_object *objJ, const char *key)
 {
     const char *str = get_object_string(objJ, key);
     return str == NULL ? NULL : strdup(str);
@@ -100,7 +100,6 @@ static char *json_object_dup_key_value(json_object *objJ, const char *key)
 static httpRqtActionT githubAttrsGetByTokenCB(const httpRqtT *httpRqt)
 {
     oidcStateT *state = (oidcStateT *)httpRqt->userData;
-    int err;
 
     // something when wrong
     if (httpRqt->status != 200)
@@ -114,21 +113,18 @@ static httpRqtActionT githubAttrsGetByTokenCB(const httpRqtT *httpRqt)
     const char **attrs = calloc(count + 1, sizeof(char *));
     for (int idx = 0; idx < count; idx++) {
         json_object *orgJ = json_object_array_get_idx(orgsJ, idx);
-        attrs[idx] = json_object_dup_key_value(orgJ, "login");
+        attrs[idx] = get_object_string_dup(orgJ, "login");
     }
-    state->fedSocial->attrs = attrs;
+    oidcStateGetSocial(state)->attrs = attrs;
 
     // we've got everything check federated user now
-    err = fedidCheck(state);
-    if (err)
-        goto OnErrorExit;
-
+    fedidCheck(state);
     return HTTP_HANDLE_FREE;
 
 OnErrorExit:
     EXT_CRITICAL(
-        "[idp-github] Fail to get user organisation status=%d body='%s'",
-        httpRqt->status, httpRqt->body.buffer);
+        "[idp-github] Fail to get user organisation status=%d body='%.*s'",
+        httpRqt->status, (int)httpRqt->body.length, httpRqt->body.buffer);
     return HTTP_HANDLE_FREE;
 }
 
@@ -139,19 +135,19 @@ static void githubGetAttrsByToken(oidcStateT *state, const char *orgApiUrl)
     const oidcIdpT *idp = oidcStateGetIdp(state);
 
     httpKeyValT authToken[] = {
-        {.tag = "Authorization", .value = oidcStateGetBearer(state)},
+        {.tag = "Authorization", .value = oidcStateGetAuthorization(state)},
         {NULL}  // terminator
     };
 
     // asynchronous wreq to IDP user profile
     // https://docs.github.com/en/rest/reference/orgs#list-organizations-for-the-authenticated-user
     EXT_DEBUG("[idp-github] curl -H 'Authorization: %s' %s\n",
-              oidcStateGetToken(state), orgApiUrl);
+              oidcStateGetAuthorization(state), orgApiUrl);
     int err = httpSendGet(oidcCoreHTTPPool(idp->oidc), orgApiUrl, &dfltOpts,
                           authToken, githubAttrsGetByTokenCB, state);
     if (err)
         EXT_ERROR("[idp-github] curl -H 'Authorization: %s' %s\n",
-                  oidcStateGetToken(state), orgApiUrl);
+                  oidcStateGetAuthorization(state), orgApiUrl);
     return;
 }
 
@@ -162,9 +158,8 @@ static httpRqtActionT githubUserGetByTokenCB(const httpRqtT *httpRqt)
 {
     oidcStateT *state = (oidcStateT *)httpRqt->userData;
     const oidcProfileT *profile = oidcStateGetProfile(state);
-    const oidcIdpT *idp = oidcStateGetIdp(state);
-    fedSocialRawT *fedSocial = NULL;
-    fedUserRawT *fedUser = NULL;
+    fedUserRawT *fedUser = oidcStateGetUser(state);
+    fedSocialRawT *fedSocial = oidcStateGetSocial(state);
 
     // something when wrong
     if (httpRqt->status != 200)
@@ -176,15 +171,12 @@ static httpRqtActionT githubUserGetByTokenCB(const httpRqtT *httpRqt)
         goto OnErrorExit;
 
     // build social fedkey from idp->uid+github->id
-    fedSocial = fedSocialCreate(idp->uid, get_object_string(profileJ, "id"), 0);
-    fedUser = fedUserCreate(get_object_string(profileJ, "login"),
-                            get_object_string(profileJ, "email"),
-                            get_object_string(profileJ, "name"),
-                            get_object_string(profileJ, "avatar_url"),
-                            get_object_string(profileJ, "company"), 0);
-
-    state->fedSocial = fedSocial;
-    state->fedUser = fedUser;
+    fedSocial->fedkey = get_object_string_dup(profileJ, "id");
+    fedUser->pseudo = get_object_string_dup(profileJ, "login");
+    fedUser->email = get_object_string_dup(profileJ, "email");
+    fedUser->name = get_object_string_dup(profileJ, "name");
+    fedUser->avatar = get_object_string_dup(profileJ, "avatar_url");
+    fedUser->company = get_object_string_dup(profileJ, "company");
 
     // user is ok, let's map user organisation onto security attributes
     if (profile->attrs) {
@@ -197,9 +189,7 @@ static httpRqtActionT githubUserGetByTokenCB(const httpRqtT *httpRqt)
     else {
         // no organisation attributes we've got everything check federated user
         // now
-        int err = fedidCheck(state);
-        if (err)
-            goto OnErrorExit;
+        fedidCheck(state);
     }
     return HTTP_HANDLE_FREE;
 
@@ -222,14 +212,14 @@ static void githubUserGetByToken(oidcStateT *state)
     const oidcIdpT *idp = oidcStateGetIdp(state);
 
     httpKeyValT authToken[] = {
-        {.tag = "Authorization", .value = oidcStateGetBearer(state)},
+        {.tag = "Authorization", .value = oidcStateGetAuthorization(state)},
         {NULL}  // terminator
     };
 
     // asynchronous wreq to IDP user profile
     // https://docs.github.com/en/rest/reference/orgs#list-organizations-for-the-authenticated-user
     EXT_DEBUG("[idp-github] curl -H 'Authorization: %s' %s\n",
-              oidcStateGetToken(state), idp->wellknown->userinfo);
+              oidcStateGetAuthorization(state), idp->wellknown->userinfo);
     int err = httpSendGet(oidcCoreHTTPPool(idp->oidc), idp->wellknown->userinfo,
                           &dfltOpts, authToken, githubUserGetByTokenCB, state);
     if (err)
@@ -269,7 +259,7 @@ static httpRqtActionT githubAccessTokenCB(const httpRqtT *httpRqt)
     }
 
     // save the access token
-    if (oidcStatePutToken(state, accessTok) < 0) {
+    if (oidcStateSetAuthorization(state, NULL, accessTok) < 0) {
         EXT_ERROR("[idp-github] Allocation failed");
         goto OnErrorExit;
     }

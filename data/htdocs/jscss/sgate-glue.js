@@ -266,7 +266,7 @@ function sgateSubmit() {
     callbinder(api, verb, query)
     .then(function (res) {
         // redirect to requested URL
-        window.location.assign(res.response.target);
+        window.location.assign(res.response.target || res.response);
     })
     .catch(function (err) {
         var info= document.getElementById ("sgate_error");
@@ -301,7 +301,7 @@ function passwordUser(verb) {
     callbinder(api, verb, query)
     .then(function (res) {
         // redirect to requested URL
-        window.location.assign(res.response.target);
+        window.location.assign(res.response.target || res.response);
 
     })
     .catch(function (err) {

@@ -8,8 +8,9 @@
 : ${RUN:=}
 : ${DB:=$PREF/fedid-local.sqlite}
 
-#RUN="gdb -ex run -arg"
-RUN="valgrind --leak-check=yes"
+#RUN="strace -f"
+RUN="gdb -ex run -arg"
+#RUN="valgrind --leak-check=yes"
 #--show-leak-kinds=definite,possible
 
 #rm $DB

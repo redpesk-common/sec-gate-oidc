@@ -137,7 +137,7 @@ static const char *get_object_string(json_object *objJ, const char *key)
 }
 
 // duplicate key value if not null
-static char *json_object_dup_key_value(json_object *objJ, const char *key)
+static char *get_object_string_dup(json_object *objJ, const char *key)
 {
     const char *str = get_object_string(objJ, key);
     return str == NULL ? NULL : strdup(str);
@@ -145,7 +145,7 @@ static char *json_object_dup_key_value(json_object *objJ, const char *key)
 
 // signature to be check with GNUTLS to be added by JOSE)
 // reference https://jwt.io/ https://datatracker.ietf.org/doc/html/rfc7517
-static json_object *oidcJwtCheck(oidcSchemaT *schema, char *token[])
+static json_object *oidcJwtCheck(const oidcSchemaT *schema, char *token[])
 {
     int err;
     const char *keyId, *keyAlg;
@@ -186,56 +186,43 @@ OnErrorExit:
     return NULL;
 }
 
-static int oidcUserFederateId(idpRqtCtxT *rqtCtx, json_object *profileJ)
+static int oidcUserFederateId(oidcStateT *state, json_object *profileJ)
 {
-    const oidcIdpT *idp = rqtCtx->idp;
+    const oidcIdpT *idp = oidcStateGetIdp(state);
     oidcSchemaT *schema = (oidcSchemaT *)idp->userData;
-    fedSocialRawT *fedSocial;
-    fedUserRawT *fedUser;
+    fedSocialRawT *fedSocial = oidcStateGetSocial(state);
+    fedUserRawT *fedUser = oidcStateGetUser(state);
     json_object *attrsJ;
-    int err;
 
     // no profile just ignore
     if (!profileJ)
         return -1;
 
     // build social fedkey from idp->uid+oidc->id
-    fedSocial = fedSocialCreate(idp->uid,
-                                get_object_string(profileJ, schema->fedid), 0);
-    rqtCtx->fedSocial = fedSocial;
+    fedSocial->fedkey = get_object_string_dup(profileJ, schema->fedid);
 
     // check groups as security attributs
     if (schema->attrs) {
         json_object_object_get_ex(profileJ, schema->attrs, &attrsJ);
-        fprintf(stderr, "fedid= %s ***\n", json_object_get_string(profileJ));
+        EXT_DEBUG("fedid= %s ***\n", json_object_get_string(profileJ));
         if (json_object_is_type(attrsJ, json_type_array)) {
             size_t count = json_object_array_length(attrsJ);
             fedSocial->attrs = calloc(count + 1, sizeof(char *));
             for (int idx = 0; idx < count; idx++) {
                 json_object *attrJ = json_object_array_get_idx(attrsJ, idx);
-                rqtCtx->fedSocial->attrs[idx] =
-                    strdup(json_object_get_string(attrJ));
+                fedSocial->attrs[idx] = strdup(json_object_get_string(attrJ));
             }
         }
     }
 
-    fedUser = fedUserCreate(get_object_string(profileJ, schema->pseudo),
-                            get_object_string(profileJ, schema->email),
-                            get_object_string(profileJ, schema->name),
-                            get_object_string(profileJ, schema->avatar),
-                            get_object_string(profileJ, schema->company), 0);
-    rqtCtx->fedUser = fedUser;
+    fedUser->pseudo = get_object_string(profileJ, schema->pseudo);
+    fedUser->email = get_object_string(profileJ, schema->email);
+    fedUser->name = get_object_string(profileJ, schema->name);
+    fedUser->avatar = get_object_string(profileJ, schema->avatar);
+    fedUser->company = get_object_string(profileJ, schema->company);
 
-    err = fedidCheck(rqtCtx);
-    if (err)
-        goto OnErrorExit;
-
+    fedidCheck(state);
     return 0;
-
-OnErrorExit:
-    fedSocialUnRef(fedSocial);
-    fedUserUnRef(fedUser);
-    return -1;
 }
 
 // call when IDP respond to user profile wreq
@@ -243,43 +230,44 @@ OnErrorExit:
 // https://docs.oidc.com/en/rest/reference/users#get-the-authenticated-user
 static httpRqtActionT oidcUserGetByTokenCB(const httpRqtT *httpRqt)
 {
-    idpRqtCtxT *rqtCtx = (idpRqtCtxT *)httpRqt->userData;
+    oidcStateT *state = (oidcStateT *)httpRqt->userData;
     int err;
 
     // something when wrong
-    if (httpRqt->status != 200)
+    if (httpRqt->status != 200) {
+        EXT_ERROR("[idp-oidc] HTTP request failed %d: %.*s", httpRqt->status,
+                (int)httpRqt->body.length, httpRqt->body.buffer);
         goto OnErrorExit;
+    }
 
     // unwrap user profile
     json_object *profileJ = json_tokener_parse(httpRqt->body.buffer);
-    if (!profileJ)
+    if (!profileJ) {
+        EXT_ERROR("[idp-oidc] bad HTTP reply %.*s",
+                (int)httpRqt->body.length, httpRqt->body.buffer);
         goto OnErrorExit;
+    }
 
-    err = oidcUserFederateId(rqtCtx, profileJ);
+    err = oidcUserFederateId(state, profileJ);
     if (err)
         goto OnErrorExit;
 
     return HTTP_HANDLE_FREE;
 
 OnErrorExit:
-    EXT_CRITICAL(
-        "[oidc-fail-user-profile] Fail to get user profile from oidc "
-        "status=%d body='%s'",
-        httpRqt->status, httpRqt->body.buffer);
-    afb_hreq_reply_error(rqtCtx->hreq, EXT_HTTP_UNAUTHORIZED);
-    oidcStateUnRef(rqtCtx);
+    oidcStateUnauthorized(state);
     return HTTP_HANDLE_FREE;
 }
 
 // from acces token wreq user profile
 // reference
 // https://docs.oidc.com/en/developers/apps/authorizing-oauth-apps#web-application-flow
-static int oidcUserGetByToken(idpRqtCtxT *rqtCtx)
+static int oidcUserGetByToken(oidcStateT *state)
 {
-    const oidcIdpT *idp = rqtCtx->idp;
+    const oidcIdpT *idp = oidcStateGetIdp(state);
 
     httpKeyValT authToken[] = {
-        {.tag = "Authorization", .value = rqtCtx->token},
+        {.tag = "Authorization", .value = oidcStateGetAuthorization(state)},
         {.tag = "grant_type", .value = "authorization_code"},
         {NULL}  // terminator
     };
@@ -287,9 +275,9 @@ static int oidcUserGetByToken(idpRqtCtxT *rqtCtx)
     // asynchronous wreq to IDP user profile
     // https://docs.oidc.com/en/rest/reference/orgs#list-organizations-for-the-authenticated-user
     EXT_DEBUG("[oidc-profile-get] curl -H 'Authorization: %s' %s\n",
-              rqtCtx->token, idp->wellknown->userinfo);
+              oidcStateGetAuthorization(state), idp->wellknown->userinfo);
     int err = httpSendGet(oidcCoreHTTPPool(idp->oidc), idp->wellknown->userinfo,
-                          &dfltOpts, authToken, oidcUserGetByTokenCB, rqtCtx);
+                          &dfltOpts, authToken, oidcUserGetByTokenCB, state);
     if (err)
         goto OnErrorExit;
     return 0;
@@ -301,7 +289,7 @@ OnErrorExit:
 // parse jwt token
 // reference
 // https://developer.yahoo.com/oauth2/guide/openid_connect/decode_id_token.html?guccounter=1
-static json_object *oidcUserGetByJwt(oidcSchemaT *schema, char *tokenId)
+static json_object *oidcUserGetByJwt(const oidcSchemaT *schema, char *tokenId)
 {
     int tknIdx = 0, start = 0, index, rc;
     char *token[TKN_SIZE];
@@ -354,8 +342,9 @@ OnErrorExit:
 static httpRqtActionT oidcAccessTokenCB(const httpRqtT *httpRqt)
 {
     char *tokenVal, *tokenType, *tokenId = NULL;
-    idpRqtCtxT *rqtCtx = (idpRqtCtxT *)httpRqt->userData;
-    oidcSchemaT *schema = (oidcSchemaT *)rqtCtx->idp->userData;
+    oidcStateT *state = (oidcStateT *)httpRqt->userData;
+    const oidcIdpT *idp = oidcStateGetIdp(state);
+    const oidcSchemaT *schema = (oidcSchemaT *)idp->userData;
     json_object *responseJ = NULL;
     int err;
 
@@ -373,21 +362,23 @@ static httpRqtActionT oidcAccessTokenCB(const httpRqtT *httpRqt)
                           "token_type", &tokenType, "id_token", &tokenId);
     if (err)
         goto OnErrorExit;
-    asprintf(&rqtCtx->token, "%s %s", tokenType, tokenVal);
+    err = oidcStateSetAuthorization(state, tokenType, tokenVal);
+    if (err)
+        goto OnErrorExit;
 
     // if we get a token ID check it otherwise try to query user profile end
     // point
     if (tokenId) {
         json_object *fedIdJ = oidcUserGetByJwt(schema, tokenId);
-        err = oidcUserFederateId(rqtCtx, fedIdJ);
+        err = oidcUserFederateId(state, fedIdJ);
         if (err)
             goto OnErrorExit;
 
         // if logout registered then keep track of SID
-        if (rqtCtx->idp->statics->aliasLogout) {
+        if (idp->statics->aliasLogout) {
             sidMapT *sidMap = calloc(1, sizeof(sidMapT));
-            sidMap->sid = json_object_dup_key_value(fedIdJ, schema->idpsid);
-            sidMap->uuid = rqtCtx->uuid;
+            sidMap->sid = get_object_string_dup(fedIdJ, schema->idpsid);
+            sidMap->uuid = oidcStateGetSessionUUID(state);
             HASH_ADD_STR(sidHead, uuid, sidMap);
             if (!sidMap)
                 goto OnErrorExit;
@@ -396,7 +387,7 @@ static httpRqtActionT oidcAccessTokenCB(const httpRqtT *httpRqt)
     else {
         // when no token id an extra request to user profile info endpoint
         // require
-        err = oidcUserGetByToken(rqtCtx);
+        err = oidcUserGetByToken(state);
         if (err)
             goto OnErrorExit;
     }
@@ -406,13 +397,12 @@ static httpRqtActionT oidcAccessTokenCB(const httpRqtT *httpRqt)
     return HTTP_HANDLE_FREE;
 
 OnErrorExit:
-    if (responseJ)
-        json_object_put(responseJ);
     EXT_CRITICAL(
         "[fail-access-token] Fail to process response from oidc status=%d "
         "body='%s' (oidcAccessTokenCB)",
         httpRqt->status, httpRqt->body.buffer);
-    afb_hreq_reply_error(rqtCtx->hreq, EXT_HTTP_UNAUTHORIZED);
+    oidcStateUnauthorized(state);
+    json_object_put(responseJ);
     return HTTP_HANDLE_FREE;
 }
 
@@ -440,8 +430,6 @@ static int oidcOnCodeCB(struct afb_hreq *hreq,
         EXT_WARNING("[idp-oidc] can't compute redirect url");
         goto OnErrorExit;
     }
-
-    state->uuid = oidcSessionUUID(session);
 
     httpKeyValT headers[5];
     const char *params[12];
@@ -525,10 +513,10 @@ static int oidcLoginCB(struct afb_hreq *hreq, void *ctx)
 // reference https://openid.net/specs/openid-connect-backchannel-1_0.html
 static int oidcLogoutCB(struct afb_hreq *hreq, void *ctx)
 {
-    oidcIdpT *idp = (oidcIdpT *)ctx;
-    oidcSchemaT *schema = (oidcSchemaT *)idp->userData;
+    const oidcIdpT *idp = (oidcIdpT *)ctx;
+    const oidcSchemaT *schema = (oidcSchemaT *)idp->userData;
     const oidcProfileT *idpProfile;
-    const char *sessionUid;
+    const char *sid;
     oidcSessionT *session;
     sidMapT *sidMap;
     int err;
@@ -540,17 +528,17 @@ static int oidcLogoutCB(struct afb_hreq *hreq, void *ctx)
         goto OnErrorExit;
 
     // tokenid nonce should match with the session uuid to reset
-    err = rp_jsonc_unpack(fedIdJ, "{ss}", "sid", &sessionUid);
+    err = rp_jsonc_unpack(fedIdJ, "{ss}", "sid", &sid);
     if (err)
         goto OnErrorExit;
 
     // search for sid into hashtable
-    HASH_FIND_STR(sidHead, sessionUid, sidMap);
+    HASH_FIND_STR(sidHead, sid, sidMap);
     if (!sidMap)
         goto OnErrorExit;
 
     // search session uuid and close it when exist
-    session = oidcSessionOfUUID(sessionUid);
+    session = oidcSessionOfUUID(sid);
     if (!session)
         goto OnErrorExit;
     idpProfile = oidcSessionGetTargetProfile(oidcSessionOfHttpReq(hreq));

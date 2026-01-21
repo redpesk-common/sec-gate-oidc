@@ -94,8 +94,8 @@ static int pamAccessToken(const oidcIdpT *idp,
                           const oidcProfileT *profile,
                           const char *login,
                           const char *passwd,
-                          fedSocialRawT **social,
-                          fedUserRawT **user)
+                          fedSocialRawT *fedSocial,
+                          fedUserRawT *fedUser)
 {
     int status = 0, err;
     pam_handle_t *pamh = NULL;
@@ -111,7 +111,7 @@ static int pamAccessToken(const oidcIdpT *idp,
     // pam challenge callback to retrieve user input (e.g. passwd)
     struct pam_conv conversion = {
         .conv = pamChalengeCB,
-        .appdata_ptr = (void *)passwd,
+        .appdata_ptr = (void *)(passwd != NULL ? passwd : ""),
     };
 
     // login/passwd match let's retrieve gids
@@ -131,9 +131,10 @@ static int pamAccessToken(const oidcIdpT *idp,
             goto OnErrorExit;
 
         // build social fedkey from idp->uid+github->id
-        fedSocialRawT *fedSocial = fedSocialCreate(idp->uid, pw->pw_name, 0);
-        fedUserRawT *fedUser = fedUserCreate(pw->pw_name, NULL, pw->pw_gecos,
-                                             dfltOpts.avatarAlias, NULL, 0);
+        fedSocial->fedkey = strdup(pw->pw_name);
+        fedUser->pseudo = strdup(pw->pw_name);
+        fedUser->name = strdup(pw->pw_gecos);
+        fedUser->avatar = strdup(dfltOpts.avatarAlias);
 
         // retrieve groups list and add them to fedSocial labels list
         err = getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups);
@@ -149,9 +150,6 @@ static int pamAccessToken(const oidcIdpT *idp,
             gr = getgrgid(groups[idx]);
             fedSocial->attrs[idx] = strdup(gr->gr_name);
         }
-
-        *user = fedUser;
-        *social = fedSocial;
     }
     // close pam transaction
     pam_end(pamh, status);
@@ -159,7 +157,26 @@ static int pamAccessToken(const oidcIdpT *idp,
 
 OnErrorExit:
     pam_end(pamh, status);
-    return 1;
+    return -1;
+}
+
+// Called to enter the state
+static void pamLogin(const oidcIdpT *idp,
+                     oidcStateT *state,
+                     const char *login,
+                     const char *passwd)
+{
+    int rc;
+    const oidcProfileT *profile = oidcStateGetProfile(state);
+
+    // Check received login/passwd
+    EXT_DEBUG("[oidc-pam] login=%s", login);
+    rc = pamAccessToken(idp, profile, login, passwd,
+            oidcStateGetSocial(state), oidcStateGetUser(state));
+    if (rc < 0)
+        oidcStateUnauthorized(state);
+    else
+        fedidCheck(state);
 }
 
 // check user email/pseudo attribute
@@ -167,121 +184,63 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
                            unsigned nparams,
                            struct afb_data *const params[])
 {
-    const char *errmsg = "[pam-login] invalid credentials";
     const oidcIdpT *idp = (const oidcIdpT *)afb_req_v4_vcbdata(wreq);
-    struct afb_data *args[nparams];
     const char *login, *passwd = NULL, *scope = NULL;
-    const oidcProfileT *profile = NULL;
-    afb_data_t reply;
-    const char *state;
     int targetLOA;
-    int err;
+    oidcSessionT *session;
+    oidcStateT *state;
+    struct json_object *obj;
+    afb_data_t arg;
+    int rc;
 
-    err = afb_data_convert(params[0], &afb_type_predefined_json_c, &args[0]);
-    json_object *queryJ = afb_data_ro_pointer(args[0]);
-    err = rp_jsonc_unpack(queryJ, "{ss ss s?s s?s s?s}", "login", &login,
-                          "state", &state, "passwd", &passwd, "password",
+    rc = afb_req_param_convert(wreq, 0, &afb_type_predefined_json_c, &arg);
+    if (rc < 0)
+        EXT_NOTICE("[oidc-pam] can't get parameters");
+    else {
+        obj = afb_data_ro_pointer(arg);
+        rc = rp_jsonc_unpack(obj, "{ss sd s?s s?s s?s}", "login", &login,
+                          "loa", &targetLOA, "passwd", &passwd, "password",
                           &passwd, "scope", &scope);
-    if (err)
-        goto OnErrorExit;
-
-    // search for a scope fiting wreqing loa
-    oidcSessionT *session = oidcSessionOfReq(wreq);
-    if (!state || strcmp(state, oidcSessionUUID(session)))
-        goto OnErrorExit;
-
-    targetLOA = oidcSessionGetTargetLOA(session);
-
-    // search for a matching profile if scope is selected then scope&loa should
-    // match
-    profile = idpGetFirstProfile(idp, targetLOA, scope);
-    if (!profile) {
-        EXT_NOTICE("[pam-check-scope] scope=%s does not match working loa=%d",
-                   scope, targetLOA);
-        goto OnErrorExit;
-    }
-    // check password
-    fedUserRawT *fedUser = NULL;
-    fedSocialRawT *fedSocial = NULL;
-    err = pamAccessToken(idp, profile, login, passwd, &fedSocial, &fedUser);
-    if (err)
-        goto OnErrorExit;
-
-    // do no check federation when only login
-    if (fedUser) {
-        afb_req_addref(wreq);
-        idpRqtCtxT *idpRqtCtx = oidcStateCreate(idp, session, profile);
-        idpRqtCtx->fedSocial = fedSocial;
-        idpRqtCtx->fedUser = fedUser;
-        idpRqtCtx->wreq = wreq;
-        err = fedidCheck(idpRqtCtx);
-        if (err) {
-            afb_req_unref(wreq);
-            goto OnErrorExit;
+        if (rc < 0)
+            EXT_NOTICE("[oidc-pam] invalid JSON parameters: %s",
+                       rp_jsonc_get_error_string(rc));
+        else {
+            rc = idpOnLoginRequest(idp, wreq, targetLOA, scope, &session, &state);
+            if (rc > 0)
+                pamLogin(idp, state, login, passwd);
+            return;
         }
     }
-    else {
-        afb_req_v4_reply_hookable(wreq, 0, 0, NULL);  // login exist
-    }
-    return;
-
-OnErrorExit:
-
-    afb_create_data_raw(&reply, AFB_PREDEFINED_TYPE_STRINGZ, errmsg,
-                        strlen(errmsg) + 1, NULL, NULL);
-    afb_req_v4_reply_hookable(wreq, -1, 1, &reply);
+    afb_req_v4_reply_hookable(wreq, AFB_ERRNO_INVALID_REQUEST, 0, NULL);
 }
 
-// when call with no login/passwd display form otherwise try to log user
-int pamLoginCB(struct afb_hreq *hreq, void *ctx)
+// Called when login page got a valid state
+static int pamOnCredsCB(struct afb_hreq *hreq,
+                         const oidcIdpT *idp,
+                         oidcSessionT *session,
+                         oidcStateT *state)
 {
-    const oidcIdpT *idp = (const oidcIdpT *)ctx;
-    int err, status;
-
     // check if wreq as a code
     const char *login = afb_hreq_get_argument(hreq, "login");
     const char *passwd = afb_hreq_get_argument(hreq, "passwd");
-    oidcSessionT *session = oidcSessionOfHttpReq(hreq);
 
     // if no code then set state and redirect to IDP
-    if (!login || !passwd) {
-        return idpRedirectLogin(idp, hreq, session, idp->wellknown->tokenid,
-                                idp->statics->aliasLogin, NULL, NULL, NULL);
+    if (login != NULL)
+        pamLogin(idp, state, login, passwd);
+    else {
+        EXT_NOTICE("[oidc-pam] login is missing");
+        afb_hreq_redirect_to(hreq, idp->wellknown->tokenid, HREQ_QUERY_INCL,
+                             HREQ_REDIR_TMPY);
     }
-
-    // we have a code check state to assert that the response was generated
-    // by us then wreq authentication token
-    const char *state = afb_hreq_get_argument(hreq, "state");
-    if (!state || strcmp(state, oidcSessionUUID(session)))
-        goto OnErrorExit;
-
-    EXT_DEBUG("[pam-auth-code] login=%s (pamLoginCB)", login);
-    const oidcProfileT *profile = oidcSessionGetTargetProfile(session);
-    if (profile == NULL)
-        goto OnErrorExit;
-
-    // Check received login/passwd
-    fedUserRawT *fedUser;
-    fedSocialRawT *fedSocial;
-    err = pamAccessToken(idp, profile, login, passwd, &fedSocial, &fedUser);
-    if (err)
-        goto OnErrorExit;
-
-    // check if federated id is already present or not
-    idpRqtCtxT *idpRqtCtx = oidcStateCreate(idp, session, profile);
-    idpRqtCtx->fedSocial = fedSocial;
-    idpRqtCtx->fedUser = fedUser;
-    idpRqtCtx->hreq = hreq;
-    err = fedidCheck(idpRqtCtx);
-    if (err)
-        goto OnErrorExit;
-
-    return 1;  // we're done
-
-OnErrorExit:
-    afb_hreq_redirect_to(hreq, idp->wellknown->tokenid, HREQ_QUERY_INCL,
-                         HREQ_REDIR_TMPY);
     return 1;
+}
+
+// Called when on login page
+int pamLoginCB(struct afb_hreq *hreq, void *ctx)
+{
+    const oidcIdpT *idp = (const oidcIdpT *)ctx;
+    return idpOnLoginPage(hreq, idp, pamOnCredsCB, idp->wellknown->tokenid,
+                          idp->statics->aliasLogin, NULL, NULL, NULL);
 }
 
 int pamRegisterVerbs(const oidcIdpT *idp, struct afb_api_v4 *sgApi)

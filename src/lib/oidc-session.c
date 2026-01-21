@@ -30,6 +30,7 @@
 #include <stdlib.h>
 
 #include <rp-utils/rp-jsonc.h>
+#include <rp-utils/rp-uuid.h>
 
 #include <libafb/afb-core.h>
 #include <libafb/afb-http.h>
@@ -47,6 +48,7 @@ struct oidcSessionS
     const oidcProfileT *targetProfile;
     const oidcProfileT *actualProfile;
     oidcStateT *targetState;
+    oidcStateT *actualState;
     fedUserRawT *user;
     fedSocialRawT *social;
     fedUserRawT *fedIdUser;
@@ -54,6 +56,7 @@ struct oidcSessionS
     struct timespec now;
     struct timespec nextCheck;
     struct timespec endValid;
+    rp_uuid_stringz_t xid; // TODO
 };
 
 // release memory used by the session

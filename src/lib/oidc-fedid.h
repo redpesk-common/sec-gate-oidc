@@ -31,4 +31,4 @@
 #include "oidc-session.h"
 #include "oidc-state.h"
 
-int fedidCheck(oidcStateT* state);
+void fedidCheck(oidcStateT* state);

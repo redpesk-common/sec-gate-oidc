@@ -114,7 +114,7 @@ typedef enum {
 typedef struct
 {
     ulong pin;
-    idpRqtCtxT *idpRqtCtx;
+    oidcStateT *state;
     pcscOptsT *opts;
     const char *scope;
     const char *label;
@@ -134,20 +134,20 @@ static void pcscResetSession(const oidcProfileT *idpProfile, void *ctx)
     pcscMonitorWait(handle, PCSC_MONITOR_CANCEL, 0);
 }
 
-static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
+static int readerMonitorCB(pcscHandleT *handle, ulong status, void *ctx)
 {
     pcscRqtCtxT *pcscRqtCtx = (pcscRqtCtxT *)ctx;
-    idpRqtCtxT *idpRqtCtx = pcscRqtCtx->idpRqtCtx;
+    oidcStateT *state = pcscRqtCtx->state;
     pcscOptsT *pcscOpts = pcscRqtCtx->opts;
     const oidcProfileT *idpProfile;
-    int status = 0;
+    int result = 0;
     int err;
     char *copy, *save;
 
     assert(pcscRqtCtx->session);
 
     // is card was previously inserted logout user (session loa=0)
-    if (state & SCARD_STATE_EMPTY) {
+    if (status & SCARD_STATE_EMPTY) {
         EXT_DEBUG("[pcsc-scard-absent] tid=0x%lx card=absent status=%d",
                   pthread_self(), pcscRqtCtx->status);
         // prevent double detection
@@ -158,13 +158,13 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
             idpProfile = oidcSessionGetTargetProfile(pcscRqtCtx->session);
             fedidsessionReset(pcscRqtCtx->session, idpProfile);
             pcscRqtCtxFree(pcscRqtCtx);
-            status = 1;  // terminate thread
+            result = 1;  // terminate thread
             break;
 
             // scard was refused wait for card removal and restart a fresh
             // authen session
         case PCSC_STATUS_REFUSED:
-            status = 1;
+            result = 1;
             break;
 
             // all other case just wait for new card insertion
@@ -173,7 +173,10 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
         }
     }
 
-    else if (state & SCARD_STATE_PRESENT) {
+    else if (status & SCARD_STATE_PRESENT) {
+        fedUserRawT *fedUser = oidcStateGetUser(state);
+        fedSocialRawT *fedSocial = oidcStateGetSocial(state);
+
         EXT_DEBUG(
             "[pcsc-scard-present] tid=0x%lx card=0x%lx ctx=0x%p status=%d",
             pthread_self(), pcscGetCardUuid(handle), pcscRqtCtx,
@@ -182,10 +185,6 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
         // prevent from double detection
         if (pcscRqtCtx->status == PCSC_STATUS_WAITING) {
             // reserve federation and social user structure
-            idpRqtCtx->fedSocial = calloc(1, sizeof(fedSocialRawT));
-            idpRqtCtx->fedSocial->refcount = 1;
-            idpRqtCtx->fedUser = calloc(1, sizeof(fedUserRawT));
-            idpRqtCtx->fedUser->refcount = 1;
             u_int64_t uuid;
             char *data = NULL;
 
@@ -214,8 +213,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
                         free(copy);
                         goto OnErrorExit;
                     }
-                    idpRqtCtx->fedSocial->idp = strdup(idpRqtCtx->idp->uid);
-                    asprintf((char **)&idpRqtCtx->fedSocial->fedkey, "%llu",
+                    asprintf((char **)&fedSocial->fedkey, "%llu",
                              (unsigned long long)uuid);
                     break;
 
@@ -234,19 +232,19 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
                     switch (rp_enum_map_value_def(oidcFedidSchema, cmd->uid,
                                                   OIDC_SCHEMA_UNKNOWN)) {
                     case OIDC_SCHEMA_PSEUDO:
-                        idpRqtCtx->fedUser->pseudo = strdup(data);
+                        fedUser->pseudo = strdup(data);
                         break;
                     case OIDC_SCHEMA_NAME:
-                        idpRqtCtx->fedUser->name = strdup(data);
+                        fedUser->name = strdup(data);
                         break;
                     case OIDC_SCHEMA_EMAIL:
-                        idpRqtCtx->fedUser->email = strdup(data);
+                        fedUser->email = strdup(data);
                         break;
                     case OIDC_SCHEMA_COMPANY:
-                        idpRqtCtx->fedUser->company = strdup(data);
+                        fedUser->company = strdup(data);
                         break;
                     case OIDC_SCHEMA_AVATAR:
-                        idpRqtCtx->fedUser->avatar = strdup(data);
+                        fedUser->avatar = strdup(data);
                         break;
                     default:
                         EXT_ERROR(
@@ -274,7 +272,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
             // map security atributes to pcsc read commands
             if (pcscRqtCtx->label) {
                 int index = 0;
-                idpRqtCtx->fedSocial->attrs =
+                fedSocial->attrs =
                     calloc(pcscOpts->labelMax + 1, sizeof(char *));
                 copy = strdup(pcscRqtCtx->label);
                 if (copy == NULL)
@@ -307,7 +305,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
                     char *save2 = NULL;
                     for (char *attr = strtok_r(data, ",", &save2); attr;
                          attr = strtok_r(NULL, ",", &save2)) {
-                        idpRqtCtx->fedSocial->attrs[index++] = strdup(attr);
+                        fedSocial->attrs[index++] = strdup(attr);
                         if (index == pcscOpts->labelMax) {
                             EXT_ERROR(
                                 "[pcsc-cmd-label] ignored labels command=%s "
@@ -322,34 +320,21 @@ static int readerMonitorCB(pcscHandleT *handle, ulong state, void *ctx)
                 free(copy);
             }
             // try do federate user
-            err = fedidCheck(idpRqtCtx);
-            if (err)
-                goto OnErrorExit;
+            fedidCheck(state);
 
             // authentication was successful
             pcscRqtCtx->status = PCSC_STATUS_AUTHENTICATED;
         }
     }
-    // we done idpRqtCtx is cleared by fedidCheck
-    return status;
+    // we done state is cleared by fedidCheck
+    return result;
 
 OnErrorExit:
     static char errorMsg[] =
         "[pcsc-scard-fail] invalid token/smartcard (check scard/config)";
     EXT_CRITICAL(errorMsg);
-    if (idpRqtCtx->hreq) {
-        afb_hreq_reply_error(idpRqtCtx->hreq, EXT_HTTP_UNAUTHORIZED);
-    }
-    else {
-        afb_data_t reply;
-        afb_create_data_raw(&reply, AFB_PREDEFINED_TYPE_STRINGZ, errorMsg,
-                            sizeof(errorMsg), NULL, NULL);
-        afb_req_v4_reply_hookable(idpRqtCtx->wreq, -1, 1, &reply);
-    }
-
+    oidcStateUnauthorized(state);
     pcscRqtCtx->status = PCSC_STATUS_REFUSED;
-    fedSocialUnRef(idpRqtCtx->fedSocial);
-    fedUserUnRef(idpRqtCtx->fedUser);
     return 0;  // keep thread waiting for card to be removed
 }
 
@@ -375,10 +360,10 @@ static int pcscScardGet(const oidcIdpT *idp,
         pcscRqtCtx->session = oidcSessionOfReq(wreq);
 
     // store pcsc context within idp request one
-    idpRqtCtxT *idpRqtCtx = oidcStateCreate(idp, pcscRqtCtx->session, profile);
-    pcscRqtCtx->idpRqtCtx = idpRqtCtx;
-    idpRqtCtx->hreq = hreq;
-    idpRqtCtx->wreq = wreq;
+    oidcStateT *state = oidcStateCreate(idp, pcscRqtCtx->session, profile);
+    oidcStateSetHttpReq(state, hreq);
+    oidcStateSetAfbReq(state, wreq);
+    pcscRqtCtx->state = state;
 
     ulong tid = pcscMonitorReader(pcscOpts->handle, readerMonitorCB,
                                   (void *)pcscRqtCtx);
@@ -575,6 +560,5 @@ static const idpPluginT idppcscAuth = {.uid = "pcsc",
 // Plugin init call at config.json parsing time
 int oidcPluginInit(oidcCoreHdlT *oidc)
 {
-    int status = idpPluginRegister(&idppcscAuth);
-    return status;
+    return idpPluginRegister(&idppcscAuth);
 }

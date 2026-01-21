@@ -717,6 +717,6 @@ int idpOnLoginRequest(const oidcIdpT *idp,
     else if (rc < 0)
         afb_req_v4_reply_hookable(wreq, AFB_ERRNO_OUT_OF_MEMORY, 0, NULL);
     else
-        oidcStateSetReq(*state, wreq);
+        oidcStateSetAfbReq(*state, wreq);
     return rc;
 }

@@ -34,20 +34,6 @@
 typedef struct oidcStateS idpRqtCtxT;
 typedef struct oidcStateS oidcStateT;
 
-struct oidcStateS {
-    unsigned ucount;
-    oidcSessionT* session;
-    const oidcProfileT* profile;
-    const oidcIdpT* idp;
-    struct afb_hreq* hreq;
-    struct afb_req_v4* wreq;
-    const char* uuid;
-    fedSocialRawT* fedSocial;
-    fedUserRawT* fedUser;
-    char* token;
-    char* bearer;
-};
-
 void fedidsessionReset(oidcSessionT* session, const oidcProfileT* idpProfile);
 
 oidcStateT* oidcStateCreate(const oidcIdpT* idp,
@@ -57,44 +43,26 @@ oidcStateT* oidcStateCreate(const oidcIdpT* idp,
 oidcStateT* oidcStateAddRef(oidcStateT* state);
 void oidcStateUnRef(oidcStateT* state);
 
-static inline const oidcIdpT* oidcStateGetIdp(oidcStateT* state) {
-    return state->idp;
-}
+const oidcIdpT* oidcStateGetIdp(oidcStateT* state);
+const oidcProfileT* oidcStateGetProfile(oidcStateT* state);
+oidcSessionT* oidcStateGetSession(oidcStateT* state);
+struct afb_hreq* oidcStateGetHttpReq(oidcStateT* state);
+struct afb_req_v4* oidcStateGetAfbReq(oidcStateT* state);
+const oidGlobalsT *oidcStateGetGlobals(oidcStateT *state);
+struct afb_api_v4 *oidcStateGetAfbApi(oidcStateT *state);
+fedUserRawT *oidcStateGetUser(oidcStateT* state);
+fedSocialRawT *oidcStateGetSocial(oidcStateT* state);
+const char* oidcStateGetAuthorization(oidcStateT* state);
+const char* oidcStateGetSessionUUID(oidcStateT* state);
 
-static inline const oidcProfileT* oidcStateGetProfile(oidcStateT* state) {
-    return state->profile;
-}
 
-static inline oidcSessionT* oidcStateGetSession(oidcStateT* state) {
-    return state->session;
-}
 
-static inline void oidcStateSetHttpReq(oidcStateT* state,
-                                       struct afb_hreq* hreq) {
-    state->hreq = hreq;
-}
+void oidcStateSetHttpReq(oidcStateT* state, struct afb_hreq* hreq);
+void oidcStateSetAfbReq(oidcStateT* state, struct afb_req_v4* wreq);
+int oidcStateSetAuthorization(oidcStateT* state, const char *type, const char* token);
 
-static inline struct afb_hreq* oidcStateGetHttpReq(oidcStateT* state) {
-    return state->hreq;
-}
+void oidcStateUnauthorized(oidcStateT* state);
+void oidcStateInternalError(oidcStateT* state);
+void oidcStateRedirect(oidcStateT *state, int status, const char *url);
 
-static inline void oidcStateSetReq(oidcStateT* state, struct afb_req_v4* wreq) {
-    state->wreq = wreq;
-}
-
-static inline struct afb_req_v4* oidcStateGetReq(oidcStateT* state) {
-    return state->wreq;
-}
-
-int oidcStatePutToken(oidcStateT* state, const char* token);
-
-static inline const char* oidcStateGetToken(oidcStateT* state) {
-    return state->token;
-}
-
-static inline const char* oidcStateGetBearer(oidcStateT* state) {
-    return state->bearer;
-}
-
-void oidcStateUnauthorized(oidcStateT* states);
 

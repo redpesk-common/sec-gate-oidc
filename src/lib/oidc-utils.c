@@ -37,74 +37,71 @@
 // sensitive)
 char *utilsExpandJson(const char *src, json_object *keysJ)
 {
-    int srcIdx, destIdx = 0, labelIdx, expanded = 0;
-    char dst[OIDC_MAX_ARG_LEN], label[OIDC_MAX_ARG_LABEL];
-    char *response;
     json_object *labelJ;
-    char separator = -1;
+    char *result;
+    const char *head, *first, *last, *val;
+    size_t len, out, sz;
 
-    if (!keysJ || !src)
-        goto OnErrorExit;
+    if (src == NULL)
+        return NULL;
 
-    for (srcIdx = 0; src[srcIdx]; srcIdx++) {
-        // replace "%%" by '%'
-        if (src[srcIdx] == '%') {
-            separator = src[srcIdx];
-            if (src[srcIdx + 1] == separator) {
-                dst[destIdx++] = src[srcIdx];
-                srcIdx++;
-                continue;
+    result = NULL;
+    head = src;
+    out = 0;
+    len = 0;
+    for (;;) {
+        /* search the pattern */
+        first = strchr(head, '%');
+        if (first == NULL) {
+            /* no more pattern */
+            if (len != 0) {
+                /* end of expansion */
+                sz = strlen(head);
+                memcpy(&result[out], head, sz + 1);
+                return result;
             }
-        }
-
-        if (src[srcIdx] != separator) {
-            dst[destIdx++] = src[srcIdx];
+            /* compute size, allocates and restart */
+            len = out + 1 + strlen(head);
+            result = malloc(len);
+            if (result == NULL)
+                return NULL;
+            out = 0;
+            head = src;
         }
         else {
-            expanded = 1;
-            labelIdx = 0;
-            // extract expansion label for source argument
-            for (srcIdx = srcIdx + 1; src[srcIdx]; srcIdx++) {
-                if (src[srcIdx] != separator) {
-                    label[labelIdx++] = src[srcIdx];
-                    if (labelIdx == OIDC_MAX_ARG_LABEL)
-                        goto OnErrorExit;
-                }
-                else
-                    break;
+            /* a start of pattern exists */
+            sz = first - head;
+            if (sz > 0) {
+                /* inserted text until pattern*/
+                if (len != 0)
+                    memcpy(&result[out], head, sz);
+                out += sz;
             }
-
-            // close label string and remove trailling '%' from destination
-            label[labelIdx] = '\0';
-
-            // search for expansion label within keysJ
-            labelJ = json_object_object_get(keysJ, label);
-            if (!labelJ) {
-                if (separator == '%')
-                    goto OnErrorExit;
+            /* start of a pattern */
+            last = strchr(first + 1, '%');
+            sz = last == NULL ? 0 : last - first;
+            if (sz <= 1) {
+                /* not a real pattern */
+                if (len != 0)
+                    result[out] = '%';
+                out++;
+                head = first + sz + 1;
             }
             else {
-                // add label value to destination argument
-                const char *labelVal = json_object_get_string(labelJ);
-                for (labelIdx = 0; labelVal[labelIdx]; labelIdx++) {
-                    dst[destIdx++] = labelVal[labelIdx];
+                /* got in % the key of a substitution */
+                char key[sz]; /* in stack alloc of key */
+                memcpy(key, first + 1, sz - 1);
+                key[sz - 1] = 0;
+                if (json_object_object_get_ex(keysJ, key, &labelJ)) {
+                    val = json_object_get_string(labelJ);
+                    sz = strlen(val);
+                    if (len != 0)
+                        memcpy(&result[out],val, sz);
+                    out += sz;
                 }
+                head = last + 1;
             }
         }
     }
-    dst[destIdx++] = '\0';
-
-    // when expanded make a copy of dst into params
-    if (!expanded) {
-        response = strdup(src);
-    }
-    else {
-        // fprintf (stderr, "utilsExpandJson: '%s' => '%s'\n", src, dst);
-        response = strdup(dst);
-    }
-
-    return response;
-
-OnErrorExit:
-    return NULL;
 }
+
