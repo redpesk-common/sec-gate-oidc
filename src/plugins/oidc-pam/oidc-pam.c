@@ -138,7 +138,7 @@ static int pamAccessToken(const oidcIdpT *idp,
         // retrieve groups list and add them to fedSocial labels list
         err = getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups);
         if (err < 0) {
-            EXT_CRITICAL("[pam-auth-gids] opts{'gids':%d} too small",
+            EXT_CRITICAL("[oidc-pam] opts{'gids':%d} too small",
                          dfltOpts.gidsMax);
             goto OnErrorExit;
         }
@@ -305,7 +305,7 @@ OnErrorExit:
 static int pamRegisterAlias(const oidcIdpT *idp, struct afb_hsrv *hsrv)
 {
     int err;
-    EXT_DEBUG("[pam-register-alias] uid=%s login='%s'", idp->uid,
+    EXT_DEBUG("[oidc-pam] uid=%s login='%s'", idp->uid,
               idp->statics->aliasLogin);
 
     err = afb_hsrv_add_handler(hsrv, idp->statics->aliasLogin, pamLoginCB,
@@ -317,8 +317,7 @@ static int pamRegisterAlias(const oidcIdpT *idp, struct afb_hsrv *hsrv)
 
 OnErrorExit:
     EXT_ERROR(
-        "[pam-register-alias] idp=%s fail to register alias=%s "
-        "(pamRegisterAlias)",
+        "[oidc-pam] idp=%s fail to register alias=%s",
         idp->uid, idp->statics->aliasLogin);
     return 1;
 }
@@ -345,7 +344,7 @@ static int pamRegisterConfig(oidcIdpT *idp, json_object *idpJ)
             &dfltOpts.avatarAlias, "uidmin", &dfltOpts.uidMin);
         if (err) {
             EXT_ERROR(
-                "[pam-config-opts] json parse fail 'plugin':{'gids': %d, "
+                "[oidc-pam] json parse fail 'plugin':{'gids': %d, "
                 "'avatar':'%s'",
                 dfltOpts.gidsMax, dfltOpts.avatarAlias);
             goto OnErrorExit;
@@ -377,9 +376,7 @@ int oidcPluginInit(oidcCoreHdlT *oidc)
     // make sure plugin get read access to shadow
     int handle = open("/etc/shadow", O_RDONLY);
     if (handle < 0) {
-        EXT_CRITICAL(
-            "[pam-auth-permission] missing permissio=O_RDONLY file=/etc/shadow "
-            "(pamLoginCB)");
+        EXT_CRITICAL("[oidc-pam] missing permissio=O_RDONLY file=/etc/shadow");
         goto OnErrorExit;
     }
     close(handle);
