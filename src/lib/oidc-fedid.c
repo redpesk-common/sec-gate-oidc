@@ -88,7 +88,7 @@ static void fedidNewUser(oidcStateT *state,
     oidcSessionSetFedUser(session, state->fedUser);
     oidcSessionSetFedSocial(session, state->fedSocial);
     if (profile->slave) {
-        oidcSessionSetFedIdLinkRequest(session, FEDID_LINK_REQUESTED);
+        oidcSessionSetFedIdUser(session, state->fedUser);
         targetUrl = oidcCoreGlobals(state->idp->oidc)->fedlinkUrl;
     }
     else {
@@ -148,7 +148,7 @@ static void fedidFederateUser(oidcStateT *state,
     afb_data_t data;
 
     // make sure we do not link account twice
-    oidcSessionSetFedIdLinkRequest(session, FEDID_LINK_RESET);
+    oidcSessionDropFedIdUser(session);
 
     // delegate account federation linking to fedid binding
     err = afb_create_data_raw(&params[0], fedUserObjType, fedUsr, 0,
@@ -177,8 +177,8 @@ static void fedidExistingUser(oidcStateT *state,
                               fedSocialRawT *fedSoc,
                               fedUserRawT *fedUsr)
 {
-    int fedLoa = oidcSessionGetFedIdLinkRequest(session);
-    if (fedLoa == FEDID_LINK_REQUESTED)
+    fedUserRawT *fedUser = oidcSessionGetFedIdUser(session);
+    if (fedUser != NULL)
         fedidFederateUser(state, session, fedSoc, fedUsr);
     else
         fedidLoginUser(state, session, fedSoc, fedUsr);

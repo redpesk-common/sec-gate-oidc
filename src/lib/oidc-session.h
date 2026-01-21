@@ -29,13 +29,7 @@
 #include "oidc-core.h"
 #include "oidc-idp.h"
 
-typedef struct {
-    char* pseudo;
-    char* email;
-} fedidLinkT;
-
-#define FEDID_LINK_REQUESTED -1
-#define FEDID_LINK_RESET 0
+#include "fedid-types.h"
 
 typedef struct oidcSessionS oidcSessionT;
 
@@ -66,6 +60,7 @@ void oidcSessionSetTargetPage(oidcSessionT* session, const oidcAliasT* alias);
 const oidcProfileT* oidcSessionGetTargetProfile(oidcSessionT* session);
 void oidcSessionSetTargetProfile(oidcSessionT* session,
                                  const oidcProfileT* profile);
+
 const oidcProfileT* oidcSessionGetActualProfile(oidcSessionT* session);
 void oidcSessionSetActualProfile(oidcSessionT* session,
                                  const oidcProfileT* profile);
@@ -73,13 +68,9 @@ void oidcSessionSetActualProfile(oidcSessionT* session,
 void oidcSessionSetTargetState(oidcSessionT* session, oidcStateT* state);
 oidcStateT* oidcSessionGetTargetState(oidcSessionT* session);
 
-int oidcSessionSetFedIdLink(oidcSessionT* session,
-                            const char* pseudo,
-                            const char* email);
-const fedidLinkT* oidcSessionGetFedIdLink(oidcSessionT* session);
-void oidcSessionDropFedIdLink(oidcSessionT* session);
-void oidcSessionSetFedIdLinkRequest(oidcSessionT* session, int request);
-int oidcSessionGetFedIdLinkRequest(oidcSessionT* session);
+void oidcSessionDropFedIdUser(oidcSessionT* session);
+void oidcSessionSetFedIdUser(oidcSessionT* session, fedUserRawT *fedUser);
+fedUserRawT *oidcSessionGetFedIdUser(oidcSessionT* session);
 
 int oidcSessionEventSubscribe(afb_req_t wreq);
 int oidcSessionEventPush(oidcSessionT* session, const char* desc, ...);

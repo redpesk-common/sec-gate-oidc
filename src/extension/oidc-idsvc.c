@@ -297,23 +297,20 @@ static void idpQueryUser(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 {
     // get current social data for further account linking
     oidcSessionT *session = oidcSessionOfReq(wreq);
-    const fedidLinkT *fedlink = oidcSessionGetFedIdLink(session);
-    if (fedlink) {
-        // fedlink is set
+    fedUserRawT *fedUser = oidcSessionGetFedIdUser(session);
+    if (fedUser != NULL) {
+        // fedUser is set
         int rc;
-        json_object *queryJ;
         afb_data_t data;
-        rc = rp_jsonc_pack(&queryJ, "{ss ss}", "email", fedlink->email, "pseudo",
-                      fedlink->pseudo);
-        if (rc >= 0)
-            rc = makeJSONData(&data, queryJ);
+        rc = afb_data_create_raw(&data, fedUserObjType,
+                                 fedUserAddRef(fedUser), 0,
+                                 (void(*)(void*))fedUserUnRef, fedUser);
         if (rc < 0)
             return replyOOM(wreq);
-        oidcSessionDropFedIdLink(session);
         fedIdClientSubCall(wreq, "social-idps", 1, &data, idpQueryUserCB, NULL);
     }
     else {
-        // fedlink isn't set
+        // fedUser isn't set
         const oidcCoreHdlT *oidc = wreq2oidc(wreq);
         const oidcProfileT *profile = oidcSessionGetTargetProfile(session);
         const char *idpId = profile != NULL ? profile->idp->uid : NULL;
@@ -453,8 +450,7 @@ static void userFederateCB(void *ctx,
     // copy current user social and registration data for further federation
     // request
     session = oidcSessionOfReq(wreq);
-    oidcSessionSetFedIdLink(session, fedUser->pseudo, fedUser->email);
-    oidcSessionSetFedIdLinkRequest(session, FEDID_LINK_REQUESTED);
+    oidcSessionSetFedIdUser(session, fedUser);
 
     // Send the url of the federation
     rc = rp_jsonc_pack(&responseJ, "{ss}", "target", oidcCoreGlobals(wreq2oidc(wreq))->fedlinkUrl);

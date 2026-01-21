@@ -49,8 +49,7 @@ struct oidcSessionS
     oidcStateT *targetState;
     fedUserRawT *user;
     fedSocialRawT *social;
-    int fedidLinkRequest;
-    fedidLinkT fedlink;
+    fedUserRawT *fedIdUser;
     struct afb_evt *event;
     struct timespec now;
     struct timespec nextCheck;
@@ -253,40 +252,22 @@ oidcStateT *oidcSessionGetTargetState(oidcSessionT *session)
     return session->targetState;
 }
 
-const fedidLinkT *oidcSessionGetFedIdLink(oidcSessionT *session)
+void oidcSessionDropFedIdUser(oidcSessionT* session)
 {
-    return session->fedlink.pseudo == NULL ? NULL : &session->fedlink;
+    oidcSessionSetFedIdUser(session, NULL);
 }
 
-void oidcSessionDropFedIdLink(oidcSessionT *session)
+void oidcSessionSetFedIdUser(oidcSessionT* session, fedUserRawT *fedUser)
 {
-    free(session->fedlink.pseudo);
-    free(session->fedlink.email);
-    session->fedlink.pseudo = NULL;
-    session->fedlink.email = NULL;
+    fedUserRawT *prev = session->fedIdUser;
+    session->fedIdUser = fedUser == NULL ? NULL : fedUserAddRef(fedUser);
+    if (prev != NULL)
+        fedUserUnRef(prev);
 }
 
-int oidcSessionSetFedIdLink(oidcSessionT *session,
-                            const char *pseudo,
-                            const char *email)
+fedUserRawT *oidcSessionGetFedIdUser(oidcSessionT* session)
 {
-    oidcSessionDropFedIdLink(session);
-    session->fedlink.pseudo = strdup(pseudo);
-    session->fedlink.email = strdup(email);
-    if (session->fedlink.pseudo != NULL && session->fedlink.email != NULL)
-        return 0;
-    oidcSessionDropFedIdLink(session);
-    return -1;
-}
-
-int oidcSessionGetFedIdLinkRequest(oidcSessionT *session)
-{
-    return session->fedidLinkRequest;
-}
-
-void oidcSessionSetFedIdLinkRequest(oidcSessionT *session, int request)
-{
-    session->fedidLinkRequest = request;
+    return session->fedIdUser;
 }
 
 const fedSocialRawT *oidcSessionGetFedSocial(oidcSessionT *session)
