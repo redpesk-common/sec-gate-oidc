@@ -523,17 +523,7 @@ int idpRegisterApis(const oidcCoreHdlT *oidc,
     return err;
 }
 
-/** make an oidcState for the given idp, target LOA and scope
- *
- * @param idp       the IDP
- * @param targetLOA the targeted LOA
- * @param scope     a required scope (can be NULL)
- * @param session   the session to be bound
- * @param state     pointer for storing created state
- *
- * @return 1 if ok, 0 if no profile foun, -1 when out of memory
- */
-static int idpMakeState(const oidcIdpT *idp,
+int idpMakeState(const oidcIdpT *idp,
                         int targetLOA,
                         const char *scope,
                         oidcSessionT *session,
