@@ -109,7 +109,8 @@ static int extract(const httpRqtT *httpRqt, const char **dest, const char *key)
 
     /* compute the value */
     value += strlen(key);
-    while (*value == ' ') value++;
+    while (*value == ' ')
+        value++;
     sz = strcspn(value, "\n");
 
     /* extract a copy of the value */
@@ -180,7 +181,7 @@ static httpRqtActionT ldapAccessAttrsCB(const httpRqtT *httpRqt)
             goto done;
         }
     }
-    oidcStateGetSocial(state)->attrs = (const char**)attrs;
+    oidcStateGetSocial(state)->attrs = (const char **)attrs;
 
     // query federation ldap groups are handle asynchronously
     fedidCheck(state);
@@ -197,8 +198,7 @@ static void ldapAccessAttrs(ldapRqtCtxT *ldapRqtCtx)
 {
     const ldapOptsT *ldapOpts = ldapRqtCtx->ldapOpts;
 
-    char *curlQuery =
-        utilsExpandJson(ldapOpts->groups, ldapRqtCtx->loginJ);
+    char *curlQuery = utilsExpandJson(ldapOpts->groups, ldapRqtCtx->loginJ);
     if (curlQuery == NULL) {
         EXT_CRITICAL(
             "[idp-ldap] fail to build curl ldap groups query=%s missing "
@@ -243,7 +243,7 @@ static httpRqtActionT ldapAccessProfileCB(const httpRqtT *httpRqt)
     // something when wrong
     if (httpRqt->status < 0) {
         EXT_ERROR("[idp-ldap] http returned %d, %.*s", httpRqt->status,
-                (int)httpRqt->body.length, httpRqt->body.buffer);
+                  (int)httpRqt->body.length, httpRqt->body.buffer);
         goto OnErrorExit;
     }
 
@@ -339,7 +339,7 @@ static int ldapAccessProfile(oidcStateT *state,
     EXT_DEBUG("[idp-ldap] curl -u '%s:my_secret_passwd' '%s'",
               ldapRqtCtx->userdn, curlQuery);
     rc = httpSendGet(ldapRqtCtx->httpPool, curlQuery, &curlOpts, NULL,
-                      ldapAccessProfileCB, ldapRqtCtx);
+                     ldapAccessProfileCB, ldapRqtCtx);
     if (rc < 0)
         goto error;
 
@@ -373,20 +373,22 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
                              &passwd, "scope", &scope);
     }
     if (rc < 0)
-        return afb_req_v4_reply_hookable(wreq, AFB_ERRNO_INVALID_REQUEST, 0, NULL);
+        return afb_req_v4_reply_hookable(wreq, AFB_ERRNO_INVALID_REQUEST, 0,
+                                         NULL);
 
     // search for a scope fiting matching loa
     oidcSessionT *session = oidcSessionOfReq(wreq);
     if (!stateid || strcmp(stateid, oidcSessionUUID(session)))
-        return afb_req_v4_reply_hookable(wreq, AFB_ERRNO_BAD_API_STATE, 0, NULL);
+        return afb_req_v4_reply_hookable(wreq, AFB_ERRNO_BAD_API_STATE, 0,
+                                         NULL);
 
     // search for a matching profile if scope is selected then scope&loa should
     // match
     targetLOA = oidcSessionGetTargetLOA(session);
     profile = idpGetFirstProfile(idp, targetLOA, scope);
     if (!profile) {
-        EXT_NOTICE("[idp-ldap] scope=%s does not match working loa=%d",
-                   scope, targetLOA);
+        EXT_NOTICE("[idp-ldap] scope=%s does not match working loa=%d", scope,
+                   targetLOA);
         return afb_req_v4_reply_hookable(wreq, AFB_ERRNO_UNAUTHORIZED, 0, NULL);
     }
 
@@ -458,9 +460,8 @@ static int ldapRegisterAlias(const oidcIdpT *idp, struct afb_hsrv *hsrv)
     return 0;
 
 OnErrorExit:
-    EXT_ERROR(
-        "[idp-ldap] idp=%s fail to register alias=%s",
-        idp->uid, idp->statics->aliasLogin);
+    EXT_ERROR("[idp-ldap] idp=%s fail to register alias=%s", idp->uid,
+              idp->statics->aliasLogin);
     return 1;
 }
 

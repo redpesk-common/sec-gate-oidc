@@ -314,9 +314,9 @@ OnErrorExit:
 // [ {uid, info, logo, client-id, login-url,
 //     profiles: [ {uid, info, scope, loa} ... ] } ... ]
 json_object *oidcCoreGetProfilesForLOA(const oidcCoreHdlT *oidc,
-                                      int loa,
-                                      const char **idps,
-                                      int noslave)
+                                       int loa,
+                                       const char **idps,
+                                       int noslave)
 {
     json_object *idpsJ = json_object_new_array();
     const oidcIdpT *idp = oidc->idps;

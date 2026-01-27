@@ -70,9 +70,9 @@ int oidcCoreDeclareApis(oidcCoreHdlT* oidc,
 int oidcCoreDeclareHTTP(oidcCoreHdlT* oidc, struct afb_hsrv* hsrv);
 
 json_object* oidcCoreGetProfilesForLOA(const oidcCoreHdlT* oidc,
-                                      int loa,
-                                      const char** idps,
-                                      int noslave);
+                                       int loa,
+                                       const char** idps,
+                                       int noslave);
 
 int oidcCoreGetFilteredIdpList(const oidcCoreHdlT* oidc,
                                const char** dest,

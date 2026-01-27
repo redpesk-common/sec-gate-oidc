@@ -48,21 +48,19 @@ const oidcProfileT* oidcStateGetProfile(oidcStateT* state);
 oidcSessionT* oidcStateGetSession(oidcStateT* state);
 struct afb_hreq* oidcStateGetHttpReq(oidcStateT* state);
 struct afb_req_v4* oidcStateGetAfbReq(oidcStateT* state);
-const oidGlobalsT *oidcStateGetGlobals(oidcStateT *state);
-struct afb_api_v4 *oidcStateGetAfbApi(oidcStateT *state);
-fedUserRawT *oidcStateGetUser(oidcStateT* state);
-fedSocialRawT *oidcStateGetSocial(oidcStateT* state);
+const oidGlobalsT* oidcStateGetGlobals(oidcStateT* state);
+struct afb_api_v4* oidcStateGetAfbApi(oidcStateT* state);
+fedUserRawT* oidcStateGetUser(oidcStateT* state);
+fedSocialRawT* oidcStateGetSocial(oidcStateT* state);
 const char* oidcStateGetAuthorization(oidcStateT* state);
 const char* oidcStateGetSessionUUID(oidcStateT* state);
 
-
-
 void oidcStateSetHttpReq(oidcStateT* state, struct afb_hreq* hreq);
 void oidcStateSetAfbReq(oidcStateT* state, struct afb_req_v4* wreq);
-int oidcStateSetAuthorization(oidcStateT* state, const char *type, const char* token);
+int oidcStateSetAuthorization(oidcStateT* state,
+                              const char* type,
+                              const char* token);
 
 void oidcStateUnauthorized(oidcStateT* state);
 void oidcStateInternalError(oidcStateT* state);
-void oidcStateRedirect(oidcStateT *state, int status, const char *url);
-
-
+void oidcStateRedirect(oidcStateT* state, int status, const char* url);

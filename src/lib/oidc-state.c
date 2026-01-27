@@ -32,16 +32,17 @@
 
 #include "oidc-idp-plugin.h"
 
-struct oidcStateS {
+struct oidcStateS
+{
     unsigned ucount;
-    oidcSessionT* session;
-    const oidcProfileT* profile;
-    const oidcIdpT* idp;
-    struct afb_hreq* hreq;
-    struct afb_req_v4* wreq;
-    fedSocialRawT* fedSocial;
-    fedUserRawT* fedUser;
-    char* authorization;
+    oidcSessionT *session;
+    const oidcProfileT *profile;
+    const oidcIdpT *idp;
+    struct afb_hreq *hreq;
+    struct afb_req_v4 *wreq;
+    fedSocialRawT *fedSocial;
+    fedUserRawT *fedUser;
+    char *authorization;
 };
 
 static const char bearer[] = "Bearer";
@@ -107,37 +108,37 @@ error:
     return NULL;
 }
 
-const oidcIdpT* oidcStateGetIdp(oidcStateT* state)
+const oidcIdpT *oidcStateGetIdp(oidcStateT *state)
 {
     return state->idp;
 }
 
-const oidcProfileT* oidcStateGetProfile(oidcStateT* state)
+const oidcProfileT *oidcStateGetProfile(oidcStateT *state)
 {
     return state->profile;
 }
 
-oidcSessionT* oidcStateGetSession(oidcStateT* state)
+oidcSessionT *oidcStateGetSession(oidcStateT *state)
 {
     return state->session;
 }
 
-struct afb_hreq* oidcStateGetHttpReq(oidcStateT* state)
+struct afb_hreq *oidcStateGetHttpReq(oidcStateT *state)
 {
     return state->hreq;
 }
 
-void oidcStateSetReq(oidcStateT* state, struct afb_req_v4* wreq)
+void oidcStateSetReq(oidcStateT *state, struct afb_req_v4 *wreq)
 {
     state->wreq = wreq;
 }
 
-struct afb_req_v4* oidcStateGetAfbReq(oidcStateT* state)
+struct afb_req_v4 *oidcStateGetAfbReq(oidcStateT *state)
 {
     return state->wreq;
 }
 
-const char* oidcStateGetAuthorization(oidcStateT* state)
+const char *oidcStateGetAuthorization(oidcStateT *state)
 {
     return state->authorization;
 }
@@ -152,22 +153,22 @@ struct afb_api_v4 *oidcStateGetAfbApi(oidcStateT *state)
     return oidcCoreAfbApi(state->idp->oidc);
 }
 
-fedUserRawT *oidcStateGetUser(oidcStateT* state)
+fedUserRawT *oidcStateGetUser(oidcStateT *state)
 {
     return state->fedUser;
 }
 
-fedSocialRawT *oidcStateGetSocial(oidcStateT* state)
+fedSocialRawT *oidcStateGetSocial(oidcStateT *state)
 {
     return state->fedSocial;
 }
 
-const char *oidcStateGetSessionUUID(oidcStateT* state)
+const char *oidcStateGetSessionUUID(oidcStateT *state)
 {
     return oidcSessionUUID(state->session);
 }
 
-void oidcStateSetHttpReq(oidcStateT* state, struct afb_hreq* hreq)
+void oidcStateSetHttpReq(oidcStateT *state, struct afb_hreq *hreq)
 {
     afb_hreq_addref(hreq);
     if (state->hreq != NULL)
@@ -175,7 +176,7 @@ void oidcStateSetHttpReq(oidcStateT* state, struct afb_hreq* hreq)
     state->hreq = hreq;
 }
 
-void oidcStateSetAfbReq(oidcStateT* state, struct afb_req_v4* wreq)
+void oidcStateSetAfbReq(oidcStateT *state, struct afb_req_v4 *wreq)
 {
     afb_req_v4_addref_hookable(wreq);
     if (state->wreq != NULL)
@@ -183,11 +184,13 @@ void oidcStateSetAfbReq(oidcStateT* state, struct afb_req_v4* wreq)
     state->wreq = wreq;
 }
 
-int oidcStateSetAuthorization(oidcStateT *state, const char *type, const char *token)
+int oidcStateSetAuthorization(oidcStateT *state,
+                              const char *type,
+                              const char *token)
 {
     size_t sz1, sz2;
     char *auth;
-    
+
     if (type == NULL)
         type = bearer;
 
@@ -218,22 +221,22 @@ void fedidsessionReset(oidcSessionT *session, const oidcProfileT *idpProfile)
               oidcSessionUUID(session));
 
     if (idpProfile) {
-/*
-  TODO
-        if (idpProfile->idp->plugin && idpProfile->idp->plugin->resetSession) {
-            void *ctx = oidcSessionGetOpaqueData(session);
-            if (ctx != NULL) {
-                idpProfile->idp->plugin->resetSession(idpProfile, ctx);
-                oidcSessionSetOpaqueData(session, NULL);
-            }
-        }
-*/
+        /*
+          TODO
+                if (idpProfile->idp->plugin &&
+          idpProfile->idp->plugin->resetSession) { void *ctx =
+          oidcSessionGetOpaqueData(session); if (ctx != NULL) {
+                        idpProfile->idp->plugin->resetSession(idpProfile, ctx);
+                        oidcSessionSetOpaqueData(session, NULL);
+                    }
+                }
+        */
 
         const oidGlobalsT *globals = oidcCoreGlobals(idpProfile->idp->oidc);
         count = oidcSessionEventPush(
             session, "{ss ss ss* ss*}", "status", "loa-reset", "home",
-            globals->homeUrl != NULL ? globals->homeUrl : "/", "login", globals->loginUrl, "error",
-            globals->errorUrl);
+            globals->homeUrl != NULL ? globals->homeUrl : "/", "login",
+            globals->loginUrl, "error", globals->errorUrl);
         if (!count)
             EXT_DEBUG("[oidc-state] no client subscribed uuid=%s ?",
                       oidcSessionUUID(session));
@@ -253,27 +256,30 @@ void oidcStateUnauthorized(oidcStateT *state)
     reply(state, EXT_HTTP_UNAUTHORIZED, AFB_ERRNO_UNAUTHORIZED);
 }
 
-void oidcStateInternalError(oidcStateT* state)
+void oidcStateInternalError(oidcStateT *state)
 {
     reply(state, EXT_HTTP_SERVER_ERROR, AFB_ERRNO_INTERNAL_ERROR);
 }
 
 #ifndef MHD_HTTP_SEE_OTHER
-#define MHD_HTTP_SEE_OTHER           303
-#define MHD_HTTP_TEMPORARY_REDIRECT  307
-#define MHD_HTTP_HEADER_LOCATION     "Location"
+#define MHD_HTTP_SEE_OTHER          303
+#define MHD_HTTP_TEMPORARY_REDIRECT 307
+#define MHD_HTTP_HEADER_LOCATION    "Location"
 #endif
 void oidcStateRedirect(oidcStateT *state, int status, const char *url)
 {
-	EXT_DEBUG("redirect to [%s]", url);
+    EXT_DEBUG("redirect to [%s]", url);
     if (state->hreq) {
-        unsigned status = (state->hreq->method & afb_method_post) ? MHD_HTTP_SEE_OTHER : MHD_HTTP_TEMPORARY_REDIRECT;
-	    afb_hreq_reply_static(state->hreq, status, 0, NULL, MHD_HTTP_HEADER_LOCATION, url, NULL);
+        unsigned status = (state->hreq->method & afb_method_post)
+                              ? MHD_HTTP_SEE_OTHER
+                              : MHD_HTTP_TEMPORARY_REDIRECT;
+        afb_hreq_reply_static(state->hreq, status, 0, NULL,
+                              MHD_HTTP_HEADER_LOCATION, url, NULL);
     }
     if (state->wreq) {
         struct afb_data *data;
-        afb_data_create_copy(&data, &afb_type_predefined_stringz, url, 1 + strlen(url));
+        afb_data_create_copy(&data, &afb_type_predefined_stringz, url,
+                             1 + strlen(url));
         afb_req_v4_reply_hookable(state->wreq, status, 1, &data);
     }
 }
-

@@ -69,7 +69,7 @@ static int makeStringData(afb_data_t *data, const char *string, int destroy)
 static int makeJSONData(afb_data_t *data, struct json_object *obj)
 {
     return afb_create_data_raw(data, AFB_PREDEFINED_TYPE_JSON_C, obj, 0,
-                               (void (*)(void*))json_object_put, obj);
+                               (void (*)(void *))json_object_put, obj);
 }
 
 /*
@@ -124,7 +124,10 @@ static void replyInternalError(afb_req_t wreq)
 /*
  * build JSON reply for idps and send it as reply
  */
-static void replyIdpList(afb_req_t wreq, const char **idps, int loa, int noslave)
+static void replyIdpList(afb_req_t wreq,
+                         const char **idps,
+                         int loa,
+                         int noslave)
 {
     afb_data_t reply;
     int rc = 0;
@@ -140,7 +143,7 @@ static void replyIdpList(afb_req_t wreq, const char **idps, int loa, int noslave
     // build IDP list with corresponding scope for requested LOA
     if (alias != NULL) {
         rc = rp_jsonc_pack(&aliasJ, "{ss ss* ss si}", "uid", alias->uid, "info",
-                      alias->info, "url", alias->url, "loa", alias->loa);
+                           alias->info, "url", alias->url, "loa", alias->loa);
         if (rc < 0)
             return replyOOM(wreq);
         if (loa < 0)
@@ -258,7 +261,7 @@ static void userCheckAttr(afb_req_t wreq,
  */
 static void idpQueryUserReply(afb_req_t wreq, const char **idps)
 {
-    replyIdpList(wreq, idps, 0, 1);   // TODO values of loa and noslave?
+    replyIdpList(wreq, idps, 0, 1);  // TODO values of loa and noslave?
 }
 /*
  * receive list of IDP from fedid
@@ -302,9 +305,8 @@ static void idpQueryUser(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
         // fedUser is set
         int rc;
         afb_data_t data;
-        rc = afb_data_create_raw(&data, fedUserObjType,
-                                 fedUserAddRef(fedUser), 0,
-                                 (void(*)(void*))fedUserUnRef, fedUser);
+        rc = afb_data_create_raw(&data, fedUserObjType, fedUserAddRef(fedUser),
+                                 0, (void (*)(void *))fedUserUnRef, fedUser);
         if (rc < 0)
             return replyOOM(wreq);
         fedIdClientSubCall(wreq, "social-idps", 1, &data, idpQueryUserCB, NULL);
@@ -367,7 +369,8 @@ static void userRegisterCB(void *ctx,
     oidcSessionSetActualLOA(session, profile->loa);
 
     // reply to the query
-    rc = rp_jsonc_pack(&aliasJ, "{ss}", "target", alias->url != NULL ? alias->url : "/");
+    rc = rp_jsonc_pack(&aliasJ, "{ss}", "target",
+                       alias->url != NULL ? alias->url : "/");
     if (rc >= 0)
         rc = makeJSONData(&reply, aliasJ);
     if (rc < 0)
@@ -402,7 +405,7 @@ static void userRegister(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     // user is new let's register it within fedid DB (do not free fedSocial
     // after call)
     rc = afb_create_data_raw(&params[1], fedSocialObjType, fedSocial, 0, NULL,
-                              NULL);
+                             NULL);
     if (rc < 0)
         return replyOOM(wreq);
 
@@ -453,7 +456,8 @@ static void userFederateCB(void *ctx,
     oidcSessionSetFedIdUser(session, fedUser);
 
     // Send the url of the federation
-    rc = rp_jsonc_pack(&responseJ, "{ss}", "target", oidcCoreGlobals(wreq2oidc(wreq))->fedlinkUrl);
+    rc = rp_jsonc_pack(&responseJ, "{ss}", "target",
+                       oidcCoreGlobals(wreq2oidc(wreq))->fedlinkUrl);
     if (rc >= 0)
         rc = makeJSONData(&reply, responseJ);
     if (rc < 0)
@@ -497,8 +501,9 @@ static void sessionReset(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     fedidsessionReset(session, profile);
 
     const oidGlobalsT *globals = oidcCoreGlobals(wreq2oidc(wreq));
-    rc = rp_jsonc_pack(&responseJ, "{ss ss* ss*}", "home", globals->homeUrl != NULL ? globals->homeUrl : "/",
-                  "login", globals->loginUrl, "error", globals->errorUrl);
+    rc = rp_jsonc_pack(&responseJ, "{ss ss* ss*}", "home",
+                       globals->homeUrl != NULL ? globals->homeUrl : "/",
+                       "login", globals->loginUrl, "error", globals->errorUrl);
     if (rc >= 0)
         rc = makeJSONData(&reply, responseJ);
     if (rc < 0)
@@ -532,14 +537,16 @@ static void sessionGet(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
         return replyBadState(wreq);
 
     rc = rp_jsonc_pack(&profileJ, "{ss ss si}", "uid", profile->uid, "scope",
-                  profile->scope, "loa", profile->loa);
+                       profile->scope, "loa", profile->loa);
     if (rc >= 0)
         rc = makeJSONData(&reply[2], profileJ);
     if (rc >= 0) {
-        rc = afb_create_data_raw(&reply[0], fedUserObjType, fedUser, 0, NULL, NULL);
+        rc = afb_create_data_raw(&reply[0], fedUserObjType, fedUser, 0, NULL,
+                                 NULL);
         if (rc >= 0) {
-            rc = afb_create_data_raw(&reply[1], fedSocialObjType, fedSocial, 0, NULL,
-                        NULL);  // keep feduser
+            rc = afb_create_data_raw(&reply[1], fedSocialObjType, fedSocial, 0,
+                                     NULL,
+                                     NULL);  // keep feduser
             if (rc >= 0)
                 return afb_req_reply(wreq, 0, 3, reply);
             afb_data_unref(reply[0]);
@@ -592,11 +599,12 @@ static void idpQueryConf(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
  *
  * The verb 'url-query-conf' doesn't expect any argument.
  *
- * It returns the global urls of the sec-gate: home, login, federate, register, error
+ * It returns the global urls of the sec-gate: home, login, federate, register,
+ * error
  */
 static void urlQuery(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 {
-    int  rc;
+    int rc;
     afb_data_t reply;
     json_object *responseJ;
 
@@ -605,10 +613,10 @@ static void urlQuery(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     const oidGlobalsT *globals = oidcCoreGlobals(oidc);
 
     // build the reply
-    rc = rp_jsonc_pack(&responseJ, "{ss ss ss ss ss}", "home",
-                        globals->homeUrl, "login", globals->loginUrl,
-                        "federate", globals->fedlinkUrl, "register",
-                        globals->registerUrl, "error", globals->errorUrl);
+    rc = rp_jsonc_pack(&responseJ, "{ss ss ss ss ss}", "home", globals->homeUrl,
+                       "login", globals->loginUrl, "federate",
+                       globals->fedlinkUrl, "register", globals->registerUrl,
+                       "error", globals->errorUrl);
     if (rc >= 0)
         rc = makeJSONData(&reply, responseJ);
     if (rc < 0)

@@ -193,8 +193,8 @@ static void rqtDone(httpRqtHndlT *hndl, CURL *easy, CURLcode status)
         hndl->httpRqt.status = (int)rcode;
         if ((long)hndl->httpRqt.status != rcode && hndl->verbose)
             fprintf(stderr,
-                    "[curl-client] error! status truncated %ld != %d.\n",
-                    rcode, hndl->httpRqt.status);
+                    "[curl-client] error! status truncated %ld != %d.\n", rcode,
+                    hndl->httpRqt.status);
         curl_easy_getinfo(easy, CURLINFO_CONTENT_TYPE,
                           &hndl->httpRqt.contentType);
     }

@@ -44,7 +44,7 @@ static void glueOnSocketCB(struct ev_fd *efd,
         action |= CURL_CSELECT_ERR;
 
     if (action != 0)
-	    httpOnSocketCB(httpRqtHndl, sock, action);
+        httpOnSocketCB(httpRqtHndl, sock, action);
 }
 
 // create libafb efd event and attach http processing callback to sock fd
@@ -91,7 +91,8 @@ static int glueSetSocketCB(httpRqtHndlT *httpRqtHndl,
             // set the efd or create it
             if (efd != NULL)
                 ev_fd_set_events(efd, events);
-            else if (ev_mgr_add_fd(mgr, pefd, sock, events, glueOnSocketCB, httpRqtHndl, 0, 0) < 0)
+            else if (ev_mgr_add_fd(mgr, pefd, sock, events, glueOnSocketCB,
+                                   httpRqtHndl, 0, 0) < 0)
                 rc = -1;
         }
         afb_ev_mgr_release_for_me();

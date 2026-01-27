@@ -12,4 +12,5 @@ BraceWrapping:
 BreakBeforeBraces: Custom
 ColumnLimit: 80
 IndentCaseLabels: false
+DerivePointerAlignment: false
 PointerAlignment: Right

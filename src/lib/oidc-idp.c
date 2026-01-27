@@ -170,8 +170,8 @@ OnErrorExit:
 }
 
 static int idpParseOneProfile(oidcIdpT *idp,
-                             json_object *profileJ,
-                             oidcProfileT *profile)
+                              json_object *profileJ,
+                              oidcProfileT *profile)
 {
     profile->sTimeout = idp->statics->sTimeout;
     profile->idp = idp;
@@ -194,8 +194,8 @@ OnErrorExit:
 }
 
 static const oidcProfileT *idpParseProfiles(oidcIdpT *idp,
-                                           json_object *profilesJ,
-                                           const oidcProfileT *defaults)
+                                            json_object *profilesJ,
+                                            const oidcProfileT *defaults)
 {
     oidcProfileT *profile = NULL;
     int err;
@@ -536,8 +536,8 @@ static int idpMakeState(const oidcIdpT *idp,
     const oidcProfileT *profile = idpGetFirstProfile(idp, targetLOA, scope);
     if (!profile) {
         // no profile foun exit without trying authentication
-        EXT_WARNING("IDP %s has no profile for LOA %d SCOPE %s",
-                    idp->uid, targetLOA, scope);
+        EXT_WARNING("IDP %s has no profile for LOA %d SCOPE %s", idp->uid,
+                    targetLOA, scope);
         return 0;
     }
 

@@ -56,7 +56,7 @@ struct oidcSessionS
     struct timespec now;
     struct timespec nextCheck;
     struct timespec endValid;
-    rp_uuid_stringz_t xid; // TODO
+    rp_uuid_stringz_t xid;  // TODO
 };
 
 // release memory used by the session
@@ -88,7 +88,7 @@ static int createSession(void *closure,
     session->uuid = afb_session_uuid(closure);
     *value = session;
     *freeclo = session;
-    *freecb = (void (*)(void*))oidcSessionUnRef;
+    *freecb = (void (*)(void *))oidcSessionUnRef;
     return 0;
 }
 
@@ -100,7 +100,7 @@ oidcSessionT *oidcSessionOfAfbSession(struct afb_session *ases)
         EXT_CRITICAL("[oidc-session] AFB session is NULL");
     else {
         int rc =
-            afb_session_cookie_getinit(ases, (void*)oidcSessionOfAfbSession,
+            afb_session_cookie_getinit(ases, (void *)oidcSessionOfAfbSession,
                                        (void *)&session, createSession, ases);
         if (rc < 0) {
             EXT_CRITICAL("[oidc-session] iCreation of session failed");
@@ -255,12 +255,12 @@ oidcStateT *oidcSessionGetTargetState(oidcSessionT *session)
     return session->targetState;
 }
 
-void oidcSessionDropFedIdUser(oidcSessionT* session)
+void oidcSessionDropFedIdUser(oidcSessionT *session)
 {
     oidcSessionSetFedIdUser(session, NULL);
 }
 
-void oidcSessionSetFedIdUser(oidcSessionT* session, fedUserRawT *fedUser)
+void oidcSessionSetFedIdUser(oidcSessionT *session, fedUserRawT *fedUser)
 {
     fedUserRawT *prev = session->fedIdUser;
     session->fedIdUser = fedUser == NULL ? NULL : fedUserAddRef(fedUser);
@@ -268,7 +268,7 @@ void oidcSessionSetFedIdUser(oidcSessionT* session, fedUserRawT *fedUser)
         fedUserUnRef(prev);
 }
 
-fedUserRawT *oidcSessionGetFedIdUser(oidcSessionT* session)
+fedUserRawT *oidcSessionGetFedIdUser(oidcSessionT *session)
 {
     return session->fedIdUser;
 }
@@ -346,7 +346,7 @@ int oidcSessionEventPush(oidcSessionT *session, const char *desc, ...)
     // create  the data
     if (rc >= 0)
         rc = afb_create_data_raw(&data, AFB_PREDEFINED_TYPE_JSON_C, obj, 0,
-                                 (void (*)(void*))json_object_put, obj);
+                                 (void (*)(void *))json_object_put, obj);
 
     // check if event created
     if (rc < 0)

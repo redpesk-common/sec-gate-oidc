@@ -171,8 +171,8 @@ static void pamLogin(const oidcIdpT *idp,
 
     // Check received login/passwd
     EXT_DEBUG("[oidc-pam] login=%s", login);
-    rc = pamAccessToken(idp, profile, login, passwd,
-            oidcStateGetSocial(state), oidcStateGetUser(state));
+    rc = pamAccessToken(idp, profile, login, passwd, oidcStateGetSocial(state),
+                        oidcStateGetUser(state));
     if (rc < 0)
         oidcStateUnauthorized(state);
     else
@@ -198,14 +198,15 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
         EXT_NOTICE("[oidc-pam] can't get parameters");
     else {
         obj = afb_data_ro_pointer(arg);
-        rc = rp_jsonc_unpack(obj, "{ss sd s?s s?s s?s}", "login", &login,
-                          "loa", &targetLOA, "passwd", &passwd, "password",
-                          &passwd, "scope", &scope);
+        rc = rp_jsonc_unpack(obj, "{ss sd s?s s?s s?s}", "login", &login, "loa",
+                             &targetLOA, "passwd", &passwd, "password", &passwd,
+                             "scope", &scope);
         if (rc < 0)
             EXT_NOTICE("[oidc-pam] invalid JSON parameters: %s",
                        rp_jsonc_get_error_string(rc));
         else {
-            rc = idpOnLoginRequest(idp, wreq, targetLOA, scope, &session, &state);
+            rc = idpOnLoginRequest(idp, wreq, targetLOA, scope, &session,
+                                   &state);
             if (rc > 0)
                 pamLogin(idp, state, login, passwd);
             return;
@@ -216,9 +217,9 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
 
 // Called when login page got a valid state
 static int pamOnCredsCB(struct afb_hreq *hreq,
-                         const oidcIdpT *idp,
-                         oidcSessionT *session,
-                         oidcStateT *state)
+                        const oidcIdpT *idp,
+                        oidcSessionT *session,
+                        oidcStateT *state)
 {
     // check if wreq as a code
     const char *login = afb_hreq_get_argument(hreq, "login");
@@ -275,9 +276,8 @@ static int pamRegisterAlias(const oidcIdpT *idp, struct afb_hsrv *hsrv)
     return 0;
 
 OnErrorExit:
-    EXT_ERROR(
-        "[oidc-pam] idp=%s fail to register alias=%s",
-        idp->uid, idp->statics->aliasLogin);
+    EXT_ERROR("[oidc-pam] idp=%s fail to register alias=%s", idp->uid,
+              idp->statics->aliasLogin);
     return 1;
 }
 

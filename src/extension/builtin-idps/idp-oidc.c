@@ -236,15 +236,15 @@ static httpRqtActionT oidcUserGetByTokenCB(const httpRqtT *httpRqt)
     // something when wrong
     if (httpRqt->status != 200) {
         EXT_ERROR("[idp-oidc] HTTP request failed %d: %.*s", httpRqt->status,
-                (int)httpRqt->body.length, httpRqt->body.buffer);
+                  (int)httpRqt->body.length, httpRqt->body.buffer);
         goto OnErrorExit;
     }
 
     // unwrap user profile
     json_object *profileJ = json_tokener_parse(httpRqt->body.buffer);
     if (!profileJ) {
-        EXT_ERROR("[idp-oidc] bad HTTP reply %.*s",
-                (int)httpRqt->body.length, httpRqt->body.buffer);
+        EXT_ERROR("[idp-oidc] bad HTTP reply %.*s", (int)httpRqt->body.length,
+                  httpRqt->body.buffer);
         goto OnErrorExit;
     }
 
@@ -477,7 +477,8 @@ static int oidcOnCodeCB(struct afb_hreq *hreq,
             schema->auth64, content, idp->wellknown->tokenid);
         break;
     case IDP_CLIENT_SECRET_POST:
-        EXT_DEBUG("[oidc-access-token] curl -X post -d '%s' %s\n", content, idp->wellknown->tokenid);
+        EXT_DEBUG("[oidc-access-token] curl -X post -d '%s' %s\n", content,
+                  idp->wellknown->tokenid);
         break;
     default:
         break;

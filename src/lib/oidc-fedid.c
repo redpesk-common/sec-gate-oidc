@@ -58,7 +58,7 @@ static void fedidError(oidcStateT *state)
 {
     EXT_NOTICE("[oidc-fedid] (hoops!!!) internal error");
     fedidEnd(state, AFB_ERRNO_INTERNAL_ERROR,
-            oidcStateGetGlobals(state)->errorUrl);
+             oidcStateGetGlobals(state)->errorUrl);
 }
 
 /*
@@ -106,8 +106,8 @@ static void fedidLoginUser(oidcStateT *state,
     alias = oidcSessionGetTargetPage(session);
 
     // user successfully loggin set session loa to current idp login profile
-    EXT_DEBUG("[oidc-fedid] setting actual profile %s/%s/%d",
-              profile->idp->uid, profile->uid, profile->loa);
+    EXT_DEBUG("[oidc-fedid] setting actual profile %s/%s/%d", profile->idp->uid,
+              profile->uid, profile->loa);
     oidcSessionSetActualLOA(session, profile->loa);
     oidcSessionSetActualProfile(session, profile);
     oidcSessionAutoValidate(session);
@@ -129,7 +129,6 @@ static void fedidFederateUser(oidcStateT *state,
     const fedSocialRawT *fedSocial;
     fedSocial = oidcSessionGetFedSocial(session);
 
-
     // if we have to link two accounts do it before cleaning
     assert(fedSocial);
     afb_data_x4_t params[2];
@@ -141,17 +140,17 @@ static void fedidFederateUser(oidcStateT *state,
     oidcSessionDropFedIdUser(session);
 
     // delegate account federation linking to fedid binding
-    err = afb_create_data_raw(&params[0], fedUserObjType, fedUsr, 0,
-                              NULL, NULL);
+    err =
+        afb_create_data_raw(&params[0], fedUserObjType, fedUsr, 0, NULL, NULL);
     if (err < 0)
         return fedidError(state);
-    err = afb_create_data_raw(&params[1], fedSocialObjType, fedSocial,
-                              0, NULL, NULL);
+    err = afb_create_data_raw(&params[1], fedSocialObjType, fedSocial, 0, NULL,
+                              NULL);
     if (err < 0)
         return fedidError(state);
     afb_api_t api = oidcStateGetAfbApi(state);
-    err = fedIdClientCallSync(api, "user-federate", 2, params, &status,
-                              &count, &data);
+    err = fedIdClientCallSync(api, "user-federate", 2, params, &status, &count,
+                              &data);
     if (err < 0 || status != 0) {
         EXT_ERROR(
             "[oidc-fedid] fail to link account pseudo=%s "
@@ -207,6 +206,6 @@ static void onSocialCheckResult(void *closure,
 void fedidCheck(oidcStateT *state)
 {
     afb_api_t api = oidcStateGetAfbApi(state);
-    fedIdClientSocialCheck(api, oidcStateGetSocial(state), onSocialCheckResult, state);
+    fedIdClientSocialCheck(api, oidcStateGetSocial(state), onSocialCheckResult,
+                           state);
 }
-

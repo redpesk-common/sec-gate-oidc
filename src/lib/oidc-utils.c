@@ -96,7 +96,7 @@ char *utilsExpandJson(const char *src, json_object *keysJ)
                     val = json_object_get_string(labelJ);
                     sz = strlen(val);
                     if (len != 0)
-                        memcpy(&result[out],val, sz);
+                        memcpy(&result[out], val, sz);
                     out += sz;
                 }
                 head = last + 1;
@@ -104,4 +104,3 @@ char *utilsExpandJson(const char *src, json_object *keysJ)
         }
     }
 }
-

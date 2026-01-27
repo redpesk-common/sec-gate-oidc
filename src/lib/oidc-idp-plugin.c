@@ -113,7 +113,8 @@ int idpPluginParseOne(const oidcCoreHdlT *oidc, json_object *pluginJ)
     while (head != NULL) {
         handle = dlopen(head, RTLD_NOW | RTLD_LOCAL);
         if (handle != NULL) {
-            registerPluginCB = (oidcPluginInitCbT)dlsym(handle, OIDC_PLUGIN_INIT);
+            registerPluginCB =
+                (oidcPluginInitCbT)dlsym(handle, OIDC_PLUGIN_INIT);
             if (registerPluginCB == NULL)
                 EXT_WARNING("[oidc-idp] no symbol " OIDC_PLUGIN_INIT
                             " in %s, skipping",
