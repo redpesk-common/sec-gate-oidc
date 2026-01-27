@@ -54,6 +54,7 @@ fedUserRawT* oidcStateGetUser(oidcStateT* state);
 fedSocialRawT* oidcStateGetSocial(oidcStateT* state);
 const char* oidcStateGetAuthorization(oidcStateT* state);
 const char* oidcStateGetSessionUUID(oidcStateT* state);
+const char* oidcStateGetUUID(oidcStateT *state);
 
 void oidcStateSetHttpReq(oidcStateT* state, struct afb_hreq* hreq);
 void oidcStateSetAfbReq(oidcStateT* state, struct afb_req_v4* wreq);

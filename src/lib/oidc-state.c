@@ -168,6 +168,11 @@ const char *oidcStateGetSessionUUID(oidcStateT *state)
     return oidcSessionUUID(state->session);
 }
 
+const char *oidcStateGetUUID(oidcStateT *state)
+{
+    return oidcStateGetSessionUUID(state);
+}
+
 void oidcStateSetHttpReq(oidcStateT *state, struct afb_hreq *hreq)
 {
     afb_hreq_addref(hreq);

@@ -592,7 +592,7 @@ int idpRedirectLogin(const oidcIdpT *idp,
     // prepare arguments encoding
     ipar = 0;
     params[ipar++] = "state";
-    params[ipar++] = oidcSessionUUID(session);
+    params[ipar++] = oidcStateGetUUID(state);
     params[ipar++] = "scope";
     params[ipar++] = oidcStateGetProfile(state)->scope;
     params[ipar++] = "redirect_uri";
@@ -671,15 +671,15 @@ int idpOnLoginPage(struct afb_hreq *hreq,
                                 clientId, responseType, nonce);
 
     // yes, check the state
-    uuid = oidcSessionUUID(session);
-    if (strcmp(stateid, uuid) != 0) {
-        EXT_WARNING("[oidc-idp] state mismatch recv=%s expect=%s", stateid,
-                    uuid);
-        goto error;
-    }
     state = oidcSessionGetTargetState(session);
     if (state == NULL) {
         EXT_WARNING("[oidc-idp] invalid state %s", stateid);
+        goto error;
+    }
+    uuid = oidcStateGetUUID(state);
+    if (strcmp(stateid, uuid) != 0) {
+        EXT_WARNING("[oidc-idp] state mismatch recv=%s expect=%s", stateid,
+                    uuid);
         goto error;
     }
 

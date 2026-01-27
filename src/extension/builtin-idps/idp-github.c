@@ -309,7 +309,7 @@ static int githubOnCodeCB(struct afb_hreq *hreq,
         "redirect_uri",
         redirectUrl,
         "state",
-        oidcSessionUUID(session),
+        oidcStateGetUUID(state),
         NULL  // terminator
     };
 
