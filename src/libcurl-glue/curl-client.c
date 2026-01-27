@@ -252,6 +252,7 @@ static int multiAction(httpRqtHndlT *hndl, int sock, int action)
             CURL *easy = msg->easy_handle;
             CURLcode status = msg->data.result;
 
+            multiSetTimerCB(multi, -1, hndl);
             if (hndl->verbose > 2)
                 fprintf(stderr, "[curl-client] multiAction: done\n");
 
