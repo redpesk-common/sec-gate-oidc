@@ -333,7 +333,7 @@ OnErrorExit:
     static char errorMsg[] =
         "[pcsc-scard-fail] invalid token/smartcard (check scard/config)";
     EXT_CRITICAL(errorMsg);
-    oidcStateUnauthorized(state);
+    oidcStateReplyUnauthorized(state);
     pcscRqtCtx->status = PCSC_STATUS_REFUSED;
     return 0;  // keep thread waiting for card to be removed
 }

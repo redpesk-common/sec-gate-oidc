@@ -32,17 +32,27 @@
 
 #include "oidc-idp-plugin.h"
 
+/** structure of an oidc state */
 struct oidcStateS
 {
+    /** usage count */
     unsigned ucount;
+    /** linked session */
     oidcSessionT *session;
+    /** profile */
     const oidcProfileT *profile;
+    /** idp */
     const oidcIdpT *idp;
-    struct afb_hreq *hreq;
-    struct afb_req_v4 *wreq;
+    /** social identity */
     fedSocialRawT *fedSocial;
+    /** federated identity */
     fedUserRawT *fedUser;
+    /** Authorization key */
     char *authorization;
+    /** HTTP request */
+    struct afb_hreq *hreq;
+    /** WS request */
+    struct afb_req_v4 *wreq;
 };
 
 static const char bearer[] = "Bearer";
@@ -50,12 +60,13 @@ static const char bearer[] = "Bearer";
 void oidcStateUnRef(oidcStateT *state)
 {
     if (state != NULL && state->ucount-- == 0) {
-        oidcSessionUnRef(state->session);
+        oidcStateClearReqs(state);
         if (state->hreq != NULL)
             afb_hreq_unref(state->hreq);
         if (state->wreq != NULL)
             afb_req_v4_unref_hookable(state->wreq);
         free(state->authorization);
+        oidcSessionUnRef(state->session);
         free(state);
     }
 }
@@ -73,17 +84,16 @@ oidcStateT *oidcStateCreate(const oidcIdpT *idp,
 {
     oidcStateT *state;
 
+    // ensure idp exists
     if (idp == NULL)
         idp = profile->idp;
 
+    // create the state now
     state = calloc(1, sizeof *state);
     if (state == NULL)
         goto error;
 
-    state->ucount = 1;
-    state->session = oidcSessionAddRef(session);
-    state->profile = profile;
-    state->idp = idp;
+    // init relative parts
     state->fedSocial = calloc(1, sizeof *state->fedSocial);
     if (state->fedSocial == NULL)
         goto error2;
@@ -95,6 +105,12 @@ oidcStateT *oidcStateCreate(const oidcIdpT *idp,
     state->fedSocial->idp = strdup(idp->uid);
     if (state->fedSocial->idp == NULL)
         goto error4;
+
+    // finalize initialization
+    state->ucount = 1;
+    state->session = oidcSessionAddRef(session);
+    state->profile = profile;
+    state->idp = idp;
     return state;
 
 error4:
@@ -171,6 +187,18 @@ const char *oidcStateGetSessionUUID(oidcStateT *state)
 const char *oidcStateGetUUID(oidcStateT *state)
 {
     return oidcStateGetSessionUUID(state);
+}
+
+void oidcStateClearReqs(oidcStateT *state)
+{
+    if (state->hreq != NULL) {
+        afb_hreq_unref(state->hreq);
+        state->hreq = NULL;
+    }
+    if (state->wreq != NULL) {
+        afb_req_v4_unref_hookable(state->wreq);
+        state->wreq = NULL;
+    }
 }
 
 void oidcStateSetHttpReq(oidcStateT *state, struct afb_hreq *hreq)
@@ -254,14 +282,15 @@ static void reply(oidcStateT *state, int hrc, int wrc)
         afb_hreq_reply_error(state->hreq, hrc);
     if (state->wreq)
         afb_req_v4_reply_hookable(state->wreq, wrc, 0, NULL);
+    oidcStateClearReqs(state);
 }
 
-void oidcStateUnauthorized(oidcStateT *state)
+void oidcStateReplyUnauthorized(oidcStateT *state)
 {
     reply(state, EXT_HTTP_UNAUTHORIZED, AFB_ERRNO_UNAUTHORIZED);
 }
 
-void oidcStateInternalError(oidcStateT *state)
+void oidcStateReplyInternalError(oidcStateT *state)
 {
     reply(state, EXT_HTTP_SERVER_ERROR, AFB_ERRNO_INTERNAL_ERROR);
 }
@@ -271,7 +300,7 @@ void oidcStateInternalError(oidcStateT *state)
 #define MHD_HTTP_TEMPORARY_REDIRECT 307
 #define MHD_HTTP_HEADER_LOCATION    "Location"
 #endif
-void oidcStateRedirect(oidcStateT *state, int status, const char *url)
+void oidcStateReplyRedirect(oidcStateT *state, int status, const char *url)
 {
     EXT_DEBUG("redirect to [%s]", url);
     if (state->hreq) {
@@ -287,4 +316,5 @@ void oidcStateRedirect(oidcStateT *state, int status, const char *url)
                              1 + strlen(url));
         afb_req_v4_reply_hookable(state->wreq, status, 1, &data);
     }
+    oidcStateClearReqs(state);
 }

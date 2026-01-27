@@ -191,11 +191,9 @@ int oidcSessionShouldCheck(oidcSessionT *session)
     return timeLesser(&session->nextCheck, &session->now);
 }
 
-void oidcSessionSetNextCheck(oidcSessionT *session, long millisec)
+const oidcAliasT *oidcSessionGetTargetPage(oidcSessionT *session)
 {
-    ldiv_t d = ldiv(millisec, 1000);
-    ensureNowIsSet(session);
-    timeAdd(&session->nextCheck, &session->now, d.quot, d.rem * 1000000);
+    return session->targetPage;
 }
 
 int oidcSessionGetTargetLOA(oidcSessionT *session)
@@ -208,14 +206,31 @@ int oidcSessionGetActualLOA(oidcSessionT *session)
     return session->loa;
 }
 
+const oidcProfileT *oidcSessionGetTargetProfile(oidcSessionT *session)
+{
+    return session->targetProfile;
+}
+
+const oidcProfileT *oidcSessionGetActualProfile(oidcSessionT *session)
+{
+    return session->actualProfile;
+}
+
+oidcStateT *oidcSessionGetTargetState(oidcSessionT *session)
+{
+    return session->targetState;
+}
+
+void oidcSessionSetNextCheck(oidcSessionT *session, long millisec)
+{
+    ldiv_t d = ldiv(millisec, 1000);
+    ensureNowIsSet(session);
+    timeAdd(&session->nextCheck, &session->now, d.quot, d.rem * 1000000);
+}
+
 void oidcSessionSetActualLOA(oidcSessionT *session, int LOA)
 {
     session->loa = LOA;
-}
-
-const oidcAliasT *oidcSessionGetTargetPage(oidcSessionT *session)
-{
-    return session->targetPage;
 }
 
 void oidcSessionSetTargetPage(oidcSessionT *session, const oidcAliasT *alias)
@@ -223,20 +238,10 @@ void oidcSessionSetTargetPage(oidcSessionT *session, const oidcAliasT *alias)
     session->targetPage = alias;
 }
 
-const oidcProfileT *oidcSessionGetTargetProfile(oidcSessionT *session)
-{
-    return session->targetProfile;
-}
-
 void oidcSessionSetTargetProfile(oidcSessionT *session,
                                  const oidcProfileT *profile)
 {
     session->targetProfile = profile;
-}
-
-const oidcProfileT *oidcSessionGetActualProfile(oidcSessionT *session)
-{
-    return session->actualProfile;
 }
 
 void oidcSessionSetActualProfile(oidcSessionT *session,
@@ -248,11 +253,6 @@ void oidcSessionSetActualProfile(oidcSessionT *session,
 void oidcSessionSetTargetState(oidcSessionT *session, oidcStateT *state)
 {
     session->targetState = state;
-}
-
-oidcStateT *oidcSessionGetTargetState(oidcSessionT *session)
-{
-    return session->targetState;
 }
 
 void oidcSessionDropFedIdUser(oidcSessionT *session)

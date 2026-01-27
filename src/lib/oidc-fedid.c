@@ -49,7 +49,7 @@
 static void fedidEnd(oidcStateT *state, int status, const char *url)
 {
     EXT_DEBUG("[oidc-fedid] end %d redirect to %s", status, url);
-    oidcStateRedirect(state, status, url);
+    oidcStateReplyRedirect(state, status, url);
     oidcStateUnRef(state);
 }
 

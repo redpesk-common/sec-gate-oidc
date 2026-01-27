@@ -255,7 +255,7 @@ static httpRqtActionT oidcUserGetByTokenCB(const httpRqtT *httpRqt)
     return HTTP_HANDLE_FREE;
 
 OnErrorExit:
-    oidcStateUnauthorized(state);
+    oidcStateReplyUnauthorized(state);
     return HTTP_HANDLE_FREE;
 }
 
@@ -401,7 +401,7 @@ OnErrorExit:
         "[fail-access-token] Fail to process response from oidc status=%d "
         "body='%s' (oidcAccessTokenCB)",
         httpRqt->status, httpRqt->body.buffer);
-    oidcStateUnauthorized(state);
+    oidcStateReplyUnauthorized(state);
     json_object_put(responseJ);
     return HTTP_HANDLE_FREE;
 }
@@ -494,7 +494,7 @@ static int oidcOnCodeCB(struct afb_hreq *hreq,
     return 0;
 
 OnErrorExit:
-    oidcStateUnauthorized(state);
+    oidcStateReplyUnauthorized(state);
     oidcStateUnRef(state);
     return 1;
 }

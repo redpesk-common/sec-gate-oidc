@@ -174,7 +174,7 @@ static void pamLogin(const oidcIdpT *idp,
     rc = pamAccessToken(idp, profile, login, passwd, oidcStateGetSocial(state),
                         oidcStateGetUser(state));
     if (rc < 0)
-        oidcStateUnauthorized(state);
+        oidcStateReplyUnauthorized(state);
     else
         fedidCheck(state);
 }

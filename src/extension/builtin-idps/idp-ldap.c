@@ -287,7 +287,7 @@ static httpRqtActionT ldapAccessProfileCB(const httpRqtT *httpRqt)
     return HTTP_HANDLE_FREE;
 
 OnErrorExit:
-    oidcStateUnauthorized(state);
+    oidcStateReplyUnauthorized(state);
     ldapRqtCtxFree(ldapRqtCtx);
     return HTTP_HANDLE_FREE;
 }

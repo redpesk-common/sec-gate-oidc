@@ -56,12 +56,14 @@ const char* oidcStateGetAuthorization(oidcStateT* state);
 const char* oidcStateGetSessionUUID(oidcStateT* state);
 const char* oidcStateGetUUID(oidcStateT *state);
 
+void oidcStateClearReqs(oidcStateT *state);
+
 void oidcStateSetHttpReq(oidcStateT* state, struct afb_hreq* hreq);
 void oidcStateSetAfbReq(oidcStateT* state, struct afb_req_v4* wreq);
 int oidcStateSetAuthorization(oidcStateT* state,
                               const char* type,
                               const char* token);
 
-void oidcStateUnauthorized(oidcStateT* state);
-void oidcStateInternalError(oidcStateT* state);
-void oidcStateRedirect(oidcStateT* state, int status, const char* url);
+void oidcStateReplyUnauthorized(oidcStateT* state);
+void oidcStateReplyInternalError(oidcStateT* state);
+void oidcStateReplyRedirect(oidcStateT* state, int status, const char* url);
