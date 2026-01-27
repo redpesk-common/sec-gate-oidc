@@ -148,7 +148,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong status, void *ctx)
 
     // is card was previously inserted logout user (session loa=0)
     if (status & SCARD_STATE_EMPTY) {
-        EXT_DEBUG("[pcsc-scard-absent] tid=0x%lx card=absent status=%d",
+        EXT_DEBUG("[oidc-psc] tid=0x%lx card=absent status=%d",
                   pthread_self(), pcscRqtCtx->status);
         // prevent double detection
 
@@ -178,7 +178,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong status, void *ctx)
         fedSocialRawT *fedSocial = oidcStateGetSocial(state);
 
         EXT_DEBUG(
-            "[pcsc-scard-present] tid=0x%lx card=0x%lx ctx=0x%p status=%d",
+            "[oidc-psc] tid=0x%lx card=0x%lx ctx=0x%p status=%d",
             pthread_self(), pcscGetCardUuid(handle), pcscRqtCtx,
             pcscRqtCtx->status);
 
@@ -198,7 +198,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong status, void *ctx)
                 pcscCmdT *cmd = pcscCmdByUid(pcscOpts->config, scope);
                 if (!cmd) {
                     free(copy);
-                    EXT_ERROR("[pcsc-cmd-uid] command=%s not found", scope);
+                    EXT_ERROR("[oidc-psc] command=%s not found", scope);
                     goto OnErrorExit;
                 }
 
@@ -207,7 +207,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong status, void *ctx)
                     uuid = pcscGetCardUuid(handle);
                     if (uuid == 0) {
                         EXT_ERROR(
-                            "[pcsc-cmd-uuid] command=%s fail getting uuid "
+                            "[oidc-psc] command=%s fail getting uuid "
                             "error=%s",
                             cmd->uid, pcscErrorMsg(handle));
                         free(copy);
@@ -222,7 +222,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong status, void *ctx)
                     err = pcscExecOneCmd(handle, cmd, (u_int8_t *)data);
                     if (err) {
                         EXT_ERROR(
-                            "[pcsc-cmd-exec] command=%s execution fail "
+                            "[oidc-psc] command=%s execution fail "
                             "error=%s",
                             cmd->uid, pcscErrorMsg(handle));
                         free(data);
@@ -248,7 +248,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong status, void *ctx)
                         break;
                     default:
                         EXT_ERROR(
-                            "[pcsc-cmd-schema] command=%s no schema mapping "
+                            "[oidc-psc] command=%s no schema mapping "
                             "[pseudo,name,email,company,avatar]",
                             cmd->uid);
                         free(data);
@@ -260,7 +260,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong status, void *ctx)
 
                 default:
                     EXT_ERROR(
-                        "[pcsc-cmd-action] command=%s action=%d not supported "
+                        "[oidc-psc] command=%s action=%d not supported "
                         "for authentication",
                         cmd->uid, cmd->action);
                     free(copy);
@@ -283,7 +283,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong status, void *ctx)
                     pcscCmdT *cmd = pcscCmdByUid(pcscOpts->config, label);
                     if (!cmd || cmd->action != PCSC_ACTION_READ) {
                         EXT_ERROR(
-                            "[pcsc-cmd-label] label=%s does does match any "
+                            "[oidc-psc] label=%s does does match any "
                             "read command",
                             label);
                         free(copy);
@@ -295,7 +295,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong status, void *ctx)
                         pcscExecOneCmd(pcscOpts->handle, cmd, (u_int8_t *)data);
                     if (err) {
                         EXT_ERROR(
-                            "[pcsc-cmd-label] command=%s execution fail "
+                            "[oidc-psc] command=%s execution fail "
                             "error=%s",
                             cmd->uid, pcscErrorMsg(handle));
                         free(copy);
@@ -308,7 +308,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong status, void *ctx)
                         fedSocial->attrs[index++] = strdup(attr);
                         if (index == pcscOpts->labelMax) {
                             EXT_ERROR(
-                                "[pcsc-cmd-label] ignored labels command=%s "
+                                "[oidc-psc] ignored labels command=%s "
                                 "maxlabel=%d too small labels=%s",
                                 cmd->uid, pcscOpts->labelMax,
                                 pcscRqtCtx->scope);
@@ -331,7 +331,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong status, void *ctx)
 
 OnErrorExit:
     static char errorMsg[] =
-        "[pcsc-scard-fail] invalid token/smartcard (check scard/config)";
+        "[oidc-psc] invalid token/smartcard (check scard/config)";
     EXT_CRITICAL(errorMsg);
     oidcStateReplyUnauthorized(state);
     pcscRqtCtx->status = PCSC_STATUS_REFUSED;
@@ -339,13 +339,10 @@ OnErrorExit:
 }
 
 // check pcsc login/passwd using scope as pcsc application
-static int pcscScardGet(const oidcIdpT *idp,
-                        const oidcProfileT *profile,
-                        ulong pin,
-                        struct afb_hreq *hreq,
-                        struct afb_req_v4 *wreq)
+static int pcscScardGet(oidcStateT *state, ulong pin)
 {
-    pcscOptsT *pcscOpts = (pcscOptsT *)idp->ctx;
+    pcscOptsT *pcscOpts = (pcscOptsT *)oidcStateGetIdp(state)->ctx;
+    const oidcProfileT *profile = oidcStateGetProfile(state);
 
     // prepare context for pcsc monitor callbacks
     pcscRqtCtxT *pcscRqtCtx = calloc(1, sizeof(pcscRqtCtxT));
@@ -353,16 +350,7 @@ static int pcscScardGet(const oidcIdpT *idp,
     pcscRqtCtx->scope = profile->scope;
     pcscRqtCtx->label = profile->attrs;
     pcscRqtCtx->opts = pcscOpts;
-
-    if (hreq)
-        pcscRqtCtx->session = oidcSessionOfHttpReq(hreq);
-    if (wreq)
-        pcscRqtCtx->session = oidcSessionOfReq(wreq);
-
-    // store pcsc context within idp request one
-    oidcStateT *state = oidcStateCreate(idp, pcscRqtCtx->session, profile);
-    oidcStateSetHttpReq(state, hreq);
-    oidcStateSetAfbReq(state, wreq);
+    pcscRqtCtx->session = oidcStateGetSession(state);
     pcscRqtCtx->state = state;
 
     ulong tid = pcscMonitorReader(pcscOpts->handle, readerMonitorCB,
@@ -382,57 +370,55 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
                            unsigned nparams,
                            struct afb_data *const params[])
 {
-    const char *errmsg =
-        "[pcsc-login-fail] invalid credentials (insert a valid scard)";
     const oidcIdpT *idp = (const oidcIdpT *)afb_req_v4_vcbdata(wreq);
-    struct afb_data *args[nparams];
+    struct afb_data *data;
+    json_object *queryJ;
     const char *scope = NULL;
-    const oidcProfileT *profile = NULL;
-    afb_data_t reply;
-    const char *state;
+    oidcSessionT *session;
+    oidcStateT *state;
+    const char *stateid;
     ulong pinCode;
     int targetLOA;
     int err;
 
-    err = afb_data_convert(params[0], &afb_type_predefined_json_c, &args[0]);
-    json_object *queryJ = afb_data_ro_pointer(args[0]);
-    err = rp_jsonc_unpack(queryJ, "{ss s?i s?s}", "state", &state, "pin",
-                          &pinCode, "scope", &scope);
-    if (err)
+    err = afb_req_param_convert(wreq, 0, &afb_type_predefined_json_c, &data);
+    if (err >= 0) {
+        queryJ = afb_data_ro_pointer(data);
+        err = rp_jsonc_unpack(queryJ, "{ss s?i s?s}", "state", &stateid, "pin",
+                              &pinCode, "scope", &scope);
+    }
+    if (err < 0)
         goto OnErrorExit;
 
     // search for a scope fiting wreqing loa
-    oidcSessionT *session = oidcSessionOfReq(wreq);
-    if (!state || strcmp(state, oidcSessionUUID(session)))
+    session = oidcSessionOfReq(wreq);
+    if (!stateid || strcmp(stateid, oidcSessionUUID(session)))
         goto OnErrorExit;
 
     targetLOA = oidcSessionGetTargetLOA(session);
 
-    // search for a matching profile if scope is selected then scope&loa should
-    // match
-    profile = idpGetFirstProfile(idp, targetLOA, scope);
-    if (!profile) {
-        EXT_NOTICE("[pcsc-check-scope] scope=%s does not match working loa=%d",
-                   scope, targetLOA);
+    err = idpMakeState(idp, targetLOA, scope, session, &state);
+    if (err <= 0) {
+        EXT_NOTICE("[oidc-psc] can't get state for scope=%s and loa=%d (got %d)",
+                   scope, targetLOA, err);
         goto OnErrorExit;
     }
+    oidcStateSetAfbReq(state, wreq);
+
     // store working profile to retrieve attached loa and role filter if login
     // succeeded
-    oidcSessionSetTargetProfile(session, profile);
+    oidcSessionSetTargetProfile(session, oidcStateGetProfile(state));
+    oidcSessionSetTargetState(session, state);
 
     // try to access smart card
-    err = pcscScardGet(idp, profile, pinCode, /*hreq */ NULL, wreq);
+    err = pcscScardGet(state, pinCode);
     if (err)
         goto OnErrorExit;
 
-    // response is handle asynchronously
-    afb_req_addref(wreq);
     return;
 
 OnErrorExit:
-    afb_create_data_raw(&reply, AFB_PREDEFINED_TYPE_STRINGZ, errmsg,
-                        strlen(errmsg) + 1, NULL, NULL);
-    afb_req_v4_reply_hookable(wreq, -1, 1, &reply);
+    afb_req_v4_reply_hookable(wreq, AFB_ERRNO_INVALID_REQUEST, 0, NULL);
 }
 
 // when call with no login/passwd display form otherwise try to log user
@@ -465,7 +451,7 @@ OnErrorExit:
 static int pcscRegisterAlias(const oidcIdpT *idp, struct afb_hsrv *hsrv)
 {
     int err;
-    EXT_DEBUG("[pcsc-register-alias] uid=%s login='%s'", idp->uid,
+    EXT_DEBUG("[oidc-psc] uid=%s login='%s'", idp->uid,
               idp->statics->aliasLogin);
 
     err = afb_hsrv_add_handler(hsrv, idp->statics->aliasLogin, pcscLoginCB,
@@ -477,7 +463,7 @@ static int pcscRegisterAlias(const oidcIdpT *idp, struct afb_hsrv *hsrv)
 
 OnErrorExit:
     EXT_ERROR(
-        "[pcsc-register-alias] idp=%s fail to register alias=%s "
+        "[oidc-psc] idp=%s fail to register alias=%s "
         "(pcscRegisterAlias)",
         idp->uid, idp->statics->aliasLogin);
     return 1;
@@ -503,7 +489,7 @@ static int pcscRegisterConfig(oidcIdpT *idp, json_object *idpJ)
                               "config", &pcscConfJ);
         if (err) {
             EXT_ERROR(
-                "[pcsc-config-opts] json parse fail "
+                "[oidc-psc] json parse fail "
                 "'plugin':{'config':{myconf},'verbose':true,'avatar':'%s','"
                 "maxdev':%d",
                 pcscOpts->avatarAlias, pcscOpts->readerMax);
@@ -521,7 +507,7 @@ static int pcscRegisterConfig(oidcIdpT *idp, json_object *idpJ)
     pcscOpts->handle =
         pcscConnect(pcscOpts->config->uid, pcscOpts->config->reader);
     if (!pcscOpts->handle) {
-        EXT_CRITICAL("[pcsc-config-reader] Fail to connect to reader=%s\n",
+        EXT_CRITICAL("[oidc-psc] Fail to connect to reader=%s\n",
                      pcscOpts->config->reader);
         goto OnErrorExit;
     }
