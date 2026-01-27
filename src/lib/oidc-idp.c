@@ -64,15 +64,12 @@ const oidcProfileT *idpGetFirstProfile(const oidcIdpT *idp,
                                        int targetLOA,
                                        const char *scope)
 {
-    const oidcProfileT *iter = idp->profiles;
-    const oidcProfileT *result = NULL;
-    while (iter->uid != NULL) {
-        if (iter->loa >= targetLOA &&
-            (scope == NULL ||
-             (iter->scope != NULL && strcmp(scope, iter->scope) == 0)) &&
-            (result == NULL || iter->loa < result->loa))
-            result = iter;
-        iter++;
+    const oidcProfileT *it, *result = NULL;
+    for (it = idp->profiles ; it->uid != NULL ; it++) {
+        if (it->loa >= targetLOA &&
+            (result == NULL || it->loa < result->loa) &&
+            (scope == NULL || (it->scope != NULL && strcmp(scope, it->scope) == 0)))
+            result = it;
     }
     return result;
 }
@@ -526,10 +523,20 @@ int idpRegisterApis(const oidcCoreHdlT *oidc,
     return err;
 }
 
+/** make an oidcState for the given idp, target LOA and scope
+ *
+ * @param idp       the IDP
+ * @param targetLOA the targeted LOA
+ * @param scope     a required scope (can be NULL)
+ * @param session   the session to be bound
+ * @param state     pointer for storing created state
+ *
+ * @return 1 if ok, 0 if no profile foun, -1 when out of memory
+ */
 static int idpMakeState(const oidcIdpT *idp,
-                        oidcSessionT *session,
                         int targetLOA,
                         const char *scope,
+                        oidcSessionT *session,
                         oidcStateT **state)
 {
     // search a profile for the target LOA and expected scope
@@ -538,17 +545,17 @@ static int idpMakeState(const oidcIdpT *idp,
         // no profile foun exit without trying authentication
         EXT_WARNING("IDP %s has no profile for LOA %d SCOPE %s", idp->uid,
                     targetLOA, scope);
+        *state = NULL;
         return 0;
     }
 
     // create target state
     *state = oidcStateCreate(idp, session, profile);
-    if (*state == NULL) {
-        EXT_ERROR("Creation of state failed");
-        return -1;
-    }
+    if (*state != NULL)
+        return 1;
 
-    return 1;
+    EXT_ERROR("Creation of state failed");
+    return -1;
 }
 
 int idpRedirectLogin(const oidcIdpT *idp,
@@ -566,14 +573,14 @@ int idpRedirectLogin(const oidcIdpT *idp,
 
     int rc, ipar, targetLOA;
     const char *scope;
-    oidcStateT *state = NULL;
+    oidcStateT *state;
 
     // get target LOA and expected scope (if any)
     targetLOA = oidcSessionGetTargetLOA(session);
     scope = afb_hreq_get_argument(hreq, "scope");
 
     // make the target state
-    rc = idpMakeState(idp, session, targetLOA, scope, &state);
+    rc = idpMakeState(idp, targetLOA, scope, session, &state);
     if (rc == 0) {
         afb_hreq_reply_error(hreq, EXT_HTTP_UNAUTHORIZED);
         return 1;
@@ -708,10 +715,9 @@ int idpOnLoginRequest(const oidcIdpT *idp,
 {
     int rc;
     *session = oidcSessionOfReq(wreq);
-    *state = NULL;
 
     // make the target state
-    rc = idpMakeState(idp, *session, targetLOA, scope, state);
+    rc = idpMakeState(idp, targetLOA, scope, *session, state);
     if (rc == 0)
         afb_req_v4_reply_hookable(wreq, AFB_ERRNO_UNAUTHORIZED, 0, NULL);
     else if (rc < 0)
