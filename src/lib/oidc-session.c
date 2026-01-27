@@ -37,6 +37,7 @@
 #include <libafb/afb-v4.h>
 
 #include "oidc-alias.h"
+#include "oidc-state.h"
 
 struct oidcSessionS
 {
@@ -45,7 +46,6 @@ struct oidcSessionS
     int loa;
     const char *uuid;
     const oidcAliasT *targetPage;
-    const oidcProfileT *targetProfile;
     const oidcProfileT *actualProfile;
     oidcStateT *targetState;
     oidcStateT *actualState;
@@ -180,8 +180,9 @@ void oidcSessionValidate(oidcSessionT *session, long seconds)
 void oidcSessionAutoValidate(oidcSessionT *session)
 {
     long to = EXT_SESSION_TIMEOUT;
-    if (session->targetProfile != NULL && session->targetProfile->sTimeout > 0)
-        to = session->targetProfile->sTimeout;
+    const oidcProfileT *tp = oidcSessionGetTargetProfile(session);
+    if (tp != NULL && tp->sTimeout > 0)
+        to = tp->sTimeout;
     oidcSessionValidate(session, to);
 }
 
@@ -208,7 +209,7 @@ int oidcSessionGetActualLOA(oidcSessionT *session)
 
 const oidcProfileT *oidcSessionGetTargetProfile(oidcSessionT *session)
 {
-    return session->targetProfile;
+    return session->targetState == NULL ? NULL : oidcStateGetProfile(session->targetState);
 }
 
 const oidcProfileT *oidcSessionGetActualProfile(oidcSessionT *session)
@@ -236,12 +237,6 @@ void oidcSessionSetActualLOA(oidcSessionT *session, int LOA)
 void oidcSessionSetTargetPage(oidcSessionT *session, const oidcAliasT *alias)
 {
     session->targetPage = alias;
-}
-
-void oidcSessionSetTargetProfile(oidcSessionT *session,
-                                 const oidcProfileT *profile)
-{
-    session->targetProfile = profile;
 }
 
 void oidcSessionSetActualProfile(oidcSessionT *session,

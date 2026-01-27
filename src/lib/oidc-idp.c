@@ -620,7 +620,6 @@ int idpRedirectLogin(const oidcIdpT *idp,
     }
 
     // setup session profile+state
-    oidcSessionSetTargetProfile(session, oidcStateGetProfile(state));
     oidcSessionSetTargetState(session, state);
 
     // send the redirect now

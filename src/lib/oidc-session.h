@@ -58,8 +58,6 @@ const oidcAliasT* oidcSessionGetTargetPage(oidcSessionT* session);
 void oidcSessionSetTargetPage(oidcSessionT* session, const oidcAliasT* alias);
 
 const oidcProfileT* oidcSessionGetTargetProfile(oidcSessionT* session);
-void oidcSessionSetTargetProfile(oidcSessionT* session,
-                                 const oidcProfileT* profile);
 
 const oidcProfileT* oidcSessionGetActualProfile(oidcSessionT* session);
 void oidcSessionSetActualProfile(oidcSessionT* session,

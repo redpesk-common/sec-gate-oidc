@@ -407,7 +407,6 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
 
     // store working profile to retrieve attached loa and role filter if login
     // succeeded
-    oidcSessionSetTargetProfile(session, oidcStateGetProfile(state));
     oidcSessionSetTargetState(session, state);
 
     // try to access smart card
