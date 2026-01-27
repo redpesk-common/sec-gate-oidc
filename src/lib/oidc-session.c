@@ -46,7 +46,6 @@ struct oidcSessionS
     int loa;
     const char *uuid;
     const oidcAliasT *targetPage;
-    const oidcProfileT *actualProfile;
     oidcStateT *targetState;
     oidcStateT *actualState;
     fedUserRawT *user;
@@ -212,11 +211,6 @@ const oidcProfileT *oidcSessionGetTargetProfile(oidcSessionT *session)
     return session->targetState == NULL ? NULL : oidcStateGetProfile(session->targetState);
 }
 
-const oidcProfileT *oidcSessionGetActualProfile(oidcSessionT *session)
-{
-    return session->actualProfile;
-}
-
 oidcStateT *oidcSessionGetTargetState(oidcSessionT *session)
 {
     return session->targetState;
@@ -237,12 +231,6 @@ void oidcSessionSetActualLOA(oidcSessionT *session, int LOA)
 void oidcSessionSetTargetPage(oidcSessionT *session, const oidcAliasT *alias)
 {
     session->targetPage = alias;
-}
-
-void oidcSessionSetActualProfile(oidcSessionT *session,
-                                 const oidcProfileT *profile)
-{
-    session->actualProfile = profile;
 }
 
 void oidcSessionSetTargetState(oidcSessionT *session, oidcStateT *state)

@@ -109,7 +109,6 @@ static void fedidLoginUser(oidcStateT *state,
     EXT_DEBUG("[oidc-fedid] setting actual profile %s/%s/%d", profile->idp->uid,
               profile->uid, profile->loa);
     oidcSessionSetActualLOA(session, profile->loa);
-    oidcSessionSetActualProfile(session, profile);
     oidcSessionAutoValidate(session);
 
     fedidEnd(state, 1, alias->url);
