@@ -38,7 +38,7 @@
 #include <libafb/afb-v4.h>
 
 #include "oidc-core.h"
-#include "oidc-fedid.h"
+#include "oidc-login.h"
 #include "oidc-idp-plugin.h"
 #include "oidc-idp.h"
 #include "oidc-session.h"
@@ -139,7 +139,6 @@ static int readerMonitorCB(pcscHandleT *handle, ulong status, void *ctx)
     pcscRqtCtxT *pcscRqtCtx = (pcscRqtCtxT *)ctx;
     oidcStateT *state = pcscRqtCtx->state;
     pcscOptsT *pcscOpts = pcscRqtCtx->opts;
-    const oidcProfileT *idpProfile;
     int result = 0;
     int err;
     char *copy, *save;
@@ -155,8 +154,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong status, void *ctx)
         switch (pcscRqtCtx->status) {
             // session was authenticated logout session and kill thread
         case PCSC_STATUS_AUTHENTICATED:
-            idpProfile = oidcSessionGetTargetProfile(pcscRqtCtx->session);
-            fedidsessionReset(pcscRqtCtx->session, idpProfile);
+            oidcSessionReset(pcscRqtCtx->session);
             pcscRqtCtxFree(pcscRqtCtx);
             result = 1;  // terminate thread
             break;
@@ -320,13 +318,12 @@ static int readerMonitorCB(pcscHandleT *handle, ulong status, void *ctx)
                 free(copy);
             }
             // try do federate user
-            fedidCheck(state);
+            oidcLogin(state);
 
             // authentication was successful
             pcscRqtCtx->status = PCSC_STATUS_AUTHENTICATED;
         }
     }
-    // we done state is cleared by fedidCheck
     return result;
 
 OnErrorExit:

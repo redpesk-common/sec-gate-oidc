@@ -25,10 +25,6 @@
 
 #pragma once
 
-#include <fedid-types.h>
-#include "oidc-defaults.h"
-#include "oidc-idp.h"
-#include "oidc-session.h"
 #include "oidc-state.h"
 
-void fedidCheck(oidcStateT* state);
+void oidcLogin(oidcStateT* state);

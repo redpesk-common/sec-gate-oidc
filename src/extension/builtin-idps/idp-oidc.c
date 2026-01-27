@@ -47,7 +47,7 @@
 #include "curl-glue.h"
 #include "idp-oidc.h"
 #include "oidc-core.h"
-#include "oidc-fedid.h"
+#include "oidc-login.h"
 #include "oidc-idp.h"
 #include "oidc-session.h"
 
@@ -221,7 +221,7 @@ static int oidcUserFederateId(oidcStateT *state, json_object *profileJ)
     fedUser->avatar = get_object_string(profileJ, schema->avatar);
     fedUser->company = get_object_string(profileJ, schema->company);
 
-    fedidCheck(state);
+    oidcLogin(state);
     return 0;
 }
 
@@ -516,7 +516,6 @@ static int oidcLogoutCB(struct afb_hreq *hreq, void *ctx)
 {
     const oidcIdpT *idp = (oidcIdpT *)ctx;
     const oidcSchemaT *schema = (oidcSchemaT *)idp->userData;
-    const oidcProfileT *idpProfile;
     const char *sid;
     oidcSessionT *session;
     sidMapT *sidMap;
@@ -542,8 +541,7 @@ static int oidcLogoutCB(struct afb_hreq *hreq, void *ctx)
     session = oidcSessionOfUUID(sid);
     if (!session)
         goto OnErrorExit;
-    idpProfile = oidcSessionGetTargetProfile(oidcSessionOfHttpReq(hreq));
-    fedidsessionReset(session, idpProfile);
+    oidcSessionReset(session);
 
     // remove sid from sidmap table
     HASH_DEL(sidHead, sidMap);

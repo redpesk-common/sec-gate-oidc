@@ -39,7 +39,7 @@
 
 #include "curl-glue.h"
 #include "oidc-core.h"
-#include "oidc-fedid.h"
+#include "oidc-login.h"
 #include "oidc-idp-plugin.h"
 #include "oidc-idp.h"
 #include "oidc-session.h"
@@ -184,10 +184,9 @@ static httpRqtActionT ldapAccessAttrsCB(const httpRqtT *httpRqt)
     oidcStateGetSocial(state)->attrs = (const char **)attrs;
 
     // query federation ldap groups are handle asynchronously
-    fedidCheck(state);
+    oidcLogin(state);
 
 done:
-    // we done state is cleared by fedidCheck
     ldapRqtCtxFree(ldapRqtCtx);
     return HTTP_HANDLE_FREE;
 }
@@ -278,9 +277,8 @@ static httpRqtActionT ldapAccessProfileCB(const httpRqtT *httpRqt)
         ldapAccessAttrs(ldapRqtCtx);
     else {
         // query federation ldap groups are handle asynchronously
-        fedidCheck(state);
+        oidcLogin(state);
 
-        // we done state is cleared by fedidCheck
         ldapRqtCtxFree(ldapRqtCtx);
     }
 

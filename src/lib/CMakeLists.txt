@@ -34,9 +34,9 @@ add_library(sgoidc SHARED
 	oidc-alias.c
 	oidc-apis.c
 	oidc-core.c
-	oidc-fedid.c
 	oidc-idp.c
 	oidc-idp-plugin.c
+	oidc-login.c
 	oidc-session.c
 	oidc-state.c
 	oidc-utils.c
@@ -59,8 +59,8 @@ install(FILES
 		oidc-common.h
 		oidc-core.h
 		oidc-defaults.h
-		oidc-fedid.h
 		oidc-idp.h
+		oidc-login.h
 		oidc-idp-plugin.h
 		oidc-session.h
 		oidc-utils.h

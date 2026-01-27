@@ -41,6 +41,8 @@ oidcSessionT* oidcSessionOfUUID(const char* uuid);
 oidcSessionT* oidcSessionAddRef(oidcSessionT* session);
 void oidcSessionUnRef(oidcSessionT* session);
 
+void oidcSessionReset(oidcSessionT* session);
+
 const char* oidcSessionUUID(const oidcSessionT* session);
 
 int oidcSessionIsValid(oidcSessionT* session);
@@ -52,26 +54,28 @@ void oidcSessionSetNextCheck(oidcSessionT* session, long millisec);
 
 int oidcSessionGetTargetLOA(oidcSessionT* session);
 int oidcSessionGetActualLOA(oidcSessionT* session);
-void oidcSessionSetActualLOA(oidcSessionT* session, int LOA);
 
 const oidcAliasT* oidcSessionGetTargetPage(oidcSessionT* session);
 void oidcSessionSetTargetPage(oidcSessionT* session, const oidcAliasT* alias);
 
-const oidcProfileT* oidcSessionGetTargetProfile(oidcSessionT* session);
-
 void oidcSessionSetTargetState(oidcSessionT* session, oidcStateT* state);
 oidcStateT* oidcSessionGetTargetState(oidcSessionT* session);
-
-void oidcSessionDropFedIdUser(oidcSessionT* session);
-void oidcSessionSetFedIdUser(oidcSessionT* session, fedUserRawT* fedUser);
-fedUserRawT* oidcSessionGetFedIdUser(oidcSessionT* session);
 
 int oidcSessionEventSubscribe(afb_req_t wreq);
 int oidcSessionEventPush(oidcSessionT* session, const char* desc, ...);
 
-const fedSocialRawT* oidcSessionGetFedSocial(oidcSessionT* session);
-void oidcSessionSetFedSocial(oidcSessionT* session, fedSocialRawT* fedSocial);
 int oidcSessionHasAttribute(oidcSessionT* session, const char* value);
 
 const fedUserRawT* oidcSessionGetUser(oidcSessionT* session);
-void oidcSessionSetFedUser(oidcSessionT* session, fedUserRawT* fedUser);
+void oidcSessionSetUser(oidcSessionT* session, fedUserRawT* fedUser);
+
+oidcStateT *oidcSessionGetActualState(oidcSessionT *session);
+void oidcSessionSetActualState(oidcSessionT *session, oidcStateT *state);
+
+const fedUserRawT *oidcSessionGetUser(oidcSessionT *session);
+void oidcSessionSetUser(oidcSessionT *session, fedUserRawT *fedUser);
+
+int oidcSessionIsFederating(oidcSessionT *session);
+void oidcSessionSetFederating(oidcSessionT *session);
+void oidcSessionClearFederating(oidcSessionT *session);
+

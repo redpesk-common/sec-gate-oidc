@@ -39,7 +39,7 @@
 
 #include "oidc-alias.h"
 #include "oidc-core.h"
-#include "oidc-fedid.h"
+#include "oidc-login.h"
 #include "oidc-session.h"
 
 // dummy unique value for session key
@@ -63,21 +63,9 @@ static int aliasRedirectLogin(struct afb_hreq *hreq,
                               oidcAliasT *alias,
                               oidcSessionT *session)
 {
+    oidcSessionReset(session);
     oidcSessionSetTargetPage(session, alias);
     return oidcCoreRedirectLogin(alias->oidc, hreq);
-}
-
-// create aliasFrom cookie and redirect to idp profile page
-static int aliasRedirectTimeout(struct afb_hreq *hreq,
-                                const oidcAliasT *alias,
-                                oidcSessionT *session,
-                                const oidcProfileT *profile)
-{
-    const oidcIdpT *idp = profile->idp;
-    oidcSessionSetTargetPage(session, alias);
-    return idpRedirectLogin(
-        idp, hreq, session, idp->statics->aliasLogin, idp->statics->aliasLogin,
-        idp->credentials->clientId, idp->wellknown->respondLabel, NULL);
 }
 
 /**
@@ -86,7 +74,6 @@ static int aliasRedirectTimeout(struct afb_hreq *hreq,
 static int aliasCheckReq(struct afb_hreq *hreq, void *ctx)
 {
     oidcAliasT *alias = (oidcAliasT *)ctx;
-    const oidcProfileT *idpProfile;
     oidcSessionT *session;
 
     // get session of the request
@@ -109,11 +96,6 @@ static int aliasCheckReq(struct afb_hreq *hreq, void *ctx)
                              alias->url, "loa-target", alias->loa,
                              "loa-session", oidcSessionGetActualLOA(session));
 
-        // if current profile LOA is enough then fire same idp/profile
-        // authen
-        idpProfile = oidcSessionGetTargetProfile(session);
-        if (idpProfile != NULL && idpProfile->loa >= alias->loa)
-            return aliasRedirectTimeout(hreq, alias, session, idpProfile);
         return aliasRedirectLogin(hreq, alias, session);
     }
     // if tCache not expired use jump authent check
@@ -126,8 +108,6 @@ static int aliasCheckReq(struct afb_hreq *hreq, void *ctx)
         // store a timestamp to cache authentication validation
         oidcSessionSetNextCheck(session, alias->tCache);
     }
-    // change hreq bearer (TODO why?)
-    afb_req_common_set_token(&hreq->comreq, NULL);
     oidcSessionAutoValidate(session);
     return 0;  // move forward and continue parsing lower priority aliases
 }

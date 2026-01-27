@@ -35,7 +35,7 @@
 #include <libafb/afb-v4.h>
 
 #include "oidc-core.h"
-#include "oidc-fedid.h"
+#include "oidc-login.h"
 #include "oidc-idp-plugin.h"
 #include "oidc-idp.h"
 

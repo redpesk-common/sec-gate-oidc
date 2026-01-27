@@ -36,7 +36,7 @@
 #include <libafb/afb-v4.h>
 
 #include "oidc-core.h"
-#include "oidc-fedid.h"
+#include "oidc-login.h"
 #include "oidc-idp-plugin.h"
 #include "oidc-idp.h"
 
@@ -680,7 +680,7 @@ int idpOnLoginPage(struct afb_hreq *hreq,
     }
 
     // check target profile+idp
-    profile = oidcSessionGetTargetProfile(session);
+    profile = oidcStateGetProfile(state);
     if (profile == NULL || idp != profile->idp) {
         EXT_WARNING("[oidc-idp] Unexpected Target mismatch");
         goto error;

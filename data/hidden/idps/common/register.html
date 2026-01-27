@@ -22,19 +22,19 @@
         <br>
         <form id="sgate_form">
             <label class="sgate_label" for="pseudo">pseudo  :</label>
-            <input class="sgate_input" type="text" id="pseudo" name="pseudo" required onFocusOut="sgateCheckAttr('pseudo');"><br><br>
+            <input class="sgate_input" type="text" id="pseudo" name="pseudo" required onFocusOut="sgateCheckAttr('pseudo');" /><br><br>
 
             <label class="sgate_label" for="email">email  :</label>
-            <input class="sgate_input" type="text" id="email" name="email" required onFocusOut="sgateCheckAttr('email');"><br><br>
+            <input class="sgate_input" type="email" id="email" name="email" required onFocusOut="sgateCheckAttr('email');" /><br><br>
 
             <label class="sgate_label"for="name">name  :</label>
-            <input class="sgate_input" type="text" id="name" name="name"><br><br>
+            <input class="sgate_input" type="text" id="name" name="name" /><br><br>
 
             <label class="sgate_label"for="company">company  :</label>
-            <input class="sgate_input" type="text" id="company" name="company"><br><br>
+            <input class="sgate_input" type="text" id="company" name="company" /><br><br>
 
-            <input type="button" id="sgate_register" class="sgate_button" value="Register" onclick="sgateSubmit();">
-            <input type="button" id="sgate_cancel"   class="sgate_button" value="Cancel" onclick="sgateReset();">
+            <input type="button" id="sgate_register" class="sgate_button" value="Register" onclick="sgateSubmit();" />
+            <input type="button" id="sgate_cancel"   class="sgate_button" value="Cancel" onclick="sgateReset();" />
         </form>
     </div>
 

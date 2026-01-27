@@ -42,17 +42,15 @@
 struct oidcSessionS
 {
     unsigned refcount;
-    int loa;
-    const char *uuid;
+    int federating;
     const oidcAliasT *targetPage;
     oidcStateT *targetState;
     oidcStateT *actualState;
     fedUserRawT *user;
-    fedSocialRawT *social;
-    fedUserRawT *fedIdUser;
     struct afb_evt *event;
     struct timespec nextCheck;
     struct timespec endValid;
+    const char *uuid;
     rp_uuid_stringz_t xid;  // TODO
 };
 
@@ -60,6 +58,11 @@ struct oidcSessionS
 void oidcSessionUnRef(oidcSessionT *session)
 {
     if (session != NULL && --session->refcount == 0) {
+        oidcStateUnRef(session->targetState);
+        oidcStateUnRef(session->actualState);
+        fedUserUnRef(session->user);
+        if (session->event != NULL)
+            afb_event_unref(session->event);
         free(session);
     }
 }
@@ -170,9 +173,8 @@ void oidcSessionValidate(oidcSessionT *session, long seconds)
 void oidcSessionAutoValidate(oidcSessionT *session)
 {
     long timou = EXT_SESSION_TIMEOUT;
-    const oidcProfileT *tprof = oidcSessionGetTargetProfile(session);
-    if (tprof != NULL && tprof->sTimeout > 0)
-        timou = tprof->sTimeout;
+    if (session->actualState != NULL)
+        timou = oidcStateGetProfile(session->actualState)->sTimeout;
     oidcSessionValidate(session, timou);
 }
 
@@ -195,17 +197,23 @@ int oidcSessionGetTargetLOA(oidcSessionT *session)
 
 int oidcSessionGetActualLOA(oidcSessionT *session)
 {
-    return session->loa;
-}
-
-const oidcProfileT *oidcSessionGetTargetProfile(oidcSessionT *session)
-{
-    return session->targetState == NULL ? NULL : oidcStateGetProfile(session->targetState);
+    return session->actualState == NULL ? 0
+        : oidcStateGetProfile(session->actualState)->loa;
 }
 
 oidcStateT *oidcSessionGetTargetState(oidcSessionT *session)
 {
     return session->targetState;
+}
+
+oidcStateT *oidcSessionGetActualState(oidcSessionT *session)
+{
+    return session->actualState;
+}
+
+int oidcSessionIsFederating(oidcSessionT *session)
+{
+    return session->federating;
 }
 
 void oidcSessionSetNextCheck(oidcSessionT *session, long millisec)
@@ -216,11 +224,6 @@ void oidcSessionSetNextCheck(oidcSessionT *session, long millisec)
     timeAdd(&session->nextCheck, &now, d.quot, d.rem * 1000000);
 }
 
-void oidcSessionSetActualLOA(oidcSessionT *session, int LOA)
-{
-    session->loa = LOA;
-}
-
 void oidcSessionSetTargetPage(oidcSessionT *session, const oidcAliasT *alias)
 {
     session->targetPage = alias;
@@ -228,36 +231,43 @@ void oidcSessionSetTargetPage(oidcSessionT *session, const oidcAliasT *alias)
 
 void oidcSessionSetTargetState(oidcSessionT *session, oidcStateT *state)
 {
-    session->targetState = state;
+    oidcStateT *prvState = session->targetState;
+    session->targetState = oidcStateAddRef(state);
+    oidcStateUnRef(prvState);
 }
 
-void oidcSessionDropFedIdUser(oidcSessionT *session)
+void oidcSessionSetActualState(oidcSessionT *session, oidcStateT *state)
 {
-    oidcSessionSetFedIdUser(session, NULL);
+    oidcStateT *prvState = session->actualState;
+    session->actualState = oidcStateAddRef(state);
+    oidcStateUnRef(prvState);
 }
 
-void oidcSessionSetFedIdUser(oidcSessionT *session, fedUserRawT *fedUser)
+void oidcSessionSetFederating(oidcSessionT *session)
 {
-    fedUserRawT *prev = session->fedIdUser;
-    session->fedIdUser = fedUser == NULL ? NULL : fedUserAddRef(fedUser);
-    if (prev != NULL)
-        fedUserUnRef(prev);
+    session->federating = 1;
 }
 
-fedUserRawT *oidcSessionGetFedIdUser(oidcSessionT *session)
+void oidcSessionClearFederating(oidcSessionT *session)
 {
-    return session->fedIdUser;
+    session->federating = 0;
 }
 
-const fedSocialRawT *oidcSessionGetFedSocial(oidcSessionT *session)
-{
-    return session->social;
-}
 
-void oidcSessionSetFedSocial(oidcSessionT *session, fedSocialRawT *fedSocial)
+void oidcSessionReset(oidcSessionT *session)
 {
-    fedSocialUnRef(session->social);
-    session->social = fedSocial;
+    oidcStateT *state = session->actualState;
+    session->actualState = NULL;
+    if (state != NULL) {
+        const oidGlobalsT *globals = oidcStateGetGlobals(state);
+        oidcSessionEventPush(
+            session, "{ss ss ss* ss*}", "status", "loa-reset", "home",
+            globals->homeUrl != NULL ? globals->homeUrl : "/", "login",
+            globals->loginUrl, "error", globals->errorUrl);
+        oidcSessionSetUser(session, NULL);
+        oidcSessionSetNextCheck(session, 0);
+        oidcStateUnRef(state);
+    }
 }
 
 // check if an attribute equal to value exists in the session
@@ -265,8 +275,8 @@ void oidcSessionSetFedSocial(oidcSessionT *session, fedSocialRawT *fedSocial)
 // return 0 if none matches
 int oidcSessionHasAttribute(oidcSessionT *session, const char *value)
 {
-    const fedSocialRawT *fedSocial = oidcSessionGetFedSocial(session);
-    if (fedSocial != NULL) {
+    if (session->actualState != NULL) {
+        const fedSocialRawT *fedSocial = oidcStateGetSocial(session->actualState);
         const char **attrs = fedSocial->attrs;
         if (attrs != NULL) {
             for (; *attrs != NULL; attrs++) {
@@ -283,10 +293,14 @@ const fedUserRawT *oidcSessionGetUser(oidcSessionT *session)
     return session->user;
 }
 
-void oidcSessionSetFedUser(oidcSessionT *session, fedUserRawT *fedUser)
+void oidcSessionSetUser(oidcSessionT *session, fedUserRawT *fedUser)
 {
-    fedUserUnRef(session->user);
+    fedUserRawT *prvUser = session->user;
     session->user = fedUser;
+    if (fedUser != NULL)
+        fedUserAddRef(fedUser);
+    if (prvUser != NULL)
+        fedUserUnRef(prvUser);
 }
 
 int oidcSessionEventSubscribe(afb_req_t wreq)

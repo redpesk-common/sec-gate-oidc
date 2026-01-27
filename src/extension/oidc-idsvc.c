@@ -40,7 +40,7 @@
 #include "oidc-alias.h"
 #include "oidc-apis.h"
 #include "oidc-core.h"
-#include "oidc-fedid.h"
+#include "oidc-login.h"
 #include "oidc-idp.h"
 #include "oidc-idsvc.h"
 #include "oidc-session.h"
@@ -300,21 +300,21 @@ static void idpQueryUser(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 {
     // get current social data for further account linking
     oidcSessionT *session = oidcSessionOfReq(wreq);
-    fedUserRawT *fedUser = oidcSessionGetFedIdUser(session);
+    const fedUserRawT *fedUser = oidcSessionGetUser(session);
     if (fedUser != NULL) {
         // fedUser is set
         int rc;
         afb_data_t data;
-        rc = afb_data_create_raw(&data, fedUserObjType, fedUserAddRef(fedUser),
-                                 0, (void (*)(void *))fedUserUnRef, fedUser);
+        rc = afb_data_create_raw(&data, fedUserObjType, fedUser, 0, NULL, NULL);
         if (rc < 0)
             return replyOOM(wreq);
         fedIdClientSubCall(wreq, "social-idps", 1, &data, idpQueryUserCB, NULL);
     }
     else {
         // fedUser isn't set
+        oidcStateT *state = oidcSessionGetActualState(session);
         const oidcCoreHdlT *oidc = wreq2oidc(wreq);
-        const oidcProfileT *profile = oidcSessionGetTargetProfile(session);
+        const oidcProfileT *profile = state ? oidcStateGetProfile(state) : NULL;
         const char *idpId = profile != NULL ? profile->idp->uid : NULL;
         const char *idps[MAX_OIDC_IDPS + 1];
         int count =
@@ -362,11 +362,7 @@ static void userRegisterCB(void *ctx,
 
     // return destination alias
     oidcSessionT *session = oidcSessionOfReq(wreq);
-    const oidcProfileT *profile = oidcSessionGetTargetProfile(session);
     const oidcAliasT *alias = oidcSessionGetTargetPage(session);
-
-    // set current LOA ????
-    oidcSessionSetActualLOA(session, profile->loa);
 
     // reply to the query
     rc = rp_jsonc_pack(&aliasJ, "{ss}", "target",
@@ -381,9 +377,9 @@ static void userRegisterCB(void *ctx,
 // Try to store fedsocial and feduser into local store
 static void userRegister(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 {
-    const oidcProfileT *profile;
     afb_data_t params[2];
     oidcSessionT *session;
+    oidcStateT *state;
     const oidcAliasT *alias;
     const fedSocialRawT *fedSocial;
     int rc;
@@ -391,10 +387,10 @@ static void userRegister(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     // retrieve current wreq LOA from session (to be fixed by Jose)
     // Check the current API state: retrieve fedsocial from session
     session = oidcSessionOfReq(wreq);
-    fedSocial = oidcSessionGetFedSocial(session);
-    profile = oidcSessionGetTargetProfile(session);
+    state = oidcSessionGetActualState(session);
+    fedSocial = state == NULL ? NULL : oidcStateGetSocial(state);
     alias = oidcSessionGetTargetPage(session);
-    if (profile == NULL || alias == NULL || fedSocial == NULL)
+    if (state == NULL || alias == NULL || fedSocial == NULL)
         return replyBadState(wreq);
 
     // get first argument and check it as being a fedUser value
@@ -453,7 +449,7 @@ static void userFederateCB(void *ctx,
     // copy current user social and registration data for further federation
     // request
     session = oidcSessionOfReq(wreq);
-    oidcSessionSetFedIdUser(session, fedUser);
+    oidcSessionSetUser(session, fedUser);
 
     // Send the url of the federation
     rc = rp_jsonc_pack(&responseJ, "{ss}", "target",
@@ -488,17 +484,12 @@ static void userFederate(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 
 static void sessionReset(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 {
-    json_object *responseJ;
     oidcSessionT *session = oidcSessionOfReq(wreq);
-    const oidcProfileT *profile;
+    json_object *responseJ;
     afb_data_t reply;
     int rc;
 
-    profile = oidcSessionGetTargetProfile(session);
-    if (!profile)
-        return replyBadState(wreq);
-
-    fedidsessionReset(session, profile);
+    oidcSessionReset(session);
 
     const oidGlobalsT *globals = oidcCoreGlobals(wreq2oidc(wreq));
     rc = rp_jsonc_pack(&responseJ, "{ss ss* ss*}", "home",
@@ -522,6 +513,8 @@ static void sessionReset(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 static void sessionGet(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
 {
     afb_data_t reply[3];
+    oidcSessionT *session;
+    oidcStateT *state;
     const oidcProfileT *profile;
     const fedUserRawT *fedUser;
     const fedSocialRawT *fedSocial;
@@ -529,11 +522,18 @@ static void sessionGet(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     int rc;
 
     // retrieve current wreq LOA from session (to be fixed by Jose)
-    oidcSessionT *session = oidcSessionOfReq(wreq);
-    profile = oidcSessionGetTargetProfile(session);
+    session = oidcSessionOfReq(wreq);
+    state = oidcSessionGetActualState(session);
+    if (state == NULL)
+        return replyBadState(wreq);
     fedUser = oidcSessionGetUser(session);
-    fedSocial = oidcSessionGetFedSocial(session);
-    if (profile == NULL || fedUser == NULL || fedSocial == NULL)
+    if (fedUser == NULL)
+        fedUser = oidcStateGetUser(state);
+    if (fedUser == NULL)
+        return replyBadState(wreq);
+    profile = oidcStateGetProfile(state);
+    fedSocial = oidcStateGetSocial(state);
+    if (profile == NULL || fedSocial == NULL)
         return replyBadState(wreq);
 
     rc = rp_jsonc_pack(&profileJ, "{ss ss si}", "uid", profile->uid, "scope",

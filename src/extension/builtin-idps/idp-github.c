@@ -42,7 +42,7 @@
 
 #include "curl-glue.h"
 #include "oidc-core.h"
-#include "oidc-fedid.h"
+#include "oidc-login.h"
 #include "oidc-idp.h"
 #include "oidc-session.h"
 
@@ -118,7 +118,7 @@ static httpRqtActionT githubAttrsGetByTokenCB(const httpRqtT *httpRqt)
     oidcStateGetSocial(state)->attrs = attrs;
 
     // we've got everything check federated user now
-    fedidCheck(state);
+    oidcLogin(state);
     return HTTP_HANDLE_FREE;
 
 OnErrorExit:
@@ -189,7 +189,7 @@ static httpRqtActionT githubUserGetByTokenCB(const httpRqtT *httpRqt)
     else {
         // no organisation attributes we've got everything check federated user
         // now
-        fedidCheck(state);
+        oidcLogin(state);
     }
     return HTTP_HANDLE_FREE;
 

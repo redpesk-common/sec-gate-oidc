@@ -36,7 +36,7 @@
 #include <libafb/afb-v4.h>
 
 #include "oidc-core.h"
-#include "oidc-fedid.h"
+#include "oidc-login.h"
 #include "oidc-idp-plugin.h"
 #include "oidc-idp.h"
 #include "oidc-session.h"
@@ -119,38 +119,37 @@ static int pamAccessToken(const oidcIdpT *idp,
     if (pw == NULL || pw->pw_uid < dfltOpts.uidMin)
         goto OnErrorExit;
 
-    // if passwd check passwd and retrieve groups when login/passwd match
-    if (passwd) {
-        // init pam transaction using scope as pam application
-        status = pam_start(profile->scope, login, &conversion, &pamh);
-        if (status != PAM_SUCCESS)
-            goto OnErrorExit;
+    // check passwd and retrieve groups when login/passwd match
+    // init pam transaction using scope as pam application
+    status = pam_start(profile->scope, login, &conversion, &pamh);
+    if (status != PAM_SUCCESS)
+        goto OnErrorExit;
 
-        status = pam_authenticate(pamh, 0);
-        if (status != PAM_SUCCESS)
-            goto OnErrorExit;
+    status = pam_authenticate(pamh, 0);
+    if (status != PAM_SUCCESS)
+        goto OnErrorExit;
 
-        // build social fedkey from idp->uid+github->id
-        fedSocial->fedkey = strdup(pw->pw_name);
-        fedUser->pseudo = strdup(pw->pw_name);
-        fedUser->name = strdup(pw->pw_gecos);
-        fedUser->avatar = strdup(dfltOpts.avatarAlias);
+    // build social fedkey from idp->uid+github->id
+    fedSocial->fedkey = strdup(pw->pw_name);
+    fedUser->pseudo = strdup(pw->pw_name);
+    fedUser->name = strdup(pw->pw_gecos);
+    fedUser->avatar = strdup(dfltOpts.avatarAlias);
 
-        // retrieve groups list and add them to fedSocial labels list
-        err = getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups);
-        if (err < 0) {
-            EXT_CRITICAL("[oidc-pam] opts{'gids':%d} too small",
-                         dfltOpts.gidsMax);
-            goto OnErrorExit;
-        }
-        // map pam group name as security labels attributes
-        fedSocial->attrs = calloc(ngroups + 1, sizeof(char *));
-        for (int idx = 0; idx < ngroups; idx++) {
-            struct group *gr;
-            gr = getgrgid(groups[idx]);
-            fedSocial->attrs[idx] = strdup(gr->gr_name);
-        }
+    // retrieve groups list and add them to fedSocial labels list
+    err = getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups);
+    if (err < 0) {
+        EXT_CRITICAL("[oidc-pam] opts{'gids':%d} too small",
+                     dfltOpts.gidsMax);
+        goto OnErrorExit;
     }
+    // map pam group name as security labels attributes
+    fedSocial->attrs = calloc(ngroups + 1, sizeof(char *));
+    for (int idx = 0; idx < ngroups; idx++) {
+        struct group *gr;
+        gr = getgrgid(groups[idx]);
+        fedSocial->attrs[idx] = strdup(gr->gr_name);
+    }
+
     // close pam transaction
     pam_end(pamh, status);
     return 0;
@@ -176,7 +175,7 @@ static void pamLogin(const oidcIdpT *idp,
     if (rc < 0)
         oidcStateReplyUnauthorized(state);
     else
-        fedidCheck(state);
+        oidcLogin(state);
 }
 
 // check user email/pseudo attribute
@@ -223,7 +222,7 @@ static int pamOnCredsCB(struct afb_hreq *hreq,
 {
     // check if wreq as a code
     const char *login = afb_hreq_get_argument(hreq, "login");
-    const char *passwd = afb_hreq_get_argument(hreq, "passwd");
+    const char *passwd = afb_hreq_get_argument(hreq, "password");
 
     // if no code then set state and redirect to IDP
     if (login != NULL)

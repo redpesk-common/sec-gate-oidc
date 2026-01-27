@@ -31,10 +31,7 @@
 #include "oidc-session.h"
 
 // request handle store federation attribute during multiple IDP async calls
-typedef struct oidcStateS idpRqtCtxT;
 typedef struct oidcStateS oidcStateT;
-
-void fedidsessionReset(oidcSessionT* session, const oidcProfileT* idpProfile);
 
 oidcStateT* oidcStateCreate(const oidcIdpT* idp,
                             oidcSessionT* session,

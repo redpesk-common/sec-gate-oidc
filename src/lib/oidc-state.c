@@ -61,10 +61,6 @@ void oidcStateUnRef(oidcStateT *state)
 {
     if (state != NULL && state->ucount-- == 0) {
         oidcStateClearReqs(state);
-        if (state->hreq != NULL)
-            afb_hreq_unref(state->hreq);
-        if (state->wreq != NULL)
-            afb_req_v4_unref_hookable(state->wreq);
         free(state->authorization);
         oidcSessionUnRef(state->session);
         free(state);
@@ -240,40 +236,6 @@ int oidcStateSetAuthorization(oidcStateT *state,
     free(state->authorization);
     state->authorization = auth;
     return 0;
-}
-
-// session timeout, reset LOA
-void fedidsessionReset(oidcSessionT *session, const oidcProfileT *idpProfile)
-{
-    int count = -1;
-
-    // reset session and alias LOA (this will force authentication)
-    oidcSessionSetActualLOA(session, 0);
-    oidcSessionSetNextCheck(session, 0);
-    EXT_DEBUG("[oidc-state] logout/timeout session uuid=%s ?",
-              oidcSessionUUID(session));
-
-    if (idpProfile) {
-        /*
-          TODO
-                if (idpProfile->idp->plugin &&
-          idpProfile->idp->plugin->resetSession) { void *ctx =
-          oidcSessionGetOpaqueData(session); if (ctx != NULL) {
-                        idpProfile->idp->plugin->resetSession(idpProfile, ctx);
-                        oidcSessionSetOpaqueData(session, NULL);
-                    }
-                }
-        */
-
-        const oidGlobalsT *globals = oidcCoreGlobals(idpProfile->idp->oidc);
-        count = oidcSessionEventPush(
-            session, "{ss ss ss* ss*}", "status", "loa-reset", "home",
-            globals->homeUrl != NULL ? globals->homeUrl : "/", "login",
-            globals->loginUrl, "error", globals->errorUrl);
-        if (!count)
-            EXT_DEBUG("[oidc-state] no client subscribed uuid=%s ?",
-                      oidcSessionUUID(session));
-    }
 }
 
 static void reply(oidcStateT *state, int hrc, int wrc)
