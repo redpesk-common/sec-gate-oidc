@@ -48,11 +48,11 @@
 
 static struct option options[] = {
     {"verbose", optional_argument, 0, 'v'},
-    {"config", optional_argument, 0, 'c'},
-    {"group", optional_argument, 0, 'g'},
+    {"config", required_argument, 0, 'c'},
+    {"group", required_argument, 0, 'g'},
     {"async", optional_argument, 0, 'a'},
     {"force", optional_argument, 0, 'f'},
-    {"list", optional_argument, 0, 'l'},
+    {"list", no_argument, 0, 'l'},
     {"help", optional_argument, 0, 'h'},
     {0, 0, 0, 0}  // trailer
 };
@@ -78,7 +78,7 @@ pcscParamsT *parseArgs(int argc, char *argv[])
         goto OnErrorExit;
 
     for (int done = 0; !done;) {
-        int option = getopt_long(argc, argv, "v::c:g:f::a::", options, &index);
+        int option = getopt_long(argc, argv, "a::c:f::g:lv::", options, &index);
         if (option == -1) {
             params->index = optind;
             break;
