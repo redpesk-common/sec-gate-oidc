@@ -42,7 +42,6 @@
 struct oidcSessionS
 {
     unsigned refcount;
-    int nowset;
     int loa;
     const char *uuid;
     const oidcAliasT *targetPage;
@@ -52,7 +51,6 @@ struct oidcSessionS
     fedSocialRawT *social;
     fedUserRawT *fedIdUser;
     struct afb_evt *event;
-    struct timespec now;
     struct timespec nextCheck;
     struct timespec endValid;
     rp_uuid_stringz_t xid;  // TODO
@@ -105,7 +103,6 @@ oidcSessionT *oidcSessionOfAfbSession(struct afb_session *ases)
             EXT_CRITICAL("[oidc-session] iCreation of session failed");
             return NULL;
         }
-        session->nowset = 0;
     }
     return session;
 }
@@ -133,14 +130,6 @@ const char *oidcSessionUUID(const oidcSessionT *session)
     return session->uuid;
 }
 
-static void ensureNowIsSet(oidcSessionT *session)
-{
-    if (1 || !session->nowset) {
-        clock_gettime(CLOCK_MONOTONIC, &session->now);
-        session->nowset = 1;
-    }
-}
-
 static int timeLesser(const struct timespec *a, const struct timespec *b)
 {
     return a->tv_sec < b->tv_sec ||
@@ -166,14 +155,16 @@ static void timeAdd(struct timespec *dest,
 
 int oidcSessionIsValid(oidcSessionT *session)
 {
-    ensureNowIsSet(session);
-    return timeLesser(&session->now, &session->endValid);
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return timeLesser(&now, &session->endValid);
 }
 
 void oidcSessionValidate(oidcSessionT *session, long seconds)
 {
-    ensureNowIsSet(session);
-    timeAdd(&session->endValid, &session->now, seconds, 0);
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    timeAdd(&session->endValid, &now, seconds, 0);
 }
 
 void oidcSessionAutoValidate(oidcSessionT *session)
@@ -187,8 +178,9 @@ void oidcSessionAutoValidate(oidcSessionT *session)
 
 int oidcSessionShouldCheck(oidcSessionT *session)
 {
-    ensureNowIsSet(session);
-    return timeLesser(&session->nextCheck, &session->now);
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return timeLesser(&session->nextCheck, &now);
 }
 
 const oidcAliasT *oidcSessionGetTargetPage(oidcSessionT *session)
@@ -219,8 +211,9 @@ oidcStateT *oidcSessionGetTargetState(oidcSessionT *session)
 void oidcSessionSetNextCheck(oidcSessionT *session, long millisec)
 {
     ldiv_t d = ldiv(millisec, 1000);
-    ensureNowIsSet(session);
-    timeAdd(&session->nextCheck, &session->now, d.quot, d.rem * 1000000);
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    timeAdd(&session->nextCheck, &now, d.quot, d.rem * 1000000);
 }
 
 void oidcSessionSetActualLOA(oidcSessionT *session, int LOA)
