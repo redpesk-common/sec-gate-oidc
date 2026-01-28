@@ -143,11 +143,11 @@ static void timeAdd(struct timespec *dest,
 {
     dest->tv_sec = src->tv_sec + sec;
     dest->tv_nsec = src->tv_nsec + nsec;
-    if (dest->tv_nsec >= 1000000000) {
+    while (dest->tv_nsec >= 1000000000) {
         dest->tv_nsec -= 1000000000;
         dest->tv_sec++;
     }
-    else if (dest->tv_nsec < 0) {
+    while (dest->tv_nsec < 0) {
         dest->tv_nsec += 1000000000;
         dest->tv_sec--;
     }
@@ -169,11 +169,11 @@ void oidcSessionValidate(oidcSessionT *session, long seconds)
 
 void oidcSessionAutoValidate(oidcSessionT *session)
 {
-    long to = EXT_SESSION_TIMEOUT;
-    const oidcProfileT *tp = oidcSessionGetTargetProfile(session);
-    if (tp != NULL && tp->sTimeout > 0)
-        to = tp->sTimeout;
-    oidcSessionValidate(session, to);
+    long timou = EXT_SESSION_TIMEOUT;
+    const oidcProfileT *tprof = oidcSessionGetTargetProfile(session);
+    if (tprof != NULL && tprof->sTimeout > 0)
+        timou = tprof->sTimeout;
+    oidcSessionValidate(session, timou);
 }
 
 int oidcSessionShouldCheck(oidcSessionT *session)
