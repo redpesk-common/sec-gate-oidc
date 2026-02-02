@@ -142,7 +142,7 @@ static const httpCallbacksT libafbCbs = {
     .evtRunLoop = NULL,
 };
 
-const httpCallbacksT *glueGetCbs()
+const httpCallbacksT *httpGlueAfbGetCbs()
 {
     return &libafbCbs;
 }

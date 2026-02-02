@@ -39,6 +39,8 @@
 #include <libafb/apis/afb-api-ws.h>
 
 #include "curl-glue.h"
+#include "http-glueafb.h"
+
 #include "oidc-alias.h"
 #include "oidc-apis.h"
 #include "oidc-defaults.h"
@@ -190,8 +192,7 @@ int oidcCoreParseConfig(oidcCoreHdlT **poidc,
         goto OnErrorExit;
 
     // create libcurl http multi pool
-    // oidc->httpPool= httpCreatePool(hsrv->efd, glueGetCbs(), oidc->verbose);
-    oidc->httpPool = httpCreatePool(NULL, glueGetCbs(), oidc->verbose);
+    oidc->httpPool = httpCreatePool(NULL, httpGlueAfbGetCbs(), oidc->verbose);
     if (!oidc->httpPool)
         goto OnErrorExit;
 

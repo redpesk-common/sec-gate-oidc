@@ -81,6 +81,22 @@ typedef struct httpRqtS {
 typedef struct httpRqtHndlS httpRqtHndlT;
 typedef httpRqtActionT (*httpRqtCbT)(const httpRqtT* httpRqt);
 
+// API to build and lauch request (if httpPoolT==NULL then run synchronously)
+int httpSendPost(httpPoolT* pool,
+                 const char* url,
+                 const httpOptsT* opts,
+                 httpKeyValT* tokens,
+                 void* databuf,
+                 long datalen,
+                 httpRqtCbT callback,
+                 void* ctx);
+int httpSendGet(httpPoolT* pool,
+                const char* url,
+                const httpOptsT* opts,
+                httpKeyValT* tokens,
+                httpRqtCbT callback,
+                void* ctx);
+
 // mainloop glue API interface
 typedef void* (*evtMainLoopCbT)();
 typedef int (*multiTimerCbT)(httpRqtHndlT* httpRqtHndl,
@@ -99,25 +115,6 @@ typedef struct {
     multiTimerCbT multiTimer;
     multiSocketCbT multiSocket;
 } httpCallbacksT;
-
-// glue proto to get mainloop callbacks
-const httpCallbacksT* glueGetCbs(void);
-
-// API to build and lauch request (if httpPoolT==NULL then run synchronously)
-int httpSendPost(httpPoolT* pool,
-                 const char* url,
-                 const httpOptsT* opts,
-                 httpKeyValT* tokens,
-                 void* databuf,
-                 long datalen,
-                 httpRqtCbT callback,
-                 void* ctx);
-int httpSendGet(httpPoolT* pool,
-                const char* url,
-                const httpOptsT* opts,
-                httpKeyValT* tokens,
-                httpRqtCbT callback,
-                void* ctx);
 
 // init curl multi pool with an abstract mainloop and corresponding callbacks
 httpPoolT* httpCreatePool(void* evtLoop,
