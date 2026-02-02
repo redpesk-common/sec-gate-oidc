@@ -450,6 +450,7 @@ static void userFederateCB(void *ctx,
     // request
     session = oidcSessionOfReq(wreq);
     oidcSessionSetUser(session, fedUser);
+    oidcSessionSetFederating(session);
 
     // Send the url of the federation
     rc = rp_jsonc_pack(&responseJ, "{ss}", "target",
