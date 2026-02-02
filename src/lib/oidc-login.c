@@ -33,7 +33,7 @@
 /* Send the final status */
 static void oidcLoginEnd(oidcStateT *state, oidcSessionT *session, int status, const char *url)
 {
-    EXT_DEBUG("[oidc-login] oidcLoginEnd");
+    EXT_DEBUG("[oidc-login] oidcLoginEnd %s:%d,%p", oidcStateGetIdp(state)->uid, oidcStateUsage(state), state);
     EXT_DEBUG("[oidc-login] end %d redirect to %s", status, url);
     oidcStateReplyRedirect(state, status, url);
     oidcSessionSetTargetState(session, NULL);
@@ -48,7 +48,7 @@ static void oidcLoginDone(oidcStateT *state, oidcSessionT *session)
     const oidcAliasT *alias = oidcSessionGetTargetPage(session);
     const char *url = alias != NULL ? alias->url : "/"; /* TODO what global home page ? */
 
-    EXT_DEBUG("[oidc-login] oidcLoginDone");
+    EXT_DEBUG("[oidc-login] oidcLoginDone %s:%d,%p", oidcStateGetIdp(state)->uid, oidcStateUsage(state), state);
     /* set actual login (TODO an what if federating?) */
     oidcSessionSetTargetPage(session, NULL);
     oidcLoginEnd(state, session, 1, url);
@@ -58,7 +58,7 @@ static void oidcLoginDone(oidcStateT *state, oidcSessionT *session)
 // should create it
 static void oidcLoginFederateDone(oidcStateT *state, oidcSessionT *session)
 {
-    EXT_DEBUG("[oidc-login] oidcLoginFederateDone");
+    EXT_DEBUG("[oidc-login] oidcLoginFederateDone %s:%d,%p", oidcStateGetIdp(state)->uid, oidcStateUsage(state), state);
     oidcSessionClearFederating(session);
     oidcSessionSetTargetState(session, NULL);
     oidcLoginDone(state, session);
@@ -90,7 +90,7 @@ static void oidcLoginFederate(oidcStateT *state, oidcSessionT *session)
     const fedSocialRawT *fedSocial;
     afb_data_x4_t data[2];
 
-    EXT_DEBUG("[oidc-login] oidcLoginFederate");
+    EXT_DEBUG("[oidc-login] oidcLoginFederate %s:%d,%p", oidcStateGetIdp(state)->uid, oidcStateUsage(state), state);
     assert(state == oidcSessionGetTargetState(session));
     assert(federating != 0);
 
@@ -175,14 +175,14 @@ void oidcLogin(oidcStateT *state)
     oidcSessionT *session = oidcStateGetSession(state);
     int federating = oidcSessionIsFederating(session);
 
+    EXT_DEBUG("[oidc-login] oidcLogin %sfederating %s:%d,%p", federating?"":"not ", oidcStateGetIdp(state)->uid, oidcStateUsage(state), state);
+
     if (state != oidcSessionGetTargetState(session)) {
         EXT_ERROR("[oidc-login] state != oidcSessionGetTargetState(session)");
         EXT_ERROR("[oidc-login] state == %p", state);
         EXT_ERROR("[oidc-login] oidcSessionGetTargetState(session) == %p", oidcSessionGetTargetState(session));
     }
 
-
-    EXT_DEBUG("[oidc-login] oidcLogin %d", federating);
     if (!federating) {
         /* not federating, do login */
         oidcSessionSetActualState(session, state);

@@ -59,6 +59,10 @@ static const char bearer[] = "Bearer";
 
 void oidcStateUnRef(oidcStateT *state)
 {
+    if (state != NULL)
+        EXT_DEBUG("[oidc-state] oidcStateUnRef  %s:%d,%p",
+                state->idp->uid, state->ucount-1, state);
+
     if (state != NULL && --state->ucount == 0) {
         oidcStateClearReqs(state);
         free(state->authorization);
@@ -72,8 +76,16 @@ void oidcStateUnRef(oidcStateT *state)
 oidcStateT *oidcStateAddRef(oidcStateT *state)
 {
     if (state != NULL)
+        EXT_DEBUG("[oidc-state] oidcStateAddRef  %s:%d,%p",
+                state->idp->uid, state->ucount+1, state);
+    if (state != NULL)
         state->ucount++;
     return state;
+}
+
+unsigned oidcStateUsage(oidcStateT *state)
+{
+    return state ? state->ucount : 0;
 }
 
 oidcStateT *oidcStateCreate(const oidcIdpT *idp,

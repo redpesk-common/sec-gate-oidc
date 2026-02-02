@@ -39,6 +39,7 @@ oidcStateT* oidcStateCreate(const oidcIdpT* idp,
 
 oidcStateT* oidcStateAddRef(oidcStateT* state);
 void oidcStateUnRef(oidcStateT* state);
+unsigned oidcStateUsage(oidcStateT *state);
 
 const oidcIdpT* oidcStateGetIdp(oidcStateT* state);
 const oidcProfileT* oidcStateGetProfile(oidcStateT* state);
