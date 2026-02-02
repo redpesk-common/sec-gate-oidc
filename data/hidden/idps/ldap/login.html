@@ -21,12 +21,12 @@
     <div id="sgate_div" class="sgate_box">
         <div id=sgate_error class="sgate_error"></div>
         <br>
-        <form id="sgate_form" action="JavaScript:passwordUser('ldap-iotbzh');">
+        <form id="sgate_form" action="login" method="post">
             <label class="sgate_label" for="login">login  :</label>
             <input class="sgate_input" type="text" id="login" name="login" required><br><br>
 
             <label class="sgate_label" for="password">password  :</label>
-            <input class="sgate_input" type="password" id="password" name="password" required><br><br>
+            <input class="sgate_input" type="password" id="password" name="password"><br><br>
 
             <input type="hidden" id="state" name="state">
             <input type="submit" class="sgate_button" value="Done" >

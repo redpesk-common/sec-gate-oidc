@@ -406,7 +406,7 @@ static int ldapOnCredsCB(struct afb_hreq *hreq,
 {
     // check if wreq as a code
     const char *login = afb_hreq_get_argument(hreq, "login");
-    const char *passwd = afb_hreq_get_argument(hreq, "passwd");
+    const char *passwd = afb_hreq_get_argument(hreq, "password");
 
     // if no code then set state and redirect to IDP
     if (login != NULL && passwd != NULL) {
