@@ -349,9 +349,12 @@ static void userRegisterCB(void *ctx,
                            const afb_data_t argv[],
                            afb_req_t wreq)
 {
+    oidcSessionT *session = oidcSessionOfReq(wreq);
+
     if (status < 0) {
         // got an error from fedid
         EXT_NOTICE("[oidc-idsvc] usr-register got error from fedid");
+        oidcSessionSetUser(session, NULL);
         afb_data_array_addref(argc, argv);
         return afb_req_reply(wreq, status, argc, argv);
     }
@@ -361,7 +364,6 @@ static void userRegisterCB(void *ctx,
     int rc;
 
     // return destination alias
-    oidcSessionT *session = oidcSessionOfReq(wreq);
     const oidcAliasT *alias = oidcSessionGetTargetPage(session);
 
     // reply to the query
@@ -381,6 +383,7 @@ static void userRegister(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     oidcSessionT *session;
     oidcStateT *state;
     const oidcAliasT *alias;
+    fedUserRawT *fedUser;
     const fedSocialRawT *fedSocial;
     int rc;
 
@@ -397,6 +400,10 @@ static void userRegister(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     rc = afb_req_param_convert(wreq, 0, fedUserObjType, &params[0]);
     if (rc < 0 || argc != 1)
         return replyInvalid(wreq);
+
+    // record the actual user
+    fedUser = (fedUserRawT *)afb_data_ro_pointer(params[0]);
+    oidcSessionSetUser(session, fedUser);
 
     // user is new let's register it within fedid DB (do not free fedSocial
     // after call)
