@@ -53,6 +53,8 @@ const char* oidcStateGetAuthorization(oidcStateT* state);
 const char* oidcStateGetSessionUUID(oidcStateT* state);
 const char* oidcStateGetUUID(oidcStateT *state);
 
+int oidcStateHasAttribute(oidcStateT *state, const char *value);
+
 void oidcStateClearReqs(oidcStateT *state);
 
 void oidcStateSetHttpReq(oidcStateT* state, struct afb_hreq* hreq);

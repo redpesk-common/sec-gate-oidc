@@ -49,9 +49,18 @@
 // return 1 if none matches
 static int aliasCheckAttrs(oidcSessionT *session, oidcAliasT *alias)
 {
+    oidcStateT *state;
     const char **roles = alias->roles;
+
+    if (roles == NULL)
+        return 1;
+
+    state = oidcSessionGetActualState(session);
+    if (state == NULL)
+        return 0;
+
     while (*roles) {
-        if (oidcSessionHasAttribute(session, *roles))
+        if (oidcStateHasAttribute(state, *roles))
             return 1;
         roles++;
     }
@@ -101,10 +110,8 @@ static int aliasCheckReq(struct afb_hreq *hreq, void *ctx)
     // if tCache not expired use jump authent check
     if (oidcSessionShouldCheck(session)) {
         // check roles
-        if (alias->roles) {
-            if (!aliasCheckAttrs(session, alias))
-                return aliasRedirectLogin(hreq, alias, session);
-        }
+        if (!aliasCheckAttrs(session, alias))
+            return aliasRedirectLogin(hreq, alias, session);
         // store a timestamp to cache authentication validation
         oidcSessionSetNextCheck(session, alias->tCache);
     }

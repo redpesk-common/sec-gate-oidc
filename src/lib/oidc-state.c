@@ -185,6 +185,21 @@ const char *oidcStateGetUUID(oidcStateT *state)
     return oidcStateGetSessionUUID(state);
 }
 
+// check if an attribute equal to value exists in the state
+// return 1 if that is the case
+// return 0 if none matches
+int oidcStateHasAttribute(oidcStateT *state, const char *value)
+{
+    const char **attrs = state->fedSocial->attrs;
+    if (attrs != NULL) {
+        for (; *attrs != NULL; attrs++) {
+            if (!strcasecmp(value, *attrs))
+                return 1;
+        }
+    }
+    return 0;
+}
+
 void oidcStateClearReqs(oidcStateT *state)
 {
     if (state->hreq != NULL) {

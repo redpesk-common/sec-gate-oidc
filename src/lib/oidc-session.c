@@ -270,24 +270,6 @@ void oidcSessionReset(oidcSessionT *session)
     }
 }
 
-// check if an attribute equal to value exists in the session
-// return 1 if that is the case
-// return 0 if none matches
-int oidcSessionHasAttribute(oidcSessionT *session, const char *value)
-{
-    if (session->actualState != NULL) {
-        const fedSocialRawT *fedSocial = oidcStateGetSocial(session->actualState);
-        const char **attrs = fedSocial->attrs;
-        if (attrs != NULL) {
-            for (; *attrs != NULL; attrs++) {
-                if (!strcasecmp(value, *attrs))
-                    return 1;
-            }
-        }
-    }
-    return 0;
-}
-
 const fedUserRawT *oidcSessionGetUser(oidcSessionT *session)
 {
     return session->user;

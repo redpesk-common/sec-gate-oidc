@@ -64,8 +64,6 @@ oidcStateT* oidcSessionGetTargetState(oidcSessionT* session);
 int oidcSessionEventSubscribe(afb_req_t wreq);
 int oidcSessionEventPush(oidcSessionT* session, const char* desc, ...);
 
-int oidcSessionHasAttribute(oidcSessionT* session, const char* value);
-
 const fedUserRawT* oidcSessionGetUser(oidcSessionT* session);
 void oidcSessionSetUser(oidcSessionT* session, fedUserRawT* fedUser);
 
