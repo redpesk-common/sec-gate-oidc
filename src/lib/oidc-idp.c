@@ -572,6 +572,7 @@ int idpRedirectLogin(const oidcIdpT *idp,
     // make the target state
     rc = idpMakeState(idp, targetLOA, scope, session, &state);
     if (rc == 0) {
+        oidcSessionSetTargetState(session, NULL);
         afb_hreq_reply_error(hreq, EXT_HTTP_UNAUTHORIZED);
         return 1;
     }
@@ -630,6 +631,7 @@ int idpRedirectLogin(const oidcIdpT *idp,
 error:
     // internal error
     oidcStateUnRef(state);
+    oidcSessionSetTargetState(session, NULL);
     afb_hreq_reply_error(hreq, EXT_HTTP_SERVER_ERROR);
     return 1;
 }

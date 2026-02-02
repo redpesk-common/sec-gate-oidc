@@ -94,6 +94,13 @@ static char *get_object_string_dup(json_object *objJ, const char *key)
     return str == NULL ? NULL : strdup(str);
 }
 
+// calls oidcLogin and return HTTP_HANDLE_FREE
+static int githubLoginFreeHttp(oidcStateT *state)
+{
+    oidcLogin(state);
+    return HTTP_HANDLE_FREE;
+}
+
 // call when IDP respond to user profile wreq
 // reference:
 // https://docs.github.com/en/rest/reference/users#get-the-authenticated-user
@@ -118,8 +125,7 @@ static httpRqtActionT githubAttrsGetByTokenCB(const httpRqtT *httpRqt)
     oidcStateGetSocial(state)->attrs = attrs;
 
     // we've got everything check federated user now
-    oidcLogin(state);
-    return HTTP_HANDLE_FREE;
+    return githubLoginFreeHttp(state);
 
 OnErrorExit:
     EXT_CRITICAL(
@@ -130,7 +136,7 @@ OnErrorExit:
 
 // reference
 // https://docs.github.com/en/developers/apps/authorizing-oauth-apps#web-application-flow
-static void githubGetAttrsByToken(oidcStateT *state, const char *orgApiUrl)
+static int githubGetAttrsByToken(oidcStateT *state, char *orgApiUrl)
 {
     const oidcIdpT *idp = oidcStateGetIdp(state);
 
@@ -148,7 +154,8 @@ static void githubGetAttrsByToken(oidcStateT *state, const char *orgApiUrl)
     if (err)
         EXT_ERROR("[idp-github] curl -H 'Authorization: %s' %s\n",
                   oidcStateGetAuthorization(state), orgApiUrl);
-    return;
+    free(orgApiUrl);
+    return HTTP_HANDLE_FREE;
 }
 
 // call when IDP respond to user profile wreq
@@ -160,6 +167,7 @@ static httpRqtActionT githubUserGetByTokenCB(const httpRqtT *httpRqt)
     const oidcProfileT *profile = oidcStateGetProfile(state);
     fedUserRawT *fedUser = oidcStateGetUser(state);
     fedSocialRawT *fedSocial = oidcStateGetSocial(state);
+    char *organizationsUrl = NULL;
 
     // something when wrong
     if (httpRqt->status != 200)
@@ -179,19 +187,14 @@ static httpRqtActionT githubUserGetByTokenCB(const httpRqtT *httpRqt)
     fedUser->company = get_object_string_dup(profileJ, "company");
 
     // user is ok, let's map user organisation onto security attributes
-    if (profile->attrs) {
-        const char *organizationsUrl = json_object_get_string(
-            json_object_object_get(profileJ, profile->attrs));
-        if (organizationsUrl) {
-            githubGetAttrsByToken(state, organizationsUrl);
-        }
+    if (profile->attrs != NULL) {
+        organizationsUrl = get_object_string_dup(profileJ, profile->attrs);
+        /* TODO: check not NULL */
     }
-    else {
-        // no organisation attributes we've got everything check federated user
-        // now
-        oidcLogin(state);
-    }
-    return HTTP_HANDLE_FREE;
+    json_object_put(profileJ);
+    if (organizationsUrl == NULL)
+        return githubLoginFreeHttp(state);
+    return githubGetAttrsByToken(state, organizationsUrl);
 
 OnErrorExit:
     EXT_CRITICAL(
@@ -199,8 +202,6 @@ OnErrorExit:
         "status=%d body='%s'",
         httpRqt->status, httpRqt->body.buffer);
     afb_hreq_reply_error(oidcStateGetHttpReq(state), EXT_HTTP_UNAUTHORIZED);
-    fedSocialUnRef(fedSocial);
-    fedUserUnRef(fedUser);
     return HTTP_HANDLE_FREE;
 }
 

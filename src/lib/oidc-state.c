@@ -59,9 +59,11 @@ static const char bearer[] = "Bearer";
 
 void oidcStateUnRef(oidcStateT *state)
 {
-    if (state != NULL && state->ucount-- == 0) {
+    if (state != NULL && --state->ucount == 0) {
         oidcStateClearReqs(state);
         free(state->authorization);
+        fedUserUnRef(state->fedUser);
+        fedSocialUnRef(state->fedSocial);
         oidcSessionUnRef(state->session);
         free(state);
     }

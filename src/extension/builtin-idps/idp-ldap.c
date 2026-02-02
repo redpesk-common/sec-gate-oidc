@@ -125,7 +125,6 @@ static void ldapRqtCtxFree(ldapRqtCtxT *ldapRqtCtx)
         free(ldapRqtCtx->passwd);
         free(ldapRqtCtx->userdn);
         json_object_put(ldapRqtCtx->loginJ);
-        oidcStateUnRef(ldapRqtCtx->state);
         free(ldapRqtCtx);
     }
 }
@@ -338,6 +337,7 @@ static int ldapAccessProfile(oidcStateT *state,
               ldapRqtCtx->userdn, curlQuery);
     rc = httpSendGet(ldapRqtCtx->httpPool, curlQuery, &curlOpts, NULL,
                      ldapAccessProfileCB, ldapRqtCtx);
+    free(curlQuery);
     if (rc < 0)
         goto error;
 
