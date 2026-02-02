@@ -9,11 +9,21 @@
 : ${DB:=$PREF/fedid-local.sqlite}
 
 #RUN="strace -f"
-RUN="gdb -ex run -arg"
-#RUN="valgrind --leak-check=yes"
+#RUN="gdb -ex run -arg"
+RUN="valgrind --leak-check=yes"
 #--show-leak-kinds=definite,possible
 
-#rm $DB
+if test -f $DB
+then
+  sqlite3 $DB 'select * from fed_users; select * from fed_keys;'
+  select action in effacer garder
+  do
+    case $action in
+    effacer) rm $DB; break;;
+    garder) break;;
+    esac
+  done
+fi
 
 cat << EOC > $CONF
 {
