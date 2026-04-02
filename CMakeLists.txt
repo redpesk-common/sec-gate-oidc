@@ -19,7 +19,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(
 	sec-gate-oidc
-	VERSION 1.1.0
+	VERSION 2.0.0
 	DESCRIPTION "Provide authentication through OpenID"
 	HOMEPAGE_URL "https://github.com/iotbzh/sec-gate-oidc"
 	LANGUAGES C
