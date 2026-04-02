@@ -52,19 +52,19 @@ target_link_libraries(sgoidc curl-glue-afb PkgConfig::DEPS)
 
 install(TARGETS sgoidc DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-install(FILES
-		fedid-client.h
-		oidc-alias.h
-		oidc-apis.h
-		oidc-common.h
-		oidc-core.h
-		oidc-defaults.h
-		oidc-idp.h
-		oidc-login.h
-		oidc-idp-plugin.h
-		oidc-session.h
-		oidc-utils.h
-        DESTINATION
-		${CMAKE_INSTALL_INCLUDEDIR}/xxxxx
+set(HEADERS
+	fedid-client.h
+	oidc-alias.h
+	oidc-apis.h
+	oidc-common.h
+	oidc-core.h
+	oidc-defaults.h
+	oidc-idp.h
+	oidc-login.h
+	oidc-idp-plugin.h
+	oidc-session.h
+	oidc-utils.h
 )
+
+install(FILES ${HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/sec-gate)
 
