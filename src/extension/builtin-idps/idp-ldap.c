@@ -370,15 +370,19 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
                              "state", &stateid, "passwd", &passwd, "password",
                              &passwd, "scope", &scope);
     }
-    if (rc < 0)
-        return afb_req_v4_reply_hookable(wreq, AFB_ERRNO_INVALID_REQUEST, 0,
+    if (rc < 0) {
+        afb_req_v4_reply_hookable(wreq, AFB_ERRNO_INVALID_REQUEST, 0,
                                          NULL);
+        return;
+    }
 
     // search for a scope fiting matching loa
     oidcSessionT *session = oidcSessionOfReq(wreq);
-    if (!stateid || strcmp(stateid, oidcSessionUUID(session)))
-        return afb_req_v4_reply_hookable(wreq, AFB_ERRNO_BAD_API_STATE, 0,
+    if (!stateid || strcmp(stateid, oidcSessionUUID(session))) {
+        afb_req_v4_reply_hookable(wreq, AFB_ERRNO_BAD_API_STATE, 0,
                                          NULL);
+        return;
+    }
 
     // search for a matching profile if scope is selected then scope&loa should
     // match
@@ -387,7 +391,8 @@ static void checkLoginVerb(struct afb_req_v4 *wreq,
     if (!profile) {
         EXT_NOTICE("[idp-ldap] scope=%s does not match working loa=%d", scope,
                    targetLOA);
-        return afb_req_v4_reply_hookable(wreq, AFB_ERRNO_UNAUTHORIZED, 0, NULL);
+        afb_req_v4_reply_hookable(wreq, AFB_ERRNO_UNAUTHORIZED, 0, NULL);
+        return;
     }
 
     // check login password
@@ -498,8 +503,13 @@ static int ldapRegsterConfig(oidcIdpT *idp, json_object *idpJ)
             goto OnErrorExit;
         }
         // prebuild request adding ldap uri
-        asprintf(&ldapOpts->groups, "%s/%s", ldapOpts->uri, groups);
-        asprintf(&ldapOpts->people, "%s/%s", ldapOpts->uri, people);
+        err = asprintf(&ldapOpts->groups, "%s/%s", ldapOpts->uri, groups);
+        if (err >= 0)
+            err = asprintf(&ldapOpts->people, "%s/%s", ldapOpts->uri, people);
+        if (err < 0) {
+            EXT_ERROR("Out of memory");
+            goto OnErrorExit;
+        }
     }
     // delegate config parsing to common idp utility callbacks
     err = idpParseOidcConfig(idp, idpJ, &defaults, NULL);

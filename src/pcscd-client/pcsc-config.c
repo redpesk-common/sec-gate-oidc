@@ -115,7 +115,7 @@ static int pcscParseOneData(json_object *dataJ, u_int8_t **data, ulong *dlen)
         for (int idx = 0; idx < count; idx++) {
             byteS =
                 json_object_get_string(json_object_array_get_idx(dataJ, idx));
-            err = sscanf(byteS, "0x%2x", &byte);
+            err = sscanf(byteS, "0x%2x", (unsigned*)&byte);
             if (err < 0)
                 goto OnErrorExit;
             if (byte > 255)

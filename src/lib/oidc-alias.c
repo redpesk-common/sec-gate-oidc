@@ -190,10 +190,16 @@ static int parseOneAlias(const oidcCoreHdlT *oidc,
         return -1;
     }
     // provide some defaults value based on uid
-    if (!alias->url)
-        asprintf((char **)&alias->url, "/%s", alias->uid);
-    if (!alias->path)
-        asprintf((char **)&alias->path, "$ROOTDIR/%s", alias->uid);
+    if (!alias->url) {
+        rc = asprintf((char **)&alias->url, "/%s", alias->uid);
+        if (rc < 0)
+            goto oom;
+    }
+    if (!alias->path) {
+        rc = asprintf((char **)&alias->path, "$ROOTDIR/%s", alias->uid);
+        if (rc < 0)
+            goto oom;
+    }
 
     // handle required roles
     if (requireJ) {
@@ -201,11 +207,8 @@ static int parseOneAlias(const oidcCoreHdlT *oidc,
         case json_type_array:
             count = (int)json_object_array_length(requireJ);
             roles = calloc(count + 1, sizeof(char *));
-            if (roles == NULL) {
-            oom:
-                EXT_CRITICAL("[oidc-alias] out of memory");
-                return -1;
-            }
+            if (roles == NULL)
+                goto oom;
 
             for (int idx = 0; idx < count; idx++) {
                 json_object *roleJ = json_object_array_get_idx(requireJ, idx);
@@ -229,6 +232,10 @@ static int parseOneAlias(const oidcCoreHdlT *oidc,
         alias->roles = roles;
     }
     return 0;
+
+oom:
+    EXT_CRITICAL("[oidc-alias] out of memory");
+    return -1;
 }
 
 /**

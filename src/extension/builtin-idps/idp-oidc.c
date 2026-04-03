@@ -758,8 +758,14 @@ static int oidcRegisterConfig(oidcIdpT *idp, json_object *configJ)
     size_t sz64;
     int len = asprintf(&authstr, "%s:%s", idp->credentials->clientId,
                        idp->credentials->secret);
-    rp_base64_encode((uint8_t *)authstr, (size_t)len, &auth64, &sz64, 0, 1, 0);
-    asprintf((char **)&schema->auth64, "Basic %s", auth64);
+    if (len < 0)
+        goto OutOfMemory;
+    err = rp_base64_encode((uint8_t *)authstr, (size_t)len, &auth64, &sz64, 0, 1, 0);
+    if (err == rp_base64_nomem)
+        goto OutOfMemory;
+    err = asprintf((char **)&schema->auth64, "Basic %s", auth64);
+    if (err < 0)
+        goto OutOfMemory;
     idp->userData = schema;
     free(authstr);
     free(auth64);
@@ -784,6 +790,10 @@ static int oidcRegisterConfig(oidcIdpT *idp, json_object *configJ)
 OnErrorExit:
     EXT_CRITICAL("[fail-config-oidc] invalid config idp='%s' (oidcDiscoveryCB)",
                  idp->uid);
+    return 1;
+
+OutOfMemory:
+    EXT_CRITICAL("Out of memory");
     return 1;
 }
 

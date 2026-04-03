@@ -61,7 +61,7 @@ void oidcStateUnRef(oidcStateT *state)
 {
     if (state != NULL)
         EXT_DEBUG("[oidc-state] oidcStateUnRef  %s:%d,%p",
-                state->idp->uid, state->ucount-1, state);
+                state->idp->uid, state->ucount-1, (void*)state);
 
     if (state != NULL && --state->ucount == 0) {
         oidcStateClearReqs(state);
@@ -77,7 +77,7 @@ oidcStateT *oidcStateAddRef(oidcStateT *state)
 {
     if (state != NULL)
         EXT_DEBUG("[oidc-state] oidcStateAddRef  %s:%d,%p",
-                state->idp->uid, state->ucount+1, state);
+                state->idp->uid, state->ucount+1, (void*)state);
     if (state != NULL)
         state->ucount++;
     return state;

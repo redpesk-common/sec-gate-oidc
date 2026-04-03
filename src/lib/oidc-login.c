@@ -33,7 +33,7 @@
 /* Send the final status */
 static void oidcLoginEnd(oidcStateT *state, oidcSessionT *session, int status, const char *url)
 {
-    EXT_DEBUG("[oidc-login] oidcLoginEnd %s:%d,%p", oidcStateGetIdp(state)->uid, oidcStateUsage(state), state);
+    EXT_DEBUG("[oidc-login] oidcLoginEnd %s:%d,%p", oidcStateGetIdp(state)->uid, oidcStateUsage(state), (void*)state);
     EXT_DEBUG("[oidc-login] end %d redirect to %s", status, url);
     oidcStateReplyRedirect(state, status, url);
     oidcSessionSetTargetState(session, NULL);
@@ -48,7 +48,7 @@ static void oidcLoginDone(oidcStateT *state, oidcSessionT *session)
     const oidcAliasT *alias = oidcSessionGetTargetPage(session);
     const char *url = alias != NULL ? alias->url : "/"; /* TODO what global home page ? */
 
-    EXT_DEBUG("[oidc-login] oidcLoginDone %s:%d,%p", oidcStateGetIdp(state)->uid, oidcStateUsage(state), state);
+    EXT_DEBUG("[oidc-login] oidcLoginDone %s:%d,%p", oidcStateGetIdp(state)->uid, oidcStateUsage(state), (void*)state);
     /* set actual login (TODO an what if federating?) */
     oidcSessionSetTargetPage(session, NULL);
     oidcLoginEnd(state, session, 1, url);
@@ -58,7 +58,7 @@ static void oidcLoginDone(oidcStateT *state, oidcSessionT *session)
 // should create it
 static void oidcLoginFederateDone(oidcStateT *state, oidcSessionT *session)
 {
-    EXT_DEBUG("[oidc-login] oidcLoginFederateDone %s:%d,%p", oidcStateGetIdp(state)->uid, oidcStateUsage(state), state);
+    EXT_DEBUG("[oidc-login] oidcLoginFederateDone %s:%d,%p", oidcStateGetIdp(state)->uid, oidcStateUsage(state), (void*)state);
     oidcSessionClearFederating(session);
     oidcSessionSetTargetState(session, NULL);
     oidcLoginDone(state, session);
@@ -90,7 +90,7 @@ static void oidcLoginFederate(oidcStateT *state, oidcSessionT *session)
     const fedSocialRawT *fedSocial;
     afb_data_x4_t data[2];
 
-    EXT_DEBUG("[oidc-login] oidcLoginFederate %s:%d,%p", oidcStateGetIdp(state)->uid, oidcStateUsage(state), state);
+    EXT_DEBUG("[oidc-login] oidcLoginFederate %s:%d,%p", oidcStateGetIdp(state)->uid, oidcStateUsage(state), (void*)state);
     assert(state == oidcSessionGetTargetState(session));
     assert(federating != 0);
 
@@ -103,8 +103,9 @@ static void oidcLoginFederate(oidcStateT *state, oidcSessionT *session)
                                   NULL);
         if (rc >= 0) {
             /* call to user federate */
-            return fedIdClientCall(oidcStateGetAfbApi(state), "user-federate",
+            fedIdClientCall(oidcStateGetAfbApi(state), "user-federate",
                                    2, data, on_user_federate_result, state);
+            return;
         }
         afb_data_unref(data[0]);
     }
@@ -130,7 +131,8 @@ static void on_social_check_result(void *closure,
         /* got an issue while calling fedid service */
         EXT_ERROR("[oidc-login] social-check got error %d", status);
         /* identification is done so shift to granted page */
-        return oidcLoginDone(state, session);
+        oidcLoginDone(state, session);
+        return;
     }
 
     if (status > 0) {
@@ -145,10 +147,13 @@ static void on_social_check_result(void *closure,
             oidcSessionSetUser(session, fedUsr);
             afb_data_unref(data);
             /* if federating, do the federation */
-            if (federating)
-                return oidcLoginFederate(state, session);
+            if (federating) {
+                oidcLoginFederate(state, session);
+                return;
+            }
         }
-        return oidcLoginDone(state, session);
+        oidcLoginDone(state, session);
+        return;
     }
 
     /* the user isn't recorded (status == 0) */
@@ -161,9 +166,10 @@ static void on_social_check_result(void *closure,
         oidcSessionSetFederating(session);
     }
     else {
-        return oidcLoginEnd(state, session, 0, oidcStateGetGlobals(state)->registerUrl);
+        oidcLoginEnd(state, session, 0, oidcStateGetGlobals(state)->registerUrl);
+        return;
     }
-    return oidcLoginEnd(state, session, 0, oidcStateGetGlobals(state)->fedlinkUrl);
+    oidcLoginEnd(state, session, 0, oidcStateGetGlobals(state)->fedlinkUrl);
 }
 
 /**
@@ -175,12 +181,12 @@ void oidcLogin(oidcStateT *state)
     oidcSessionT *session = oidcStateGetSession(state);
     int federating = oidcSessionIsFederating(session);
 
-    EXT_DEBUG("[oidc-login] oidcLogin %sfederating %s:%d,%p", federating?"":"not ", oidcStateGetIdp(state)->uid, oidcStateUsage(state), state);
+    EXT_DEBUG("[oidc-login] oidcLogin %sfederating %s:%d,%p", federating?"":"not ", oidcStateGetIdp(state)->uid, oidcStateUsage(state), (void*)state);
 
     if (state != oidcSessionGetTargetState(session)) {
         EXT_ERROR("[oidc-login] state != oidcSessionGetTargetState(session)");
-        EXT_ERROR("[oidc-login] state == %p", state);
-        EXT_ERROR("[oidc-login] oidcSessionGetTargetState(session) == %p", oidcSessionGetTargetState(session));
+        EXT_ERROR("[oidc-login] state == %p", (void*)state);
+        EXT_ERROR("[oidc-login] oidcSessionGetTargetState(session) == %p", (void*)oidcSessionGetTargetState(session));
     }
 
     if (!federating) {
@@ -198,13 +204,14 @@ void oidcLogin(oidcStateT *state)
         if (rc >= 0) {
            /* call fedid binding */
             afb_api_t api = oidcStateGetAfbApi(state);
-            return fedIdClientCall(api, "social-check", 1, &data,
+            fedIdClientCall(api, "social-check", 1, &data,
                                    on_social_check_result, state);
+            return;
         }
         EXT_ERROR("[oidc-login] can't create social-check arg");
     }
 
     /* identification is done so shift to granted page */
-    return oidcLoginDone(state, session);
+    oidcLoginDone(state, session);
 }
 

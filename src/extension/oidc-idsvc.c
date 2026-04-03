@@ -94,7 +94,7 @@ static void replyError(afb_req_t wreq, int code, const char *message)
  */
 static void replyOOM(afb_req_t wreq)
 {
-    return replyError(wreq, AFB_ERRNO_OUT_OF_MEMORY, "out of memory");
+    replyError(wreq, AFB_ERRNO_OUT_OF_MEMORY, "out of memory");
 }
 
 /*
@@ -102,7 +102,7 @@ static void replyOOM(afb_req_t wreq)
  */
 static void replyInvalid(afb_req_t wreq)
 {
-    return replyError(wreq, AFB_ERRNO_INVALID_REQUEST, "invalid request");
+    replyError(wreq, AFB_ERRNO_INVALID_REQUEST, "invalid request");
 }
 
 /*
@@ -110,7 +110,7 @@ static void replyInvalid(afb_req_t wreq)
  */
 static void replyBadState(afb_req_t wreq)
 {
-    return replyError(wreq, AFB_ERRNO_BAD_API_STATE, "invalid state");
+    replyError(wreq, AFB_ERRNO_BAD_API_STATE, "invalid state");
 }
 
 /*
@@ -118,7 +118,7 @@ static void replyBadState(afb_req_t wreq)
  */
 static void replyInternalError(afb_req_t wreq)
 {
-    return replyError(wreq, AFB_ERRNO_INTERNAL_ERROR, "internal error");
+    replyError(wreq, AFB_ERRNO_INTERNAL_ERROR, "internal error");
 }
 
 /*
@@ -144,8 +144,10 @@ static void replyIdpList(afb_req_t wreq,
     if (alias != NULL) {
         rc = rp_jsonc_pack(&aliasJ, "{ss ss* ss si}", "uid", alias->uid, "info",
                            alias->info, "url", alias->url, "loa", alias->loa);
-        if (rc < 0)
-            return replyOOM(wreq);
+        if (rc < 0) {
+            replyOOM(wreq);
+            return;
+        }
         if (loa < 0)
             loa = alias->loa;
     }
@@ -156,11 +158,14 @@ static void replyIdpList(afb_req_t wreq,
     if (rc < 0) {
         json_object_put(aliasJ);
         json_object_put(idpsJ);
-        return replyOOM(wreq);
+        replyOOM(wreq);
+        return;
     }
     rc = makeJSONData(&reply, responseJ);
-    if (rc < 0)
-        return replyOOM(wreq);
+    if (rc < 0) {
+        replyOOM(wreq);
+        return;
+    }
 
     // return the computed data
     afb_req_reply(wreq, 0, 1, &reply);
@@ -306,8 +311,10 @@ static void idpQueryUser(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
         int rc;
         afb_data_t data;
         rc = afb_data_create_raw(&data, fedUserObjType, fedUser, 0, NULL, NULL);
-        if (rc < 0)
-            return replyOOM(wreq);
+        if (rc < 0) {
+            replyOOM(wreq);
+            return;
+        }
         fedIdClientSubCall(wreq, "social-idps", 1, &data, idpQueryUserCB, NULL);
     }
     else {
@@ -356,7 +363,8 @@ static void userRegisterCB(void *ctx,
         EXT_NOTICE("[oidc-idsvc] usr-register got error from fedid");
         oidcSessionSetUser(session, NULL);
         afb_data_array_addref(argc, argv);
-        return afb_req_reply(wreq, status, argc, argv);
+        afb_req_reply(wreq, status, argc, argv);
+        return;
     }
 
     afb_data_t reply;
@@ -371,8 +379,10 @@ static void userRegisterCB(void *ctx,
                        alias->url != NULL ? alias->url : "/");
     if (rc >= 0)
         rc = makeJSONData(&reply, aliasJ);
-    if (rc < 0)
-        return replyOOM(wreq);
+    if (rc < 0) {
+        replyOOM(wreq);
+        return;
+    }
     afb_req_reply(wreq, status, 1, &reply);
 }
 
@@ -393,13 +403,17 @@ static void userRegister(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     state = oidcSessionGetActualState(session);
     fedSocial = state == NULL ? NULL : oidcStateGetSocial(state);
     alias = oidcSessionGetTargetPage(session);
-    if (state == NULL || alias == NULL || fedSocial == NULL)
-        return replyBadState(wreq);
+    if (state == NULL || alias == NULL || fedSocial == NULL) {
+        replyBadState(wreq);
+        return;
+    }
 
     // get first argument and check it as being a fedUser value
     rc = afb_req_param_convert(wreq, 0, fedUserObjType, &params[0]);
-    if (rc < 0 || argc != 1)
-        return replyInvalid(wreq);
+    if (rc < 0 || argc != 1) {
+        replyInvalid(wreq);
+        return;
+    }
 
     // record the actual user
     fedUser = (fedUserRawT *)afb_data_ro_pointer(params[0]);
@@ -409,8 +423,10 @@ static void userRegister(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     // after call)
     rc = afb_create_data_raw(&params[1], fedSocialObjType, fedSocial, 0, NULL,
                              NULL);
-    if (rc < 0)
-        return replyOOM(wreq);
+    if (rc < 0) {
+        replyOOM(wreq);
+        return;
+    }
 
     afb_data_addref(params[0]);
     fedIdClientSubCall(wreq, "user-create", 2, params, userRegisterCB, NULL);
@@ -443,14 +459,17 @@ static void userFederateCB(void *ctx,
     int rc;
 
     // subcall failed
-    if (status < 0)
-        return afb_req_reply(wreq, status, 0, NULL);
+    if (status < 0) {
+        afb_req_reply(wreq, status, 0, NULL);
+        return;
+    }
 
     // user isn't recorded
     if (status == 0) {
         EXT_INFO("user not recorded, pseudo=%s, email=%s", fedUser->pseudo,
                  fedUser->email);
-        return replyInvalid(wreq);
+        replyInvalid(wreq);
+        return;
     }
 
     // copy current user social and registration data for further federation
@@ -464,8 +483,10 @@ static void userFederateCB(void *ctx,
                        oidcCoreGlobals(wreq2oidc(wreq))->fedlinkUrl);
     if (rc >= 0)
         rc = makeJSONData(&reply, responseJ);
-    if (rc < 0)
-        return replyOOM(wreq);
+    if (rc < 0) {
+        replyOOM(wreq);
+        return;
+    }
 
     afb_req_reply(wreq, 0, 1, &reply);
 }
@@ -476,8 +497,10 @@ static void userFederate(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     afb_data_t data;
 
     // get first argument and check the request
-    if (argc != 1 || afb_req_param_convert(wreq, 0, fedUserObjType, &data) < 0)
-        return replyInvalid(wreq);
+    if (argc != 1 || afb_req_param_convert(wreq, 0, fedUserObjType, &data) < 0) {
+        replyInvalid(wreq);
+        return;
+    }
 
     // check if pseudo/email already present within user federation db
     afb_data_addref(data);
@@ -505,8 +528,10 @@ static void sessionReset(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
                        "login", globals->loginUrl, "error", globals->errorUrl);
     if (rc >= 0)
         rc = makeJSONData(&reply, responseJ);
-    if (rc < 0)
-        return replyOOM(wreq);
+    if (rc < 0) {
+        replyOOM(wreq);
+        return;
+    }
 
     afb_req_reply(wreq, 0, 1, &reply);
 }
@@ -532,17 +557,23 @@ static void sessionGet(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
     // retrieve current wreq LOA from session (to be fixed by Jose)
     session = oidcSessionOfReq(wreq);
     state = oidcSessionGetActualState(session);
-    if (state == NULL)
-        return replyBadState(wreq);
+    if (state == NULL) {
+        replyBadState(wreq);
+        return;
+    }
     fedUser = oidcSessionGetUser(session);
     if (fedUser == NULL)
         fedUser = oidcStateGetUser(state);
-    if (fedUser == NULL)
-        return replyBadState(wreq);
+    if (fedUser == NULL) {
+        replyBadState(wreq);
+        return;
+    }
     profile = oidcStateGetProfile(state);
     fedSocial = oidcStateGetSocial(state);
-    if (profile == NULL || fedSocial == NULL)
-        return replyBadState(wreq);
+    if (profile == NULL || fedSocial == NULL) {
+        replyBadState(wreq);
+        return;
+    }
 
     rc = rp_jsonc_pack(&profileJ, "{ss ss si}", "uid", profile->uid, "scope",
                        profile->scope, "loa", profile->loa);
@@ -555,13 +586,15 @@ static void sessionGet(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
             rc = afb_create_data_raw(&reply[1], fedSocialObjType, fedSocial, 0,
                                      NULL,
                                      NULL);  // keep feduser
-            if (rc >= 0)
-                return afb_req_reply(wreq, 0, 3, reply);
+            if (rc >= 0) {
+                afb_req_reply(wreq, 0, 3, reply);
+                return;
+            }
             afb_data_unref(reply[0]);
         }
         afb_data_unref(reply[2]);
     }
-    return replyOOM(wreq);
+    replyOOM(wreq);
 }
 /************************************************************************
  * Implement the verb 'session-event'
@@ -576,8 +609,10 @@ static void subscribeEvent(afb_req_t wreq,
 {
     int rc = oidcSessionEventSubscribe(wreq);
     EXT_DEBUG("[oidc-idsvc] client subscribe: %d", rc);
-    if (rc < 0)
-        return replyInternalError(wreq);
+    if (rc < 0) {
+        replyInternalError(wreq);
+        return;
+    }
 
     afb_req_reply(wreq, 0, 0, NULL);
 }
@@ -627,8 +662,10 @@ static void urlQuery(afb_req_t wreq, unsigned argc, afb_data_t const argv[])
                        "error", globals->errorUrl);
     if (rc >= 0)
         rc = makeJSONData(&reply, responseJ);
-    if (rc < 0)
-        return replyOOM(wreq);
+    if (rc < 0) {
+        replyOOM(wreq);
+        return;
+    }
 
     // send the reply
     afb_req_reply(wreq, 0, 1, &reply);

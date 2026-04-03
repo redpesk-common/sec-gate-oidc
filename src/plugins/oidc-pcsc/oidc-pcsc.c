@@ -177,7 +177,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong status, void *ctx)
 
         EXT_DEBUG(
             "[oidc-psc] tid=0x%lx card=0x%lx ctx=0x%p status=%d",
-            pthread_self(), pcscGetCardUuid(handle), pcscRqtCtx,
+            pthread_self(), pcscGetCardUuid(handle), (void*)pcscRqtCtx,
             pcscRqtCtx->status);
 
         // prevent from double detection
@@ -211,8 +211,11 @@ static int readerMonitorCB(pcscHandleT *handle, ulong status, void *ctx)
                         free(copy);
                         goto OnErrorExit;
                     }
-                    asprintf((char **)&fedSocial->fedkey, "%llu",
-                             (unsigned long long)uuid);
+                    if (0 > asprintf((char **)&fedSocial->fedkey, "%llu",
+                                     (unsigned long long)uuid)) {
+                        EXT_ERROR("Out of memory");
+                        goto OnErrorExit;
+                    }
                     break;
 
                 case PCSC_ACTION_READ:
@@ -327,9 +330,7 @@ static int readerMonitorCB(pcscHandleT *handle, ulong status, void *ctx)
     return result;
 
 OnErrorExit:
-    static char errorMsg[] =
-        "[oidc-psc] invalid token/smartcard (check scard/config)";
-    EXT_CRITICAL(errorMsg);
+    EXT_CRITICAL("[oidc-psc] invalid token/smartcard (check scard/config)");
     oidcStateReplyUnauthorized(state);
     pcscRqtCtx->status = PCSC_STATUS_REFUSED;
     return 0;  // keep thread waiting for card to be removed

@@ -373,7 +373,7 @@ int oidcCoreGetFilteredIdpList(const oidcCoreHdlT *oidc,
     int index = 0;
     const oidcIdpT *idp = oidc->idps;
     for (; idp->uid != NULL && index < nrDest; idp++) {
-        if (excludedUID != NULL || strcasecmp(idp->uid, excludedUID)) {
+        if (excludedUID == NULL || strcasecmp(idp->uid, excludedUID)) {
             dest[index++] = idp->uid;
         }
     }

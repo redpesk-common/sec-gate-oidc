@@ -137,8 +137,11 @@ static int apisParseOne(const oidcCoreHdlT *oidc,
         return -1;
     }
     // provide some defaults value based on uid
-    if (!api->uri)
-        asprintf((char **)&api->uri, "unix:@%s", api->uid);
+    if (!api->uri) {
+        rc = asprintf((char **)&api->uri, "unix:@%s", api->uid);
+        if (rc < 0)
+            goto oom;
+    }
 
     // inspect require values, building roles array
     if (requireJ) {
@@ -146,11 +149,8 @@ static int apisParseOne(const oidcCoreHdlT *oidc,
         case json_type_array:
             count = (int)json_object_array_length(requireJ);
             roles = calloc(count + 1, sizeof(char *));
-            if (roles == NULL) {
-            oom:
-                EXT_CRITICAL("[oidc-apis] out of memory");
-                return -1;
-            }
+            if (roles == NULL)
+                goto oom;
 
             for (idx = 0; idx < count; idx++) {
                 json_object *roleJ = json_object_array_get_idx(requireJ, idx);
@@ -173,6 +173,10 @@ static int apisParseOne(const oidcCoreHdlT *oidc,
         api->roles = roles;
     }
     return 0;
+
+oom:
+    EXT_CRITICAL("[oidc-apis] out of memory");
+    return -1;
 }
 
 // parse API configuration object
