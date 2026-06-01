@@ -18,20 +18,20 @@ books:
       name: Running and Testing
     - name: Kickstarts
       children:
-        - url: ../idps/docs/onelogin-kickstart.md
+        - url: ../src/extension/builtin-idps/docs/onelogin-kickstart.md
           name: OneLogin IDP config
-        - url: ../idps/docs/github-kickstart.md
+        - url: ../src/extension/builtin-idps/docs/github-kickstart.md
           name: Github IDP config
-        - url: ../idps/docs/ldap-kickstart.md
+        - url: ../src/extension/builtin-idps/docs/ldap-kickstart.md
           name: LDAP config
-        - url: ../idps/docs/phantauth-kickstart.md
+        - url: ../src/extension/builtin-idps/docs/phantauth-kickstart.md
           name: Phantauth IDP config
-        - url: ../plugins/oidc-pam/README.md
+        - url: ../src/plugins/oidc-pam/README.md
           name: PAM config
-        - url: ../plugins/oidc-pcsc/README.md
+        - url: ../src/plugins/oidc-pcsc/README.md
           name: NFC/Smartcard pcsc config
     - name: Libraries
       children:
         - name: pcscd libs
-          url: ../libs/pcscd-client/README.md
+          url: ../src/pcscd-client/README.md
 
