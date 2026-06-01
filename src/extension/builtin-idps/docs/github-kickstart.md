@@ -6,7 +6,7 @@ github is not openid-connect compliant but proposes similar functionality on bas
 
 As everyone should already have an account, I suppose that we should replace this chapter title with "log on with your existing github account".
 
-![registration](../../docs/assets/github/01-register-account.png)
+![registration](../../../../docs/assets/github/01-register-account.png)
 
 ## 2- get your application client-id
 
@@ -17,9 +17,9 @@ On order to get a client-id for your application, you should
 * select 'OAauth' apps
 * finally create your application.
 
-![select-settings](../../docs/assets/github/02a-select-setting.png)
-![select-developer](../../docs/assets/github/02b-developper-settings.png)
-![select-oauth](../../docs/assets/github/02c-oauth-app-menu.png)
+![select-settings](../../../../docs/assets/github/02a-select-setting.png)
+![select-developer](../../../../docs/assets/github/02b-developper-settings.png)
+![select-oauth](../../../../docs/assets/github/02c-oauth-app-menu.png)
 
 ## 3- register your login url
 
@@ -40,7 +40,7 @@ Note:
 
 * redirect logout is not supported by github.
 
-![register-uri](../../docs/assets/github/03-oauth-app-create.png)
+![register-uri](../../../../docs/assets/github/03-oauth-app-create.png)
 
 
 ## 4- retrieve application clientid/secret
@@ -55,7 +55,7 @@ When this is done you should be able to login with openid-connect and github.
         "secret": "*****bdc98970"
     },
 ```
-![retrieve-clientid](../../docs/assets/github/04-clientid-secret.png)
+![retrieve-clientid](../../../../docs/assets/github/04-clientid-secret.png)
 
 ## 5- Add users
 

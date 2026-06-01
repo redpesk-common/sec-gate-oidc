@@ -4,7 +4,7 @@ phantauth is not a readl IDP, but more a tool for openid-connect client test and
 
 Note that Phantauth provides a quite complete set od REST api to automate your CI testing scenario. Check API documentation [here](https://www.phantauth.net/api/)
 
-![home-documentation](../../docs/assets/phantauth/01-documentation-api.png)
+![home-documentation](../../../../docs/assets/phantauth/01-documentation-api.png)
 
 ## 1- request a developer account.
 
@@ -14,7 +14,7 @@ Phantauth is fully opensource, and no registration is required. This does not pr
 
 Phantauth allows you to use any random client-id. Simply generate a secret [here](https://www.phantauth.net/)
 
-![register-clientid](../../docs/assets/phantauth/02-get-clientid.png)
+![register-clientid](../../../../docs/assets/phantauth/02-get-clientid.png)
 
 ## 3- register your login url
 
@@ -31,7 +31,7 @@ No need to register your redirect_uri, any one will do the job. This being said,
 
 No need to request a user. Phantauth provides a fake login with no password. At login time user may choose its own attributes.
 
-![register-user](../../docs/assets/phantauth/04-authenticate-user.png)
+![register-user](../../../../docs/assets/phantauth/04-authenticate-user.png)
 
 
 ## 6- mapping role on sgate security attributes

@@ -88,7 +88,7 @@ the same uri end point, or better as explained before use the websocket
 API to check login/password validity.
 Check sample pam login page at $SOURCE/data/htdocs/idps/pam/login.html
 
-![login-page](../../docs/assets/pam/04-pam-login-form-sample.png)
+![login-page](../../../docs/assets/pam/04-pam-login-form-sample.png)
 
 
 ## 5- Add users

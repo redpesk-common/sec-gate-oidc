@@ -8,7 +8,7 @@ OneLogin developer documentation is quite well done, following screenshot should
 
 The process is pretty straight forward. After receiving an email to assert you're not a robot, your account is created. Registration creates a public dns hostname as "my-company-name-onelogin.com". You should then connect through that hostname for all your onelogin requests.
 
-![registration](../../docs/assets/onelogin/01-register-account.png)
+![registration](../../../../docs/assets/onelogin/01-register-account.png)
 
 ## 2- get your application client-id
 
@@ -18,7 +18,7 @@ An order to get a client-id for your application, you should
 
 * give a name, logo and few misc info about your application. You may give any name you like, it is only used by onelogin and has no impact on sgate config.
 
-![register-account](../../docs/assets/onelogin/02-register-app.png)
+![register-account](../../../../docs/assets/onelogin/02-register-app.png)
 
 ## 3- register your login url
 
@@ -40,7 +40,7 @@ Note:
 
 * redirect logout is optional and harder to use. The logout url is a direct IDP back channel and the url should be reachable by IDP. As a result IDP initiated logout does not work with systems hidden behind a Firewall/NAT *(which is generally the case for embedded devices)*.
 
-![register-uri](../../docs/assets/onelogin/03-register-uri.png)
+![register-uri](../../../../docs/assets/onelogin/03-register-uri.png)
 
 
 ## 4- retrieve application clientid/secret
@@ -55,7 +55,7 @@ When this is done you should be able to login with openid-connect and onelogin.
         "secret": "7a180580642702d7-xxxx"
     },
 ```
-![retrieve-clientid](../../docs/assets/onelogin/04-clientid-secretid.png)
+![retrieve-clientid](../../../../docs/assets/onelogin/04-clientid-secretid.png)
 
 ## 5- Add users
 
@@ -65,7 +65,7 @@ Creating a user is simple. Select "user" in the top menu bar and click on "new-u
 
 Note that from this page you cannot add roles/groups (see later section). As we have no external directory any other detail can be safely ignored.
 
-![register-user](../../docs/assets/onelogin/05-register-user.png)
+![register-user](../../../../docs/assets/onelogin/05-register-user.png)
 
 
 ## 6- mapping role on sgate security attributes
@@ -79,13 +79,13 @@ Creating a new role is very similar to user creation. From top bar menu select "
 * click on the green button
 * click save
 
-![create-role](../../docs/assets/onelogin/06-add-role.png)
+![create-role](../../../../docs/assets/onelogin/06-add-role.png)
 
 ### 6.2 add users to a role
 
 Role creation does not ask for any options, the role is just created and you return to role list page. You should select your newly created role from the global list after it has been created.
 
-![list-role](../../docs/assets/onelogin/06-list-roles.png)
+![list-role](../../../../docs/assets/onelogin/06-list-roles.png)
 
 From this list select your role and click on 'user' and the left menu. You end up on the following page. You then should:
 
@@ -96,7 +96,7 @@ From this list select your role and click on 'user' and the left menu. You end u
 
 As said before, this is not the most intuitive part of onelogin admin console, but it does the job.
 
-![user-role](../../docs/assets/onelogin/06-user-role.png)
+![user-role](../../../../docs/assets/onelogin/06-user-role.png)
 
 ### 6.3 make role as sgate security attributes.
 
@@ -127,7 +127,7 @@ The last thing to do, is to configure onelogin for its returned token-id 'groups
 * click on parameters on left menu (should see following page)
 * on this page select "credentials are configured by the admin"
 
-![user-role](../../docs/assets/onelogin/07-app-credentials.png)
+![user-role](../../../../docs/assets/onelogin/07-app-credentials.png)
 
 Finaly from the same page click on "Groups". This will open a popup window. As on following image.
 * select "User Roles" as default (scroll the list is long)

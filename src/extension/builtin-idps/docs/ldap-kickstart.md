@@ -69,7 +69,7 @@ There is no clientid/secret the credential section is unused. On the other hand 
 
 This page should request user login/password and either post it back to the same uri end point, or even better as explained before use the websocket API to check login/password validity. Check sample ldap login page at $SOURCE/data/htdocs/idps/ldap/login.html
 
-![login-page](../../docs/assets/ldap/04-ldap-login-form-sample.png)
+![login-page](../../../../docs/assets/ldap/04-ldap-login-form-sample.png)
 
 
 ## 5- Add users
