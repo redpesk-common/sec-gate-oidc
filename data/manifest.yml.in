@@ -1,0 +1,24 @@
+rp-manifest: 1
+id: @PROJECT_NAME@
+version: @PROJECT_VERSION@
+name: @PROJECT_NAME@
+description: @PROJECT_DESCRIPTION@
+author: IoT.bzh
+license: APL2.0
+required-permission:
+  urn:AGL:permission::public:hidden:
+    name: urn:AGL:permission::public:hidden
+    value: required
+targets:
+  - target: main
+    content:
+      src: lib/libafb-sec-gate-oidc-ext.so
+      type: application/vnd.agl.service
+    icon:
+      - src: icon.jpg
+    provided-api:
+      - name: sec-gate-oidc
+        value: ws
+    required-binding:
+      - name: lib/libafb-sec-gate-oidc-ext.so
+        value: local

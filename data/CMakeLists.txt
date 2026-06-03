@@ -1,5 +1,6 @@
-configure_file(config.xml.in config.xml @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/config.xml icon.jpg DESTINATION ${APPDIR})
+configure_file(manifest.yml.in manifest.yml @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/manifest.yml DESTINATION ${APPDIR}/.rpconfig)
+install(FILES icon.jpg DESTINATION ${APPDIR})
 install(DIRECTORY htdocs etc hidden DESTINATION ${APPDIR})
 if(CMAKE_BUILD_TYPE STREQUAL Debug)
     install(DIRECTORY ssl DESTINATION ${APPDIR})
