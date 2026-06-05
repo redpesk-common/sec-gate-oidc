@@ -146,7 +146,7 @@ In order to test social authentication we recommend the 3 following authorities:
   limitations are more than acceptable (3 applications and 25 users) which should be more
   than enough to start.
 
-  see onelogin [kick-start](../idps/docs/onelogin-kickstart.html)
+  see onelogin [kick-start]({% chapter_link oidc_binding.kickstarts.onelogin-idp-config %})
 
 They are many other openid-connect authorities that proposes free developer accounts.
 Unfortunately we did not find application registration as intuitive as on github or onelogin.

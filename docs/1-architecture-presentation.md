@@ -104,7 +104,7 @@ Detail on OpenId-Connect specifications can be found [here](https://openid.net/d
 * [Configuration](./3-configuration.html)
 * [Secure Gate SVC API](./4-sgate-svc-api.html)
 * [Running and Testing](./5-running-and-testing.html)
-* [pcsc library](../libs/pcscd-client/README.html)
+* [pcsc library]({% chapter_link oidc_binding.libraries.pcscd-libs %})
 
 ## Support/sources
 
