@@ -18,9 +18,70 @@ Check with `afb-binder --version` that your version >= 4.0.0
   * `sec-gate-oidc` basic HTML/JS testing pages.
   * `sec-gate-webui` for one-page HTML Angular
 
-If you run redpesk simply install the package with `dnf install sec-gate-oidc`
-for other platforms check redpesk
-[developer guide]({% chapter_link host-configuration-doc.setup-your-build-host %})
+If you run redpesk or a [`SDK` container]({% chapter_link sdk-container-doc.overview %}), simply install the package with `dnf install sec-gate-oidc`
+
+## Quick test
+
+### start sec-gate-oidc samples
+
+Use one of the default config templates to write your own one and start
+the binder with your own oidc-config.json
+
+```bash
+ # check with PAM login as fake IDP
+ afb-binder --config=/my_config/oidc-local.json
+```
+
+**Note:** *any test with an external authority requires a minimum level of remote configuration.
+Check specific IDPs requirement before trying oidc-oauth2.json samples.*
+
+### Connect to HTML5 test page
+
+Connect your browser to your sec-gate-oidc service with `https://target:port`
+to display corresponding HTML5 test page.
+When testing on your local machine redirect uri should look like
+https://localhost:1234 when running sgate on a target,
+then your should use https://target-ip-addr
+
+* Note:
+
+  * HTTPS requires SSL certificates.
+    Check $PROJECT/data/ssl/gen-cert.sh to generated self signed SSL certificates.
+    For development only, you may also choose to remove SSL.
+    To remove SSL simply set 'HTTPS':false within your oidc-config.json
+
+  * Warning: most IDPs impose HTTPS connection when using anything different from
+    localhost as redirect login URL.
+
+### Run a test from building tree
+
+Create a custom config file from samples available at '../data/etc/oidc-\*.json'.
+When config looks good try it with afb-binder --config.
+
+Note that it is a good 'best-practice' to check your json config
+with 'jq' on equivalent tools before trying to use it.
+
+```bash
+    jq < ../data/etc/my-oidc-config.json
+    afb-binder --config=../data/etc/my-oidc-config.json -v
+```
+
+### Warning NFC USB reader (ACR122U) with pcscd
+
+* Do not forget to update NFC kernel module blacklist
+
+  * sudo cp $SOURCES/libs/pcscd-client/test/nfc-blacklist.conf /etc/modprobe.d
+
+  * rmmod nfc and dependencies (or reboot)
+
+  * systemctl enable pcscd.service
+
+Check with you USB reader is visible with
+
+```bash
+    ./build/package/bin/pcscd-client --list
+    -- reader[?]=ACS ACR122U PICC Interface 01 00
+```
 
 ## set up your HTTPS/TLS environment
 
