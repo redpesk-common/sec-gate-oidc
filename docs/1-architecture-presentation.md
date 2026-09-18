@@ -109,7 +109,7 @@ Detail on OpenId-Connect specifications can be found [here](https://openid.net/d
 ## Support/sources
 
 `sec-gate-oidc` is part of redpesk-common and relies on
-[redpesk-core]({% chapter_link apis-services-doc.services-list %})
+[redpesk-core]({% chapter_link apis-services-doc.available-services %})
 
 * Community support [#redpesk-core:matrix.org]( {% chapter_link community-doc.support %})
 * source code: [github/redpesk-common](https://github.com/redpesk-common)
